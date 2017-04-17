@@ -1,0 +1,14 @@
+{
+  "name": "mediainfo",
+  "version": "1.0.0",
+  "description": "runs mediainfo on s3 signed urls",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "UNLICENCED",
+  "dependencies": {
+    "xml2js": "^0.4.17"
+  }
+}
