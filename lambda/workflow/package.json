@@ -1,0 +1,19 @@
+{
+  "name": "vod-workflow",
+  "version": "1.0.0",
+  "description": "lambda functions for VOD workflow",
+  "main": "elemental-encode.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "aws-sdk": "^2.41.0",
+    "fs": "0.0.1-security",
+    "moment": "^2.18.1",
+    "sleep": "^5.1.1",
+    "uuid": "^3.0.1",
+    "xml2js": "^0.4.17"
+  }
+}
