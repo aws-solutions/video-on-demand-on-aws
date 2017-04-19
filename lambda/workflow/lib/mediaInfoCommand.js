@@ -200,7 +200,7 @@ class MediaInfoCommand extends BaseNotifier {
       return this.notify('$runCompleted', this);
     });
 
-    var exec = PATH.join(process.cwd(), 'mediainfo', 'bin', 'mediainfo');
+    var exec = PATH.join(process.cwd(), 'bin', 'mediainfo');
     //exec = 'mediainfo';
     var child = CHILD.exec(`${exec} ${this.$cmdOptions.join(' ')} '${this.$fileName}'`, (err, stdout, stderr) => {
       if (err)

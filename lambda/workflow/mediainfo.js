@@ -31,7 +31,7 @@ exports.handler = (event, context, callback) => {
     let s3_get;
     let info;
 
-    if (event.preset) {
+    if (event.mp4Output) {
         s3_get = {
             Bucket: process.env.Mp4Dest,
             Key: event.guid + '/' + event.mp4Output,

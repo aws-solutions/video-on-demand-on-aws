@@ -20,9 +20,10 @@ update dynamo and then publish to SNS with the asset details form
 Dynamo
 */
 'use strict';
-const moment = require('moment');
 const AWS = require('aws-sdk');
 const child_process = require('child_process');
+const MetricsHelper = require('./lib/metrics-helper.js');
+const moment = require('moment');
 const dynamodb = new AWS.DynamoDB({
     region: process.env.AWS_REGION
 });
@@ -47,9 +48,7 @@ exports.handler = (event, context, callback) => {
                     console.log(err, err.stack);
                     reject(Error("Failed"));
                 } else if (data.Item.mp4Output && data.Item.hlsOutput) {
-                  //ets jobs finsish at the same time for small files (< 20mb)
-                  child_process.execSync("sleep 3");
-                  // delay to ensure Db writes are completed for both outputs
+                  
                     var db_update = {
                         TableName: process.env.Dynamo,
                         Key: {
@@ -85,8 +84,50 @@ exports.handler = (event, context, callback) => {
     getDynamo.then(
         function(res) {
             if (res == "Complete") {
+                //ets jobs finsish at the same time for small files (< 20mb)
+                child_process.execSync("sleep 2");
+                // delay to ensure Db writes are completed for both outputs
                 console.log('HLS and MP4 Encoding complete');
                 dynamodb.getItem(db_get, function(err, data) {
+                    // Send anonymous data
+                    if (process.env.uuid) {
+                      let metricsHelper = new MetricsHelper();
+                      let metadata = {};
+                      let srcMedia = JSON.parse(data.Item.srcMediainfo.S);
+                      let file = ["$fileName",];
+                      let raw = ["$rawData",];
+                      let xml = ["$xmlParserInstance"];
+                      //removing file name from metadata
+                      delete srcMedia[file];
+                      delete srcMedia[raw];
+                      delete srcMedia[xml];
+                      let workflow = {
+                          "profile": data.Item.profile.S,
+                          "srcSize": data.Item.srcSize.S,
+                          "mp4Size": data.Item.mp4Size.S,
+                          "startTime": data.Item.startTime.S,
+                          "completeTime": data.Item.completeTime.S
+                      };
+                      metadata.scrMedia = srcMedia;
+                      metadata.workflow = workflow;
+                      console.log(JSON.stringify(metadata));
+
+                      let metric = {
+                        Solution: 'SO0021',
+                        UUID: process.env.uuid,
+                        TimeStamp: moment().utc().format('YYYY-MM-DD HH:mm:ss.S'),
+                        Data: JSON.stringify(metadata, null, 2)
+                      };
+                      metricsHelper.sendAnonymousMetric(metric, function(err, data) {
+                          if (err) {
+                            console.log(err, err.stack);
+                          } else {
+                            console.log('data sent');
+                          }
+                      });
+                    }
+                    // End anonymous data
+
                     var json = {
                         "guid": data.Item.guid.S,
                         "profile": data.Item.profile.S,
@@ -116,7 +157,6 @@ exports.handler = (event, context, callback) => {
                             callback(err, 'Failed');
                         } else {
                             console.log(data);
-                            // if anonymous send metrics (data)
                         }
                     });
                 });
