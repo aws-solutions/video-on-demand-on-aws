@@ -21,7 +21,6 @@ Dynamo
 */
 'use strict';
 const AWS = require('aws-sdk');
-const child_process = require('child_process');
 const MetricsHelper = require('./lib/metrics-helper.js');
 const moment = require('moment');
 const dynamodb = new AWS.DynamoDB({
@@ -47,8 +46,9 @@ exports.handler = (event, context, callback) => {
                 if (err) {
                     console.log(err, err.stack);
                     reject(Error("Failed"));
-                } else if (data.Item.mp4Output && data.Item.hlsOutput) {
-                  
+                // check if both mp4 and hls content has been processed
+                } else if (data.Item.mp4Metadata && data.Item.hlsUrl) {
+
                     var db_update = {
                         TableName: process.env.Dynamo,
                         Key: {
@@ -84,9 +84,6 @@ exports.handler = (event, context, callback) => {
     getDynamo.then(
         function(res) {
             if (res == "Complete") {
-                //ets jobs finsish at the same time for small files (< 20mb)
-                child_process.execSync("sleep 2");
-                // delay to ensure Db writes are completed for both outputs
                 console.log('HLS and MP4 Encoding complete');
                 dynamodb.getItem(db_get, function(err, data) {
                     // Send anonymous data
@@ -147,7 +144,7 @@ exports.handler = (event, context, callback) => {
 
                     var sns_params = {
                         Message: JSON.stringify(json, null, 2),
-                        Subject: ': VOD Workflow Complete:' + event.guid,
+                        Subject: process.env.AWS_LAMBDA_FUNCTION_NAME.slice(0, -8) +': Workflow complete:' + event.guid,
                         TargetArn: process.env.StepsPublish
                     };
 

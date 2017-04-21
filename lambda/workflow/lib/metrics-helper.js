@@ -41,9 +41,9 @@ let metricsHelper = (function() {
     metricsHelper.prototype.sendAnonymousMetric = function(metric, cb) {
 
         let _options = {
-            hostname: 'oszclq8tyh.execute-api.us-east-1.amazonaws.com',
+            hostname: 'metrics.awssolutionsbuilder.com',
             port: 443,
-            path: '/prod/generic',
+            path: '/generic',
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

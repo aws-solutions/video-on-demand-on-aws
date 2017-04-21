@@ -18,6 +18,7 @@
 Step function: Get mediainfo and create metadata json file.
 */
 'use strict';
+const child_process = require('child_process');
 const AWS = require('aws-sdk');
 const s3 = new AWS.S3();
 const dynamodb = new AWS.DynamoDB({
@@ -25,6 +26,10 @@ const dynamodb = new AWS.DynamoDB({
 });
 
 exports.handler = (event, context, callback) => {
+    //ets jobs can finsish at the same time for small files (< 100mb)
+    child_process.execSync("sleep 8");
+    // delay to off set the 2 step functions executions and prevent publish
+    // sending SNS completion twice
 
     var db_get = {
         TableName: process.env.Dynamo,

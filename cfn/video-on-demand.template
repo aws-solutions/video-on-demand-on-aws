@@ -15,6 +15,19 @@ Parameters:
           - "Yes"
           - "No"
 
+Metadata:
+    AWS::CloudFormation::Interface:
+        ParameterGroups:
+            -
+                Parameters:
+                    - AdminEmail
+                    - SendAnonymousData
+        ParameterLabels:
+            AdminEmail:
+                default: "Administrator email address"
+            SendAnonymousData:
+                default: "Send Anonymous Usage Data"
+
 Conditions:
   SendMetrics: !Equals [ !Ref SendAnonymousData, "Yes" ]
 
@@ -68,9 +81,11 @@ Resources:
               - sns:Publish
             Resource:
               - !Ref StepsPublish
+              - !Ref StepsErrors
       Roles:
         - !Ref LambdaSnsDynamoRole
         - !Ref LambdaS3SnsDeploymentRole
+        - !Ref StepFunctionsExecuteRole
 
   LambdaEtsJobRole:
     Type: AWS::IAM::Role

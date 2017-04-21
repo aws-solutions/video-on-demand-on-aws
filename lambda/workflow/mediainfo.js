@@ -27,14 +27,14 @@ const dynamodb = new AWS.DynamoDB({
 });
 
 exports.handler = (event, context, callback) => {
-
+    console.log(event);
     let s3_get;
     let info;
 
     if (event.mp4Output) {
         s3_get = {
             Bucket: process.env.Mp4Dest,
-            Key: event.guid + '/' + event.mp4Output,
+            Key: event.mp4Output,
             Expires: 300
         };
         info = 'mp4Mediainfo';
@@ -46,6 +46,9 @@ exports.handler = (event, context, callback) => {
         };
         info = 'srcMediainfo';
     }
+
+    console.log(s3_get);
+    console.log('running ' + info);
 
     var url = s3.getSignedUrl('getObject', s3_get);
     var mediaInfo = new MediaInfo(url);

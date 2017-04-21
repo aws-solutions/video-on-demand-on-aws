@@ -37,7 +37,7 @@ exports.handler = (event, context, callback) => {
         prefix = '-hls';
         json = {
             "guid": msg.outputKeyPrefix.slice(0, -1),
-            "hlsOutput": msg.playlists[0].name,
+            "hlsOutput": msg.outputKeyPrefix.slice(0, -1) + '/' + msg.playlists[0].name,
             "duration": msg.outputs[0].duration.toString()
             };
     }
@@ -45,7 +45,7 @@ exports.handler = (event, context, callback) => {
         prefix = '-mp4';
         json = {
             "guid": msg.outputKeyPrefix.slice(0, -1),
-            "mp4Output":msg.outputs[0].key,
+            "mp4Output":msg.outputKeyPrefix.slice(0, -1) + '/' + msg.outputs[0].key,
             "duration": msg.outputs[0].duration.toString()
             };
     }

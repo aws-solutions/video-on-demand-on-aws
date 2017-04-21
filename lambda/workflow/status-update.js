@@ -54,7 +54,7 @@ exports.handler = (event, context, callback) => {
 
           var sns_params = {
               Message: JSON.stringify(event, null, 2),
-              Subject: ': VOD Workflow Started:' + event.guid,
+              Subject: process.env.AWS_LAMBDA_FUNCTION_NAME.slice(0, -14) + ':Workflow started:' + event.guid,
               TargetArn: process.env.StepsPublish
           };
 
