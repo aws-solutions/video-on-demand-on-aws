@@ -26,7 +26,7 @@ const dynamodb = new AWS.DynamoDB({
 
 exports.handler = (event, context, callback) => {
 
-  var url = 'http://' + process.env.Cdn + '/' + event.guid + '/' + event.hlsOutput + '.m3u8';
+  var url = 'http://' + process.env.Cdn + '/' + event.hlsOutput;
 
   console.log(event);
   console.log(url);
