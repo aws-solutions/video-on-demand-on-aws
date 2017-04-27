@@ -1,0 +1,23 @@
+{
+  "name": "vod-deployment",
+  "version": "1.0.0",
+  "description": "cfn custom resources for vod workflow",
+  "main": "na",
+  "scripts": {
+    "test": "na"
+  },
+  "dependencies": {
+    "uuid": "*",
+    "cfn-response": "*",
+    "https": "^1.0.0",
+    "url": "^0.11.0",
+    "moment": "^2.18.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "na"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {}
+}

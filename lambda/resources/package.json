@@ -7,10 +7,9 @@
     "test": "na"
   },
   "dependencies": {
-    "aws-sdk": "*",
-    "uuid": "*",
     "async": "*",
-    "cfn-response": "*"
+    "cfn-response": "*",
+    "fs": "0.0.1-security"
   },
   "repository": {
     "type": "git",

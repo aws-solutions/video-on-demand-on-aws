@@ -87,7 +87,8 @@ exports.handler = (event, context, callback) => {
                 console.log('HLS and MP4 Encoding complete');
                 dynamodb.getItem(db_get, function(err, data) {
                     // Send anonymous data
-                    if (process.env.uuid) {
+                    if (process.env.anonymousData === 'Yes') {
+
                       let metricsHelper = new MetricsHelper();
                       let metadata = {};
                       let srcMedia = JSON.parse(data.Item.srcMediainfo.S);
@@ -111,7 +112,7 @@ exports.handler = (event, context, callback) => {
 
                       let metric = {
                         Solution: 'SO0021',
-                        UUID: process.env.uuid,
+                        UUID: process.env.UUID,
                         TimeStamp: moment().utc().format('YYYY-MM-DD HH:mm:ss.S'),
                         Data: JSON.stringify(metadata, null, 2)
                       };

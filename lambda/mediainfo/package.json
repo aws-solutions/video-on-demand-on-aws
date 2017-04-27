@@ -1,0 +1,19 @@
+{
+  "name": "mediainfo",
+  "version": "1.0.0",
+  "description": "runs media info on an s3 signed url",
+  "main": "na",
+  "scripts": {
+    "test": "na"
+  },
+  "dependencies": {
+    "xml2js": "^0.4.17"
+  },
+  "repository": {
+    "type": "git",
+    "url": "na"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {}
+}

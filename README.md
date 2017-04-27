@@ -11,8 +11,7 @@ Source code for the AWS solution [Video on Demand on AWS](https://aws.amazon.com
 
 ## source code node.js 4.3:
 
-lambda/workflow - Micro services that make up the AWS Step Functions.
-- **mediainfo**         - runs mediainfo executable on s3 signed url. https://mediaarea.net/en/MediaInfo
+lambda/functions - Micro services that make up the AWS Step Functions.
 - **dynamo-entry**      - creates the initial DynamoDB entry for the source video.
 - **encode-hls**        - creates an HLS encode job on Elastic Transcoder based on the profiler.
 - **encode-mp4**        - creates an MP4 encode job on Elastic Transcoder based on the profiler.
@@ -23,8 +22,13 @@ lambda/workflow - Micro services that make up the AWS Step Functions.
 - **publish-execute**   - triggers publish step functions workflow on ETS completion.
 - **publish**           - publishes workflow results to SNS
 
+lambda/mediainfo
+- **index**         - runs mediainfo executable on s3 signed url. https://mediaarea.net/en/MediaInfo
 
-lambda/deployment - Custom Resources for CloudFormation to deploy Elastic Transcoder, AWS Step Functions and more.
+lambda/metrics
+- **index**         - Anonymous data
+
+lambda/resources - Custom Resources for CloudFormation to deploy Elastic Transcoder, AWS Step Functions and more.
 - **cloudfront-identity**   - creates a CF identity.
 - **ets-pipeline**          - creates ETS pipeline.
 - **ets-presets**           - creates ETS presents based on Apple tech note from 2016.

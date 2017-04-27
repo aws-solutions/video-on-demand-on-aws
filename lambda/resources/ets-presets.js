@@ -57,59 +57,59 @@ exports.handler = (event, context, callback) => {
 
     const presets = [{
             id: 'Hls_1080p',
-            data: 'presets/hls_1080p_7800.json'
+            data: './presets/hls_1080p_7800.json'
         },
         {
             id: 'Hls_720p',
-            data: 'presets/hls_720p_6000.json'
+            data: './presets/hls_720p_6000.json'
         },
         {
             id: 'Hls_540p',
-            data: 'presets/hls_540p_2000.json'
+            data: './presets/hls_540p_2000.json'
         },
         {
             id: 'Hls_432p',
-            data: 'presets/hls_432p_1100.json'
+            data: './presets/hls_432p_1100.json'
         },
         {
             id: 'Hls_360p',
-            data: 'presets/hls_360p_730.json'
+            data: './presets/hls_360p_730.json'
         },
         {
             id: 'Hls_270p',
-            data: 'presets/hls_270p_365.json'
+            data: './presets/hls_270p_365.json'
         },
         {
             id: 'Hls_234p',
-            data: 'presets/hls_234p_145.json'
+            data: './presets/hls_234p_145.json'
         },
         {
             id: 'Mp4_1080p',
-            data: 'presets/mp4_1080p_7800.json'
+            data: './presets/mp4_1080p_7800.json'
         },
         {
             id: 'Mp4_720p',
-            data: 'presets/mp4_720p_6000.json'
+            data: './presets/mp4_720p_6000.json'
         },
         {
             id: 'Mp4_540p',
-            data: 'presets/mp4_540p_2000.json'
+            data: './presets/mp4_540p_2000.json'
         },
         {
             id: 'Mp4_432p',
-            data: 'presets/mp4_432p_1100.json'
+            data: './presets/mp4_432p_1100.json'
         },
         {
             id: 'Mp4_360p',
-            data: 'presets/mp4_360p_730.json'
+            data: './presets/mp4_360p_730.json'
         },
         {
             id: 'Mp4_270p',
-            data: 'presets/mp4_270p_365.json'
+            data: './presets/mp4_270p_365.json'
         },
         {
             id: 'Mp4_234p',
-            data: 'presets/mp4_234p_145.json'
+            data: './presets/mp4_234p_145.json'
         }
     ];
 

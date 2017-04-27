@@ -28,9 +28,6 @@ Metadata:
             SendAnonymousData:
                 default: "Send Anonymous Usage Data"
 
-Conditions:
-  SendMetrics: !Equals [ !Ref SendAnonymousData, "Yes" ]
-
 Resources:
 
   DynamoPolicy:
@@ -164,6 +161,32 @@ Resources:
             Action:
               - sts:AssumeRole
 
+  LambdaMetricsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        -
+          PolicyName: !Sub "${AWS::StackName}-s3-access"
+          PolicyDocument:
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource:
+                  - !Join ["", ["arn:aws:logs:", Ref: "AWS::Region", ":", Ref: "AWS::AccountId", ":log-group:/aws/lambda/*"]]
 
   StepFunctionsExecuteRole:
     Type: AWS::IAM::Role
@@ -524,7 +547,7 @@ Resources:
       Role: !GetAtt LambdaEtsDeploymentRole.Arn
       Code:
         S3Bucket: !Join ["-", ["solutions",  Ref: "AWS::Region"]]
-        S3Key: video-on-demand/v1/deployment.zip
+        S3Key: video-on-demand/v1/resources.zip
       Runtime: nodejs4.3
       Timeout: 120
 
@@ -563,7 +586,7 @@ Resources:
       Role: !GetAtt LambdaEtsDeploymentRole.Arn
       Code:
         S3Bucket: !Join ["-", ["solutions",  Ref: "AWS::Region"]]
-        S3Key: video-on-demand/v1/deployment.zip
+        S3Key: video-on-demand/v1/resources.zip
       Runtime: nodejs4.3
       Timeout: 120
 
@@ -582,7 +605,7 @@ Resources:
       Role: !GetAtt LambdaCfDeploymentRole.Arn
       Code:
         S3Bucket: !Join ["-", ["solutions",  Ref: "AWS::Region"]]
-        S3Key: video-on-demand/v1/deployment.zip
+        S3Key: video-on-demand/v1/resources.zip
       Runtime: nodejs4.3
       Timeout: 120
 
@@ -613,7 +636,7 @@ Resources:
             Headers:
               - Origin
           ViewerProtocolPolicy: allow-all
-        PriceClass: PriceClass_100
+        PriceClass: PriceClass_All
         ViewerCertificate:
           CloudFrontDefaultCertificate: 'true'
 
@@ -627,7 +650,7 @@ Resources:
       Role: !GetAtt LambdaDynamoRole.Arn
       Code:
         S3Bucket: !Join ["-", ["solutions",  Ref: "AWS::Region"]]
-        S3Key: video-on-demand/v1/workflow.zip
+        S3Key: video-on-demand/v1/functions.zip
       Runtime: nodejs4.3
       Timeout: 120
       Environment:
@@ -641,11 +664,11 @@ Resources:
     Properties:
       FunctionName: !Sub ${AWS::StackName}-mediainfo
       Description: run mediainfo & updateDB
-      Handler: mediainfo.handler
+      Handler: index.handler
       Role: !GetAtt LambdaMediainfoRole.Arn
       Code:
         S3Bucket: !Join ["-", ["solutions",  Ref: "AWS::Region"]]
-        S3Key: video-on-demand/v1/workflow.zip
+        S3Key: video-on-demand/v1/mediainfo.zip
       Runtime: nodejs4.3
       Timeout: 120
       Environment:
@@ -662,7 +685,7 @@ Resources:
       Role: !GetAtt LambdaDynamoRole.Arn
       Code:
         S3Bucket: !Join ["-", ["solutions",  Ref: "AWS::Region"]]
-        S3Key: video-on-demand/v1/workflow.zip
+        S3Key: video-on-demand/v1/functions.zip
       Runtime: nodejs4.3
       Timeout: 120
       Environment:
@@ -678,7 +701,7 @@ Resources:
       Role: !GetAtt LambdaEtsJobRole.Arn
       Code:
         S3Bucket: !Join ["-", ["solutions",  Ref: "AWS::Region"]]
-        S3Key: video-on-demand/v1/workflow.zip
+        S3Key: video-on-demand/v1/functions.zip
       Runtime:  nodejs4.3
       Timeout: 120
       Environment:
@@ -703,7 +726,7 @@ Resources:
       Role: !GetAtt LambdaEtsJobRole.Arn
       Code:
         S3Bucket: !Join ["-", ["solutions",  Ref: "AWS::Region"]]
-        S3Key: video-on-demand/v1/workflow.zip
+        S3Key: video-on-demand/v1/functions.zip
       Runtime:  nodejs4.3
       Timeout: 120
       Environment:
@@ -729,7 +752,7 @@ Resources:
       Role: !GetAtt LambdaSnsDynamoRole.Arn
       Code:
         S3Bucket: !Join ["-", ["solutions",  Ref: "AWS::Region"]]
-        S3Key: video-on-demand/v1/workflow.zip
+        S3Key: video-on-demand/v1/functions.zip
       Runtime:  nodejs4.3
       Timeout: 120
       Environment:
@@ -746,7 +769,7 @@ Resources:
       Role: !GetAtt LambdaDynamoRole.Arn
       Code:
         S3Bucket: !Join ["-", ["solutions",  Ref: "AWS::Region"]]
-        S3Key: video-on-demand/v1/workflow.zip
+        S3Key: video-on-demand/v1/functions.zip
       Runtime: nodejs4.3
       Timeout: 120
       Environment:
@@ -767,7 +790,7 @@ Resources:
       Role: !GetAtt LambdaDynamoRole.Arn
       Code:
         S3Bucket: !Join ["-", ["solutions",  Ref: "AWS::Region"]]
-        S3Key: video-on-demand/v1/workflow.zip
+        S3Key: video-on-demand/v1/functions.zip
       Runtime:  nodejs4.3
       Timeout: 120
       Environment:
@@ -784,7 +807,7 @@ Resources:
       Role: !GetAtt LambdaMediainfoRole.Arn
       Code:
         S3Bucket: !Join ["-", ["solutions",  Ref: "AWS::Region"]]
-        S3Key: video-on-demand/v1/workflow.zip
+        S3Key: video-on-demand/v1/functions.zip
       Runtime:  nodejs4.3
       Timeout: 120
       Environment:
@@ -803,7 +826,7 @@ Resources:
       Role: !GetAtt LambdaSnsDynamoRole.Arn
       Code:
         S3Bucket: !Join ["-", ["solutions",  Ref: "AWS::Region"]]
-        S3Key: video-on-demand/v1/workflow.zip
+        S3Key: video-on-demand/v1/functions.zip
       Runtime:  nodejs4.3
       Timeout: 120
       Environment:
@@ -812,6 +835,10 @@ Resources:
             !Ref Dynamo
           StepsPublish:
             !Ref StepsPublish
+          UUID:
+            !GetAtt Uuid.UUID
+          anonymousData:
+            !Ref SendAnonymousData
 
 # Step Functions
   IngestStepFunctions:
@@ -836,7 +863,7 @@ Resources:
       Role: !GetAtt LambdaStepDeploymentRole.Arn
       Code:
         S3Bucket: !Join ["-", ["solutions",  Ref: "AWS::Region"]]
-        S3Key: video-on-demand/v1/deployment.zip
+        S3Key: video-on-demand/v1/resources.zip
       Runtime: nodejs4.3
       Timeout: 120
 
@@ -861,7 +888,7 @@ Resources:
       Role: !GetAtt LambdaStepDeploymentRole.Arn
       Code:
         S3Bucket: !Join ["-", ["solutions",  Ref: "AWS::Region"]]
-        S3Key: video-on-demand/v1/deployment.zip
+        S3Key: video-on-demand/v1/resources.zip
       Runtime: nodejs4.3
       Timeout: 120
 
@@ -874,7 +901,7 @@ Resources:
       Role: !GetAtt StepFunctionsExecuteRole.Arn
       Code:
         S3Bucket: !Join ["-", ["solutions",  Ref: "AWS::Region"]]
-        S3Key: video-on-demand/v1/workflow.zip
+        S3Key: video-on-demand/v1/functions.zip
       Runtime:  nodejs4.3
       Timeout: 120
       Environment:
@@ -892,7 +919,7 @@ Resources:
       Role: !GetAtt StepFunctionsExecuteRole.Arn
       Code:
         S3Bucket: !Join ["-", ["solutions",  Ref: "AWS::Region"]]
-        S3Key: video-on-demand/v1/workflow.zip
+        S3Key: video-on-demand/v1/functions.zip
       Runtime:  nodejs4.3
       Timeout: 120
       Environment:
@@ -934,7 +961,7 @@ Resources:
       Role: !GetAtt LambdaS3SnsDeploymentRole.Arn
       Code:
         S3Bucket: !Join ["-", ["solutions",  Ref: "AWS::Region"]]
-        S3Key: video-on-demand/v1/deployment.zip
+        S3Key: video-on-demand/v1/resources.zip
       Runtime:  nodejs4.3
       Timeout: 120
 
@@ -954,32 +981,8 @@ Resources:
       Role: !GetAtt LambdaS3SnsDeploymentRole.Arn
       Code:
         S3Bucket: !Join ["-", ["solutions",  Ref: "AWS::Region"]]
-        S3Key: video-on-demand/v1/deployment.zip
+        S3Key: video-on-demand/v1/resources.zip
       Runtime:  nodejs4.3
-      Timeout: 120
-
-  Metrics:
-    Type: Custom::Metrics
-    Condition: SendMetrics
-    Properties:
-      ServiceToken: !GetAtt LambdaMetrics.Arn
-      Publish: !Ref Publish
-      Dynamo: !Ref Dynamo
-      StepsPublish: !Ref StepsPublish
-
-  LambdaMetrics:
-    DependsOn: CloudFront
-    Type: AWS::Lambda::Function
-    Condition: SendMetrics
-    Properties:
-      FunctionName: !Sub "${AWS::StackName}-metrics"
-      Description: Adds metrics UUID to publish function
-      Handler: metrics-uuid.handler
-      Role: !GetAtt LambdaS3SnsDeploymentRole.Arn
-      Code:
-        S3Bucket: !Join ["-", ["solutions-test",  Ref: "AWS::Region"]]
-        S3Key: vod/latest/deployment.zip
-      Runtime:  nodejs6.10
       Timeout: 120
 
   PublishAlarm:
@@ -1020,6 +1023,41 @@ Resources:
       Threshold: 0.0
       EvaluationPeriods: '1'
 
+  LambdaMetricsHelper:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "${AWS::StackName}-metrics"
+      Description: Adds metrics UUID to publish function
+      Handler: index.handler
+      Role: !GetAtt LambdaMetricsRole.Arn
+      Code:
+        S3Bucket: !Join ["-", ["solutions",  Ref: "AWS::Region"]]
+        S3Key: video-on-demand/v1/metrics.zip
+      Runtime:  nodejs4.3
+      Timeout: 120
+
+  Uuid:
+    Type: "Custom::LoadLambda"
+    Properties:
+      ServiceToken:
+        Fn::GetAtt:
+          - "LambdaMetricsHelper"
+          - "Arn"
+      customAction: "createUuid"
+
+  AnonymousMetric:
+    Type: "Custom::LoadLambda"
+    Properties:
+      ServiceToken:
+        Fn::GetAtt:
+          - "LambdaMetricsHelper"
+          - "Arn"
+      solutionId: "SO0021"
+      UUID: !GetAtt Uuid.UUID
+      version: "1"
+      anonymousData: !Ref SendAnonymousData
+      customAction: "sendMetric"
+
 Outputs:
   Dynamo:
     Description: DynamoDB Table
@@ -1040,3 +1078,7 @@ Outputs:
   Cdn:
     Description: CloudFront Domain Name
     Value: !GetAtt CloudFront.DomainName
+
+  UUID:
+    Description: AnonymousMetric UUID
+    Value: !GetAtt Uuid.UUID
