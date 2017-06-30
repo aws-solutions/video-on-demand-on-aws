@@ -5,42 +5,44 @@ How to implement a video-on-demand workflow on AWS leveraging AWS Step Functions
 
 Source code for the AWS solution [Video on Demand on AWS](https://aws.amazon.com/answers/media-entertainment/video-on-demand-on-aws/).
 
-## CloudFormation template
+## source code node.js 6.10:
 
-- cfn/video-on-demand.template
+**source/custom-resources**:
+A series of CloudFormation custom resources used to deploy ElasticTranscoder, AWS Step Functions and make configuration changes to SNS, S3 and CloudFront.
 
-## source code node.js 4.3:
+**source/mediainfo**
+A Lambda function to run mediainfo on s3 signed url. https://mediaarea.net/en/MediaInfo. bin/mediainfo must be made executable before deploying to lambda.
 
-lambda/functions - Micro services that make up the AWS Step Functions.
-- **dynamo-entry**      - creates the initial DynamoDB entry for the source video.
-- **encode-hls**        - creates an HLS encode job on Elastic Transcoder based on the profiler.
-- **encode-mp4**        - creates an MP4 encode job on Elastic Transcoder based on the profiler.
-- **ingest-execute**    - triggers ingest step functions workflow on s3 put object event.
-- **metadata**          - creates a json metadata file for the mp4 output.
-- **preset-check**      - determines if the ETS complete job is HLS or MP4.
-- **profiler**          - determines which ETS profile to use based on the source video height.
-- **publish-execute**   - triggers publish step functions workflow on ETS completion.
-- **publish**           - publishes workflow results to SNS
+**source/workflow**
+The Lambda functions that make up the core of the workflow.
 
-lambda/mediainfo
-- **index**         - runs mediainfo executable on s3 signed url. https://mediaarea.net/en/MediaInfo
+**source/metrics**
+CloudFormation custom resources to send Anonymous usage metrics to AWS
 
-lambda/metrics
-- **index**         - Anonymous data
+## Building the Lambda Packages
+We recommend building this package on Amazon Linux because the target Lambda environment will run on Amazon Linux and the build process compiles MediaInfo
 
-lambda/resources - Custom Resources for CloudFormation to deploy Elastic Transcoder, AWS Step Functions and more.
-- **cloudfront-identity**   - creates a CF identity.
-- **ets-pipeline**          - creates ETS pipeline.
-- **ets-presets**           - creates ETS presents based on Apple tech note from 2016.
-- **ingest-stepfunctions**  - creates the ingest state machine.
-- **publish-stepfunctions** - creates the ingest state machine.
-- **s3-notification**       - creates s3 events for put objects on the source bucket to trigger ingest-execute.
-- **sns-subscription**      - subscribes publish-execute to the ETS Complete SNS topic.
+```bash
+# Install Development Tools necessary to compile MediaInfo
+sudo yum groupinstall 'Development Tools' -y
+# Install library required to add CURL support to Mediainfo
+sudo yum install libcurl-devel -y
+
+cd deployment
+./build-s3-dist.sh source-bucket-base-name
+```
+source-bucket-base-name should be the base name for the S3 bucket location where the template will source the Lambda code from.
+The template will append '-[region_name]' to this value.
+For example: ./build-s3-dist.sh solutions
+The template will then expect the source code to be located in the solutions-[region_name] bucket
+
+## CF template and Lambda functions
+Located in deployment/dist after running build-s3-dist.sh
 
 
 ***
 
-Copyright 2016 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+Copyright 2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 
 Licensed under the Amazon Software License (the "License"). You may not use this file except in compliance with the License. A copy of the License is located at
 

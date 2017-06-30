@@ -1,0 +1,22 @@
+{
+  "name": "resources",
+  "version": "1.0.0",
+  "description": "custom cfn resources",
+  "main": "stepfunctions.js",
+  "scripts": {
+    "test": "na"
+  },
+  "repository": {
+    "type": "git",
+    "url": "na"
+  },
+  "keywords": [
+    "na"
+  ],
+  "author": "tomnight",
+  "license": "Amazon Software License",
+  "dependencies": {
+    "async": "^2.4.0",
+    "cfn-response": "^1.0.1"
+  }
+}
