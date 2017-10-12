@@ -4,19 +4,13 @@
   "engines": {
     "node": "^6.10"
   },
-  "description": "cfn custom resources for vod workflow",
+  "description": "process workflow for video on demand",
   "main": "na",
   "scripts": {
     "test": "nyc mocha lib/*.spec.js"
   },
   "dependencies": {
-    "aws-sdk": "*",
-    "cfn-response": "*",
-    "https": "^1.0.0",
-    "moment": "^2.18.1",
-    "promise-throttle": "^0.3.1",
-    "url": "^0.11.0",
-    "uuid": "*"
+    "aws-sdk": "*"
   },
   "devDependencies": {
     "aws-sdk-mock": "*",

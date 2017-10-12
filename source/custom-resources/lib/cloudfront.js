@@ -15,34 +15,37 @@
  * @author Solution Builders
  **/
 'use strict';
+const fs = require('fs');
 const AWS = require('aws-sdk');
-const MediaInfo = require('./lib/mediaInfoCommand').MediaInfoCommand;
-const error = require('./lib/error.js');
 
-exports.handler = (event, context, callback) => {
-    console.log('Received event:', JSON.stringify(event, null, 2));
+let response;
 
-    const s3 = new AWS.S3();
+let createPromise = function() {
+  response = new Promise((res, reject) => {
+
+    const cloudfront = new AWS.CloudFront();
 
     let params = {
-            Bucket: event.srcBucket,
-            Key: event.srcVideo,
-            Expires: 300
+      CloudFrontOriginAccessIdentityConfig: {
+        CallerReference: Math.random().toString(),
+        Comment: 'VOD on AWS'
+      }
+    };
+
+    cloudfront.createCloudFrontOriginAccessIdentity(params, function(err, data) {
+      if (err) reject(err);
+      else {
+        let responseData = {
+          'Identity': data.Id,
+          'S3CanonicalUserId': data.CloudFrontOriginAccessIdentity.S3CanonicalUserId
         };
-
-    let url = s3.getSignedUrl('getObject', params);
-    let mediaInfo = new MediaInfo(url);
-
-    mediaInfo.once('$runCompleted', (output) => {
-        console.log(JSON.stringify(output, null, 2));
-        event.srcMediainfo = JSON.stringify(output);
-        callback(null, event);
+        res(responseData);
+      }
     });
+  });
+  return response;
+};
 
-    mediaInfo.on('error', (err) => {
-        error.sns(event.guid, err);
-        callback(err);
-    });
-
-    mediaInfo.run();
+module.exports = {
+  createIdentity: createPromise
 };

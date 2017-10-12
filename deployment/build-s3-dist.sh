@@ -13,57 +13,57 @@ if [ -z "$1" ]; then
     exit 1
 fi
 
-echo "mkdir -p dist"
 mkdir -p dist
 
-echo "cp video-on-demand.yaml dist/video-on-demand.template"
-cp video-on-demand.yaml dist/video-on-demand.template
+echo "copy cfn template to dist"
+cp video-on-demand-metadata.yaml dist/video-on-demand-metadata.template
+cp video-on-demand-video-only.yaml dist/video-on-demand-video-only.template
 
-echo "sed -i -e $replace video-on-demand.yaml"
-replace="s/%%BUCKET_NAME%%/$1/g"
-sed -i -e $replace dist/video-on-demand.template
+export BUCKET_PREFIX=solutions-test
+if [ $1 = "solutions-master" ]; then
+    export BUCKET_PREFIX=solutions
+fi
+bucket="s/CODEBUCKET/$BUCKET_PREFIX/g"
+sed -i -e $bucket dist/video-on-demand-metadata.template
+sed -i -e $bucket dist/video-on-demand-video-only.template
 
-echo "zip and copy ../source/custom-resources to dist/"
-cd ../source/custom-resources     # all lambda backed custom resources
-npm install --silent
+echo "zip and copy source files to dist/"
+find ../source -name "node_modules" -exec rm -rf "{}" \;
+cd ../source/custom-resources
+npm install --production
 zip -q -r9 ../../deployment/dist/custom-resources.zip *
 
-echo "zip and copy ../source/workflow  to dist/"
-cd ../workflow           # lambda functions for step Functions
-npm install --silent
-zip -q -r9 ../../deployment/dist/workflow.zip *
+cd ../dynamo
+npm install --production
+zip -q -r9 ../../deployment/dist/dynamo.zip *
 
-echo "zip and copy ../source/metrics  to dist/"
-cd ../metrics     # custom resource for stack create/update/delete metrics
-npm install --silent
-zip -q -r9 ../../deployment/dist/metrics.zip *
+cd ../error-handler
+npm install --production
+zip -q -r9 ../../deployment/dist/error-handler.zip *
 
-echo "compiling  mediainfo from source"
-cd ../mediainfo/
-ls
-mkdir bin
+cd ../ingest
+npm install --production
+zip -q -r9 ../../deployment/dist/ingest.zip *
+
+cd ../process
+npm install --production
+zip -q -r9 ../../deployment/dist/process.zip *
+
+cd ../publish
+npm install --production
+zip -q -r9 ../../deployment/dist/publish.zip *
+
+echo "compile mediainfo, zip and copy to dist/"
+cd ../mediainfo
+npm install --production
 cd bin
-echo "Download MediaInfo"
 wget http://mediaarea.net/download/binary/mediainfo/0.7.84/MediaInfo_CLI_0.7.84_GNU_FromSource.tar.xz
-echo "Untar MediaInfo"
 tar xf MediaInfo_CLI_0.7.84_GNU_FromSource.tar.xz
-
-echo "Compile MediaInfo with Support for URL Inputs"
 cd MediaInfo_CLI_GNU_FromSource/
 ./CLI_Compile.sh --with-libcurl
-echo "move binary to mediainfo/bin"
 mv ./MediaInfo/Project/GNU/CLI/mediainfo ../
 cd ../..
-echo "make sure mediainfo executable"
 chmod 755 ./bin/mediainfo
-echo "run mediainfo --version"
 ./bin/mediainfo --version
-echo "rm mediainfo source files"
 rm -rf ./bin/MediaInfo_CLI*
-
-echo "zip and copy ../source/metrics  to dist/"
-npm install
 zip -q -r9 ../../deployment/dist/mediainfo.zip *
-ls -la ../../deployment/dist/
-
-echo "Build complete"

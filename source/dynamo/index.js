@@ -13,36 +13,48 @@
 
 /**
  * @author Solution Builders
- **/
-'use strict';
-const AWS = require('aws-sdk');
-const MediaInfo = require('./lib/mediaInfoCommand').MediaInfoCommand;
-const error = require('./lib/error.js');
+ */
+ 'use strict';
+ const AWS = require('aws-sdk');
+ const error = require('./lib/error.js');
 
-exports.handler = (event, context, callback) => {
-    console.log('Received event:', JSON.stringify(event, null, 2));
+ exports.handler = (event, context, callback) => {
+     console.log('Received event:', JSON.stringify(event, null, 2));
 
-    const s3 = new AWS.S3();
+     const docClient = new AWS.DynamoDB.DocumentClient({
+         region: process.env.AWS_REGION
+     });
 
-    let params = {
-            Bucket: event.srcBucket,
-            Key: event.srcVideo,
-            Expires: 300
-        };
+     let guid = event.guid;
+     delete event.guid;
+     let expression = '';
+     let values = {};
+     let i = 0;
 
-    let url = s3.getSignedUrl('getObject', params);
-    let mediaInfo = new MediaInfo(url);
+     Object.keys(event).forEach(function(key) {
+         i++;
+         expression += ' ' + key + ' = :' + i + ',';
+         values[':' + i] = event[key];
+     });
 
-    mediaInfo.once('$runCompleted', (output) => {
-        console.log(JSON.stringify(output, null, 2));
-        event.srcMediainfo = JSON.stringify(output);
-        callback(null, event);
-    });
+     let params = {
+         TableName: process.env.DynamoDB,
+         Key: {
+             guid: guid,
+         },
+         // remove the trailing ',' from the update expression added by the forEach loop
+         UpdateExpression: 'set ' + expression.slice(0, -1),
+         ExpressionAttributeValues: values
+     };
+     console.log('Dynamo update: ', JSON.stringify(params, null, 2));
 
-    mediaInfo.on('error', (err) => {
-        error.sns(event.guid, err);
-        callback(err);
-    });
-
-    mediaInfo.run();
-};
+     docClient.update(params).promise()
+       .then(() => {
+           event.guid = guid;
+           callback(null, event);
+       })
+       .catch(err => {
+           error.sns(event, err);
+           callback(err);
+       });
+ };

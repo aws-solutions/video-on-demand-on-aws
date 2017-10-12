@@ -10,39 +10,63 @@
  *  OR CONDITIONS OF ANY KIND, express or implied. See the License for the specific language governing permissions    *
  *  and limitations under the License.                                                                                *
  *********************************************************************************************************************/
-
 /**
  * @author Solution Builders
- **/
+ */
 'use strict';
 const AWS = require('aws-sdk');
-const MediaInfo = require('./lib/mediaInfoCommand').MediaInfoCommand;
 const error = require('./lib/error.js');
+const uuid = require('uuid');
+const moment = require('moment');
 
 exports.handler = (event, context, callback) => {
-    console.log('Received event:', JSON.stringify(event, null, 2));
+  console.log('Received event:', JSON.stringify(event, null, 2));
 
-    const s3 = new AWS.S3();
+  const stepfunctions = new AWS.StepFunctions({
+    region: process.env.AWS_REGION
+  });
 
-    let params = {
-            Bucket: event.srcBucket,
-            Key: event.srcVideo,
-            Expires: 300
-        };
+  let key = decodeURIComponent(event.Records[0].s3.object.key.replace(/\+/g, " "));
+  let guid = uuid.v4();
+  let time = moment().utc().format('YYYY-MM-DD HH:mm.S');
 
-    let url = s3.getSignedUrl('getObject', params);
-    let mediaInfo = new MediaInfo(url);
+  let input = {
+    guid: guid,
+    srcBucket: event.Records[0].s3.bucket.name,
+    abrBucket: process.env.AbrDest,
+    mp4Bucket: process.env.Mp4Dest,
+    workflowStatus: "ingest",
+    startTime: time
+  };
 
-    mediaInfo.once('$runCompleted', (output) => {
-        console.log(JSON.stringify(output, null, 2));
-        event.srcMediainfo = JSON.stringify(output);
-        callback(null, event);
+  // get file extension for the source file.
+  let keyType = key.slice((key.lastIndexOf(".") - 1 >>> 0) + 2)
+
+  if (keyType === 'json' || keyType === 'xml') {
+    input.srcMetadataFile = key;
+  } else {
+    // video only workflow, encode options are set @ launch as cfn parameters.
+    input.srcVideo = key;
+    input.mp4 = JSON.parse("[" + process.env.Mp4 + "]");
+    input.hls = JSON.parse("[" + process.env.Hls + "]");
+    input.dash = JSON.parse("[" + process.env.Dash + "]");
+    input.thumbnails = process.env.Thumbnails;
+    input.watermark = process.env.Watermark;
+    input.upscaling = process.env.Upscaling;
+  }
+
+  let params = {
+    stateMachineArn: process.env.IngestWorkflow,
+    input: JSON.stringify(input),
+    name: guid
+  };
+
+  console.log('workflow execute: ', JSON.stringify(input, null, 2));
+
+  stepfunctions.startExecution(params).promise()
+    .then(() => callback(null, 'success'))
+    .catch(err => {
+      error.sns(event, err);
+      callback(err);
     });
-
-    mediaInfo.on('error', (err) => {
-        error.sns(event.guid, err);
-        callback(err);
-    });
-
-    mediaInfo.run();
 };

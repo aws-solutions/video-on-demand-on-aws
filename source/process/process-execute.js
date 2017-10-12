@@ -13,36 +13,31 @@
 
 /**
  * @author Solution Builders
- **/
+ */
 'use strict';
 const AWS = require('aws-sdk');
-const MediaInfo = require('./lib/mediaInfoCommand').MediaInfoCommand;
 const error = require('./lib/error.js');
 
 exports.handler = (event, context, callback) => {
     console.log('Received event:', JSON.stringify(event, null, 2));
 
-    const s3 = new AWS.S3();
+    const stepfunctions = new AWS.StepFunctions({
+        region: process.env.AWS_REGION
+    });
 
     let params = {
-            Bucket: event.srcBucket,
-            Key: event.srcVideo,
-            Expires: 300
-        };
+        stateMachineArn: process.env.ProcessWorkflow,
+        input: JSON.stringify({"guid":event.guid}),
+        name: event.guid
+    };
 
-    let url = s3.getSignedUrl('getObject', params);
-    let mediaInfo = new MediaInfo(url);
+    console.log('workflow execute: ',JSON.stringify(params, null, 2));
 
-    mediaInfo.once('$runCompleted', (output) => {
-        console.log(JSON.stringify(output, null, 2));
-        event.srcMediainfo = JSON.stringify(output);
-        callback(null, event);
-    });
-
-    mediaInfo.on('error', (err) => {
-        error.sns(event.guid, err);
+    stepfunctions.startExecution(params).promise()
+      .then(() => callback(null, 'success'))
+      .catch(err => {
+        error.sns(event, err);
         callback(err);
-    });
+      });
 
-    mediaInfo.run();
 };

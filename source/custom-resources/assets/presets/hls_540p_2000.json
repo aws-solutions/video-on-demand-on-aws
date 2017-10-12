@@ -1,0 +1,56 @@
+{
+   "Container": "ts",
+   "Name": "HLS 540 - 2000",
+   "Description": "Preset based on Apple recommendations",
+   "Video": {
+      "SizingPolicy": "ShrinkToFit",
+      "MaxWidth": "960",
+      "PaddingPolicy": "NoPad",
+      "MaxFrameRate": "30",
+      "FrameRate": "auto",
+      "MaxHeight": "540",
+      "KeyframesMaxDist": "60",
+      "FixedGOP": "true",
+      "Codec": "H.264",
+      "Watermarks": [
+        {
+          "Id" : "VOD",
+          "HorizontalAlign": "Right",
+          "HorizontalOffset": "10%",
+          "MaxHeight": "10%",
+          "MaxWidth": "10%",
+          "Opacity": "100",
+          "SizingPolicy": "ShrinkToFit",
+          "Target": "Content",
+          "VerticalAlign": "Bottom",
+          "VerticalOffset": "10%"
+        }
+      ],
+      "CodecOptions": {
+         "Profile": "high",
+         "MaxReferenceFrames": "3",
+         "ColorSpaceConversionMode": "None",
+         "InterlacedMode": "Progressive",
+         "Level": "4.1"
+      },
+      "BitRate": "2000",
+      "DisplayAspectRatio": "auto"
+   },
+   "Audio": {
+      "Channels": "2",
+      "CodecOptions": {
+         "Profile": "AAC-LC"
+      },
+      "SampleRate": "48000",
+      "Codec": "AAC",
+      "BitRate": "96"
+   },
+   "Thumbnails": {
+      "SizingPolicy": "ShrinkToFit",
+      "MaxWidth": "960",
+      "Format": "png",
+      "PaddingPolicy": "NoPad",
+      "Interval": "60",
+      "MaxHeight": "540"
+   }
+}

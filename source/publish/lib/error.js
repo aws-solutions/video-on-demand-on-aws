@@ -10,39 +10,35 @@
  *  OR CONDITIONS OF ANY KIND, express or implied. See the License for the specific language governing permissions    *
  *  and limitations under the License.                                                                                *
  *********************************************************************************************************************/
+ /**
+  * @author Solution Builders
+  */
+ 'use strict';
+ const AWS = require('aws-sdk');
 
-/**
- * @author Solution Builders
- **/
-'use strict';
-const AWS = require('aws-sdk');
-const MediaInfo = require('./lib/mediaInfoCommand').MediaInfoCommand;
-const error = require('./lib/error.js');
+ let errSns = function(event,_err) {
+   console.log('Running Error Handler');
 
-exports.handler = (event, context, callback) => {
-    console.log('Received event:', JSON.stringify(event, null, 2));
+   const sns = new AWS.SNS({region: process.env.AWS_REGION});
 
-    const s3 = new AWS.S3();
+   let msg = {
+     "guid": event.guid,
+     "event":event,
+     "function":process.env.AWS_LAMBDA_FUNCTION_NAME,
+     "error": _err.toString()
+   };
 
-    let params = {
-            Bucket: event.srcBucket,
-            Key: event.srcVideo,
-            Expires: 300
-        };
+   let params = {
+         Subject: 'Workflow error: ' + event.guid,
+         Message: JSON.stringify(msg, null, 2),
+         TargetArn: process.env.ErrorsSns
+     };
 
-    let url = s3.getSignedUrl('getObject', params);
-    let mediaInfo = new MediaInfo(url);
+   sns.publish(params).promise()
+     .catch(err => console.log(err)
+     );
+ };
 
-    mediaInfo.once('$runCompleted', (output) => {
-        console.log(JSON.stringify(output, null, 2));
-        event.srcMediainfo = JSON.stringify(output);
-        callback(null, event);
-    });
-
-    mediaInfo.on('error', (err) => {
-        error.sns(event.guid, err);
-        callback(err);
-    });
-
-    mediaInfo.run();
-};
+ module.exports = {
+     sns: errSns
+ };

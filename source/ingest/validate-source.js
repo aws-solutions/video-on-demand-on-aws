@@ -13,36 +13,44 @@
 
 /**
  * @author Solution Builders
- **/
+ */
 'use strict';
 const AWS = require('aws-sdk');
-const MediaInfo = require('./lib/mediaInfoCommand').MediaInfoCommand;
 const error = require('./lib/error.js');
 
 exports.handler = (event, context, callback) => {
-    console.log('Received event:', JSON.stringify(event, null, 2));
+  console.log('Received event:', JSON.stringify(event, null, 2));
 
-    const s3 = new AWS.S3();
+  const s3 = new AWS.S3();
 
-    let params = {
-            Bucket: event.srcBucket,
-            Key: event.srcVideo,
-            Expires: 300
-        };
-
-    let url = s3.getSignedUrl('getObject', params);
-    let mediaInfo = new MediaInfo(url);
-
-    mediaInfo.once('$runCompleted', (output) => {
-        console.log(JSON.stringify(output, null, 2));
-        event.srcMediainfo = JSON.stringify(output);
-        callback(null, event);
+  function validate(key) {
+    let response = new Promise((res, reject) => {
+      let params = {
+        Bucket: event.srcBucket,
+        Key: key
+      };
+      s3.headObject(params, function(err, data) {
+        if (err) reject('error: ',key,' not found');
+        else {
+          res(data);
+        }
+      });
     });
+    return response;
+  }
 
-    mediaInfo.on('error', (err) => {
-        error.sns(event.guid, err);
-        callback(err);
+  let promises = [];
+
+  promises.push(validate(event.srcVideo));
+
+  if (event.watermark) {
+    promises.push(validate('watermarks/' + event.watermark));
+  }
+
+  Promise.all(promises)
+    .then(() => callback(null, event))
+    .catch(err => {
+      error.sns(event, err);
+      callback(err);
     });
-
-    mediaInfo.run();
 };

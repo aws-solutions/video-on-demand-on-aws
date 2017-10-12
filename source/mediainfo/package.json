@@ -1,19 +1,33 @@
 {
-  "name": "mediainfo",
+  "name": "vod-deployment",
   "version": "1.0.0",
-  "description": "runs media info on an s3 signed url",
+  "engines": {
+    "node": "^6.10"
+  },
+  "description": "mediainfo for video on demand",
   "main": "na",
   "scripts": {
     "test": "na"
   },
   "dependencies": {
-    "xml2js": "^0.4.17"
+    "xml2js": "^0.4.17",
+    "aws-sdk":"*"
+  },
+  "devDependencies": {
+    "chai": "*",
+    "sinon": "*",
+    "sinon-chai": "*",
+    "mocha": "*",
+    "aws-sdk-mock": "*"
   },
   "repository": {
     "type": "git",
     "url": "na"
   },
+  "scripts":{
+    "test":"mocha lib/*.spec.js"
+  },
   "author": "",
   "license": "Amazon Software License",
-  "devDependencies": {}
+  "readme": "../../ReadMe.md"
 }
