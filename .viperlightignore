@@ -1,5 +1,0 @@
-^dist/
-deployment/video-on-demand-media-convert.yaml:161
-deployment/video-on-demand-elastic-transcoder.yaml:169
-deployment/video-on-demand-elastic-transcoder.yaml:177
-deployment/video-on-demand-elastic-transcoder.yaml:800
