@@ -9,8 +9,7 @@
  *  or in the "license" file accompanying this file. This file is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES *
  *  OR CONDITIONS OF ANY KIND, express or implied. See the License for the specific language governing permissions    *
  *  and limitations under the License.                                                                                *
- ***** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** /
-
+ ***** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** /
 /**
  * @author Solution Builders
  */
@@ -23,7 +22,7 @@ const xml2js = require('xml2js');
 exports.handler = (event, context, callback) => {
   console.log('Received event:', JSON.stringify(event, null, 2));
 
-  const validePresets = [1080, 720, 540, 432, 360, 270, 234];
+  const validePresets = [2160, 1080, 720, 540, 360, 270];
   const s3 = new AWS.S3();
   const parser = new xml2js.Parser({
     explicitArray: false
@@ -92,7 +91,7 @@ exports.handler = (event, context, callback) => {
       callback(null, event);
     })
     .catch(err => {
-      error.sns(event, err);
+      error.handler(event, err);
       callback(err);
     });
 };

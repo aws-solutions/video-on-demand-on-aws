@@ -1,0 +1,30 @@
+{
+  "name": "vod-deployment",
+  "version": "1.0.0",
+  "engines": {
+    "node": "^6.10"
+  },
+  "description": "sns function for video on demand",
+  "main": "na",
+  "scripts": {
+    "test": "nyc mocha lib/*.spec.js"
+  },
+  "dependencies": {
+    "aws-sdk": "*"
+  },
+  "devDependencies": {
+    "aws-sdk-mock": "*",
+    "chai": "*",
+    "mocha": "*",
+    "nyc": "^11.2.1",
+    "sinon": "*",
+    "sinon-chai": "*"
+  },
+  "repository": {
+    "type": "git",
+    "url": "na"
+  },
+  "author": "",
+  "license": "Amazon Software License",
+  "readme": "../../ReadMe.md"
+}

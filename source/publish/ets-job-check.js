@@ -11,7 +11,7 @@ exports.handler = (event, context, callback) => {
     });
 
     let params = {
-        TableName: process.env.DynamoDB,
+        TableName: process.env.DynamoDBTable,
         Key: {
           guid: event.guid
         }
@@ -42,7 +42,7 @@ exports.handler = (event, context, callback) => {
       callback(null,event);
     })
     .catch(err => {
-        error.sns(event, err);
+        error.handler(event, err);
         callback(err);
     });
 };

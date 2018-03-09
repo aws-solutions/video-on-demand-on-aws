@@ -22,11 +22,14 @@ describe('lambda', function() {
 
     describe('#ets-job-check ', function() {
 
-        beforeEach(function() {});
+        beforeEach(function() {
+          process.env.ErrorHandler = "errHandler";
+        });
 
         afterEach(function() {
             AWS.restore('DynamoDB.DocumentClient');
-            AWS.restore('SNS');
+            AWS.restore('Lambda');
+            delete process.env.ErrorHandler;
         });
 
         it('should return "sucess" when db get success', function(done) {
@@ -45,7 +48,7 @@ describe('lambda', function() {
 
             AWS.mock('DynamoDB.DocumentClient', 'get', Promise.reject('db error'));
 
-            AWS.mock('SNS', 'publish', Promise.resolve('sucess'));
+            AWS.mock('Lambda', 'invoke', Promise.resolve('sucess'));
 
             lambda.handler(_event, null, function(err, data) {
                 if (err) {
@@ -60,7 +63,7 @@ describe('lambda', function() {
 
             AWS.mock('DynamoDB.DocumentClient', 'get', Promise.reject('db error'));
 
-            AWS.mock('SNS', 'publish', Promise.reject('sns error'));
+            AWS.mock('Lambda', 'invoke', Promise.reject('sns error'));
 
             lambda.handler(_event, null, function(err, data) {
                 if (err) {

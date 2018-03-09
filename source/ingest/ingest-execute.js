@@ -33,8 +33,8 @@ exports.handler = (event, context, callback) => {
   let input = {
     guid: guid,
     srcBucket: event.Records[0].s3.bucket.name,
-    abrBucket: process.env.AbrDest,
-    mp4Bucket: process.env.Mp4Dest,
+    abrBucket: process.env.AbrDestination,
+    mp4Bucket: process.env.Mp4Destination,
     workflowStatus: "ingest",
     startTime: time
   };
@@ -50,9 +50,13 @@ exports.handler = (event, context, callback) => {
     input.mp4 = JSON.parse("[" + process.env.Mp4 + "]");
     input.hls = JSON.parse("[" + process.env.Hls + "]");
     input.dash = JSON.parse("[" + process.env.Dash + "]");
-    input.thumbnails = process.env.Thumbnails;
-    input.watermark = process.env.Watermark;
-    input.upscaling = process.env.Upscaling;
+    //convert env.FrameCapture from string to boolean
+    if (process.env.FrameCapture === 'true') {
+      input.frameCapture = true;
+    } else {
+      input.frameCapture = false;
+    }
+    input.imageOverlay = process.env.ImageOverlay;
   }
 
   let params = {
@@ -66,7 +70,7 @@ exports.handler = (event, context, callback) => {
   stepfunctions.startExecution(params).promise()
     .then(() => callback(null, 'success'))
     .catch(err => {
-      error.sns(event, err);
+      error.handler(event, err);
       callback(err);
     });
 };

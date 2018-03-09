@@ -27,7 +27,7 @@ let noticePromise = function(event) {
   });
   response = new Promise((res, reject) => {
 
-    if (event.ResourceProperties.Trigger === 'Metadata') {
+    if (event.ResourceProperties.WorkflowTrigger === 'SourceMetadata') {
       params = {
         Bucket: event.ResourceProperties.Source,
         NotificationConfiguration: {
@@ -131,7 +131,7 @@ let putPromise = function(event) {
 
   params = {
     Bucket: event.ResourceProperties.Source,
-    Key: 'watermarks/aws-logo.png',
+    Key: 'image-overlay/aws-logo.png',
     Body: fs.createReadStream('./assets/aws-logo.png')
   };
 

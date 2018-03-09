@@ -19,11 +19,13 @@ describe('lambda', function() {
     describe('#handler', function() {
 
         beforeEach(function() {
+          process.env.ErrorHandler = "errHandler";
         });
 
         afterEach(function() {
             AWS.restore('DynamoDB.DocumentClient');
-            AWS.restore('SNS');
+            AWS.restore('Lambda');
+            delete process.env.ErrorHandler;
         });
 
         it('should return "success" when db put success', function(done) {
@@ -42,7 +44,7 @@ describe('lambda', function() {
 
             AWS.mock('DynamoDB.DocumentClient', 'update', Promise.reject('db error'));
 
-            AWS.mock('SNS', 'publish', Promise.resolve('sucess'));
+            AWS.mock('Lambda', 'invoke', Promise.resolve('sucess'));
 
             lambda.handler(_event, null, function(err, data) {
                 if (err) {
@@ -53,11 +55,11 @@ describe('lambda', function() {
                 }
             });
         });
-        it('should return "db error" when db put error & sns error', function(done) {
+        it('should return "db error" when db put error & lambda error', function(done) {
 
             AWS.mock('DynamoDB.DocumentClient', 'update', Promise.reject('db error'));
 
-            AWS.mock('SNS', 'publish', Promise.reject('sns error'));
+            AWS.mock('Lambda', 'invoke', Promise.reject('lambda error'));
 
             lambda.handler(_event, null, function(err, data) {
                 if (err) {

@@ -36,7 +36,7 @@ exports.handler = (event, context, callback) => {
     stepfunctions.startExecution(params).promise()
       .then(() => callback(null, 'success'))
       .catch(err => {
-        error.sns(event, err);
+        error.handler(event, err);
         callback(err);
       });
 

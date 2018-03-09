@@ -43,14 +43,14 @@ exports.handler = (event, context, callback) => {
 
   promises.push(validate(event.srcVideo));
 
-  if (event.watermark) {
-    promises.push(validate('watermarks/' + event.watermark));
+  if (event.ImageOverlay) {
+    promises.push(validate('image-overlay/' + event.ImageOverlay));
   }
 
   Promise.all(promises)
     .then(() => callback(null, event))
     .catch(err => {
-      error.sns(event, err);
+      error.handler(event, err);
       callback(err);
     });
 };

@@ -7,11 +7,11 @@
   "description": "mediainfo for video on demand",
   "main": "na",
   "scripts": {
-    "test": "na"
+    "test": "mocha lib/*.spec.js"
   },
   "dependencies": {
     "xml2js": "^0.4.17",
-    "aws-sdk":"*"
+    "aws-sdk": "*"
   },
   "devDependencies": {
     "chai": "*",
@@ -23,9 +23,6 @@
   "repository": {
     "type": "git",
     "url": "na"
-  },
-  "scripts":{
-    "test":"mocha lib/*.spec.js"
   },
   "author": "",
   "license": "Amazon Software License",

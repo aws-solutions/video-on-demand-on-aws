@@ -29,12 +29,14 @@ describe('lambda', function() {
 
     beforeEach(function() {
       process.env.IngestWorkflow = 'arn:aws:states:us-east-1:::example';
+      process.env.ErrorHandler = "errHandler";
     });
 
     afterEach(function() {
       AWS.restore('StepFunctions');
       AWS.restore('SNS');
       delete process.env.IngestWorkflow;
+      delete process.env.ErrorHandler;
     });
 
     it('should return "Success" when step execute successful', function(done) {
@@ -53,7 +55,7 @@ describe('lambda', function() {
 
       AWS.mock('StepFunctions', 'startExecution', Promise.reject('step error'));
 
-      AWS.mock('SNS', 'publish', Promise.resolve('sucess'));
+      AWS.mock('Lambda', 'invoke', Promise.resolve('sucess'));
 
       lambda.handler(_event, null, function(err, data) {
         if (err) {
@@ -68,7 +70,7 @@ describe('lambda', function() {
 
       AWS.mock('StepFunctions', 'startExecution', Promise.reject('step error'));
 
-      AWS.mock('SNS', 'publish', Promise.reject('sns error'));
+      AWS.mock('Lambda', 'invoke', Promise.reject('lambda error'));
 
       lambda.handler(_event, null, function(err, data) {
         if (err) {

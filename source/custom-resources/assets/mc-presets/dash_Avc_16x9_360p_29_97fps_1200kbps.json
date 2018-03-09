@@ -1,0 +1,70 @@
+{
+  "Name": "-dash_360p",
+  "Description": "Wifi, 640x360, 16:9, 29.97fps, 1200kbps",
+  "Category": "DASH",
+  "Settings": {
+    "VideoDescription": {
+      "Sharpness": 50,
+      "AfdSignaling": "NONE",
+      "ScalingBehavior": "DEFAULT",
+      "AntiAlias": "ENABLED",
+      "Width": 640,
+      "TimecodeInsertion": "DISABLED",
+      "RespondToAfd": "NONE",
+      "CodecSettings": {
+        "Codec": "H_264",
+        "H264Settings": {
+          "NumberBFramesBetweenReferenceFrames": 2,
+          "Syntax": "DEFAULT",
+          "GopSize": 90.0,
+          "FramerateConversionAlgorithm": "DUPLICATE_DROP",
+          "QualityTuningLevel": "MULTI_PASS_HQ",
+          "Slices": 1,
+          "RepeatPps": "DISABLED",
+          "ParNumerator": 1,
+          "FramerateNumerator": 30000,
+          "RateControlMode": "CBR",
+          "SlowPal": "DISABLED",
+          "UnregisteredSeiTimecode": "DISABLED",
+          "ParDenominator": 1,
+          "ParControl": "SPECIFIED",
+          "CodecProfile": "MAIN",
+          "GopClosedCadence": 1,
+          "GopBReference": "DISABLED",
+          "EntropyEncoding": "CABAC",
+          "NumberReferenceFrames": 3,
+          "GopSizeUnits": "FRAMES",
+          "FramerateDenominator": 1001,
+          "FramerateControl": "SPECIFIED",
+          "Telecine": "NONE",
+          "HrdBufferSize": 1800000,
+          "AdaptiveQuantization": "HIGH",
+          "InterlaceMode": "PROGRESSIVE",
+          "SceneChangeDetect": "ENABLED",
+          "FlickerAdaptiveQuantization": "DISABLED",
+          "CodecLevel": "LEVEL_3_1",
+          "FieldEncoding": "PAFF",
+          "HrdBufferInitialFillPercentage": 90,
+          "SpatialAdaptiveQuantization": "ENABLED",
+          "TemporalAdaptiveQuantization": "ENABLED",
+          "Bitrate": 1200000,
+          "Softness": 0,
+          "MinIInterval": 0
+        }
+      },
+      "ColorMetadata": "INSERT",
+      "VideoPreprocessors": {
+        "Deinterlacer": {
+          "Mode": "DEINTERLACE",
+          "Algorithm": "INTERPOLATE",
+          "Control": "NORMAL"
+        }
+      },
+      "DropFrameTimecode": "ENABLED",
+      "Height": 360
+    },
+    "ContainerSettings": {
+      "Container": "MPD"
+    }
+  }
+}

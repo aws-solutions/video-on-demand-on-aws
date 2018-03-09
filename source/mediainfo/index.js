@@ -35,12 +35,18 @@ exports.handler = (event, context, callback) => {
 
     mediaInfo.once('$runCompleted', (output) => {
         console.log(JSON.stringify(output, null, 2));
-        event.srcMediainfo = JSON.stringify(output);
+        let srcMediainfo = {
+          container:output.$container,
+          video: output.$videoES,
+          audio:output.$audioES,
+          text:output.$textES
+        };
+        event.srcMediainfo = JSON.stringify(srcMediainfo, null, 2)
         callback(null, event);
     });
 
     mediaInfo.on('error', (err) => {
-        error.sns(event.guid, err);
+        error.handler(event.guid, err);
         callback(err);
     });
 

@@ -26,7 +26,6 @@ const throttle = new PromiseThrottle({
 let params;
 let response;
 let responseData;
-let asyncFunctions = {};
 
 let createPipelinePromise = function(event) {
   const elastictranscoder = new AWS.ElasticTranscoder({
@@ -91,88 +90,52 @@ let createPresetPromise = function(params) {
   response = new Promise((res, reject) => {
     let presets = [{
         id: 'Hls_1080p',
-        data: './assets/presets/hls_1080p_7800.json'
+        data: './assets/ets-presets/hls_1080p_7800.json'
       },
       {
         id: 'Hls_720p',
-        data: './assets/presets/hls_720p_6000.json'
+        data: './assets/ets-presets/hls_720p_6000.json'
       },
       {
         id: 'Hls_540p',
-        data: './assets/presets/hls_540p_2000.json'
-      },
-      {
-        id: 'Hls_432p',
-        data: './assets/presets/hls_432p_1100.json'
+        data: './assets/ets-presets/hls_540p_2000.json'
       },
       {
         id: 'Hls_360p',
-        data: './assets/presets/hls_360p_730.json'
+        data: './assets/ets-presets/hls_360p_730.json'
       },
       {
         id: 'Hls_270p',
-        data: './assets/presets/hls_270p_365.json'
-      },
-      {
-        id: 'Hls_234p',
-        data: './assets/presets/hls_234p_145.json'
+        data: './assets/ets-presets/hls_270p_365.json'
       },
       {
         id: 'Mp4_1080p',
-        data: './assets/presets/mp4_1080p_7800.json'
+        data: './assets/ets-presets/mp4_1080p_7800.json'
       },
       {
         id: 'Mp4_720p',
-        data: './assets/presets/mp4_720p_6000.json'
-      },
-      {
-        id: 'Mp4_540p',
-        data: './assets/presets/mp4_540p_2000.json'
-      },
-      {
-        id: 'Mp4_432p',
-        data: './assets/presets/mp4_432p_1100.json'
-      },
-      {
-        id: 'Mp4_360p',
-        data: './assets/presets/mp4_360p_730.json'
-      },
-      {
-        id: 'Mp4_270p',
-        data: './assets/presets/mp4_270p_365.json'
-      },
-      {
-        id: 'Mp4_234p',
-        data: './assets/presets/mp4_234p_145.json'
+        data: './assets/ets-presets/mp4_720p_6000.json'
       },
       {
         id: 'Dash_1080p',
-        data: './assets/presets/dash_1080p_7800.json'
+        data: './assets/ets-presets/dash_1080p_7800.json'
       },
       {
         id: 'Dash_720p',
-        data: './assets/presets/dash_720p_6000.json'
+        data: './assets/ets-presets/dash_720p_6000.json'
       },
       {
         id: 'Dash_540p',
-        data: './assets/presets/dash_540p_2000.json'
-      },
-      {
-        id: 'Dash_432p',
-        data: './assets/presets/dash_432p_1100.json'
+        data: './assets/ets-presets/dash_540p_2000.json'
       },
       {
         id: 'Dash_360p',
-        data: './assets/presets/dash_360p_730.json'
+        data: './assets/ets-presets/dash_360p_730.json'
       },
       {
         id: 'Dash_270p',
-        data: './assets/presets/dash_270p_365.json'
-      },
-      {
-        id: 'Dash_234p',
-        data: './assets/presets/dash_234p_145.json'
-      },
+        data: './assets/ets-presets/dash_270p_365.json'
+      }
     ];
 
     let creates = [];
@@ -186,6 +149,7 @@ let createPresetPromise = function(params) {
           else {
             let id = i.id;
             Ids[id] = data.Preset.Id;
+            console.log('created preset: ',data.Preset.Id);
             res(data.Preset.Id);
           }
         });
@@ -257,7 +221,7 @@ let deletePresetPromise = function(params) {
       .catch(err => {
         console.log(err);
         reject(err);
-      })
+      });
   });
   return response;
 };

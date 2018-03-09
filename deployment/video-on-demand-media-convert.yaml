@@ -1,0 +1,1072 @@
+Description: '(SO0021) - Video On Demand workflow with AWS Step Functions, MediaConvert, S3, CloudFront and DynamoDB'
+
+Parameters:
+
+  AdminEmail:
+    Description: Email address for SNS notifications.
+    Type: String
+    AllowedPattern: "^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$"
+
+  WorkflowTrigger:
+    Description: Select how the workflow will be triggered; source video upload to S3 or source metadata file upload.
+    Type: String
+    AllowedValues:
+        - SourceVideo
+        - SourceMetadata
+
+  UseGlacier:
+    Description: If enabled source assets will be tagged for archiving to Glacier one the workflow is complete.
+    Type: String
+    Default: Yes
+    AllowedValues:
+        - Yes
+        - No
+
+  MP4:
+    Description: Specify the Mp4 presets to be used, leave blank to disable
+    Type: String
+    Default: "2160,1080,720"
+
+  HLS:
+    Description: Specify the Hls presets to be used, leave blank to disable
+    Type: String
+    Default: "1080,720,540,360,270"
+
+  DASH:
+    Description: Specify the Dash presets to be used, leave blank to disable
+    Type: String
+    Default: "1080,720,540,360,270"
+
+  FrameCapture:
+    Description: Create FrameCapture for all MediaConvert outputs
+    Type: String
+    Default: No
+    AllowedValues:
+      - Yes
+      - No
+
+Metadata:
+    AWS::CloudFormation::Interface:
+        ParameterGroups:
+            -
+              Label:
+                  default: Workflow Configuration
+              Parameters:
+                  - AdminEmail
+                  - WorkflowTrigger
+                  - UseGlacier
+            -
+              Label:
+                  default: Video Only Configuration (These parameters are only applied if the workflow trigger is set to SourceVideo)
+              Parameters:
+                  - MP4
+                  - HLS
+                  - DASH
+                  - FrameCapture
+                  - Upscaling
+        ParameterLabels:
+          AdminEmail:
+            default: Administrator email address
+          UseGlacier:
+            default: Archive source content
+          WorkflowTrigger:
+            default: Workflow trigger
+          MP4:
+            default: List of MP4 presets
+          HLS:
+            default: List of HLS presets
+          DASH:
+            default: List of DASH presets
+          FrameCapture:
+            default: Enable Frame Capture
+
+Mappings:
+  SourceCode:
+    General:
+      S3Bucket: CODEBUCKET
+      KeyPrefix: video-on-demand/CODEVERSION
+
+  AnonymousData:
+    SendAnonymousData:
+      Data: Yes
+
+Conditions:
+  SourceMetadata: !Equals [ !Ref WorkflowTrigger, SourceMetadata ]
+  SourceVideo: !Equals [ !Ref WorkflowTrigger, SourceVideo ]
+  Glacier: !Equals [ !Ref UseGlacier, Yes ]
+  NoGlacier: !Equals [ !Ref UseGlacier, No ]
+  Metrics: !Equals [ !FindInMap [AnonymousData,SendAnonymousData,Data], Yes ]
+
+Resources:
+
+  CustomResourceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: "/"
+      Policies:
+        -
+          PolicyName: !Sub "${AWS::StackName}-custom-resource"
+          PolicyDocument:
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - iam:PassRole
+                Resource:
+                  - !Join ["", ["arn:aws:iam::", Ref: "AWS::AccountId", ":role/*"]]
+              -
+                Effect: Allow
+                Action:
+                  - states:CreateStateMachine
+                  - states:DeleteStateMachine
+                Resource:
+                  - !Join ["", ["arn:aws:states:", Ref: "AWS::Region", ":", Ref: "AWS::AccountId", ":*"]]
+              -
+                Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource:
+                  - !Join ["", ["arn:aws:logs:", Ref: "AWS::Region", ":", Ref: "AWS::AccountId", ":log-group:/aws/lambda/*"]]
+              -
+                Effect: Allow
+                Action:
+                  - lambda:UpdateFunctionConfiguration
+                Resource:
+                  - !Join ["", ["arn:aws:lambda:", Ref: "AWS::Region", ":", Ref: "AWS::AccountId", ":", "function:*" ]]
+              -
+                Effect: Allow
+                Action:
+                  - s3:PutBucketNotification
+                  - s3:PutObject
+                Resource:
+                  - !Join ["", ["arn:aws:s3:::", Ref: "Source", "/*" ]]
+                  - !Join ["", ["arn:aws:s3:::", Ref: "Source" ]]
+              -
+                Effect: Allow
+                Action:
+                  - cloudfront:CreateCloudFrontOriginAccessIdentity
+                  - cloudfront:DeleteCloudFrontOriginAccessIdentity
+                Resource: "*"
+              -
+                Effect: Allow
+                Action:
+                  - mediaconvert:CreatePreset
+                  - mediaconvert:DescribeEndpoints
+                Resource:
+                  - !Join ["", ["arn:aws:mediaconvert:", Ref: "AWS::Region", ":", Ref: "AWS::AccountId", ":*"]]
+
+  StepFunctionsServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Principal:
+              Service:
+                - !Join ["", ["states.", Ref: "AWS::Region", ".amazonaws.com" ]]
+            Action:
+              - sts:AssumeRole
+      Policies:
+        -
+          PolicyName: !Sub "${AWS::StackName}-stepfunctions-service-role"
+          PolicyDocument:
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - lambda:InvokeFunction
+                Resource:
+                  - !Join ["", ["arn:aws:lambda:", Ref: "AWS::Region", ":", Ref: "AWS::AccountId", ":", "function:*" ]]
+
+  ErrorHandlerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        -
+          PolicyName: !Sub "${AWS::StackName}-error-handler-lambda-role"
+          PolicyDocument:
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - sns:Publish
+                Resource:
+                  - !Ref NotificationSns
+              -
+                Effect: Allow
+                Action:
+                  - dynamodb:UpdateItem
+                Resource:
+                  - !Join ["", ["arn:aws:dynamodb:", Ref: "AWS::Region", ":", Ref: "AWS::AccountId", ":table/",Ref: "DynamoDBTable"]]
+              -
+                Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource:
+                  - !Join ["", ["arn:aws:logs:", Ref: "AWS::Region", ":", Ref: "AWS::AccountId", ":log-group:/aws/lambda/*"]]
+
+  WorkflowRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        -
+          PolicyName: !Sub "${AWS::StackName}-worflow-lambda-role"
+          PolicyDocument:
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - states:StartExecution
+                Resource:
+                  - !Join ["", ["arn:aws:states:", Ref: "AWS::Region", ":", Ref: "AWS::AccountId", ":stateMachine:", Ref: "AWS::StackName","-Ingest"]]
+                  - !Join ["", ["arn:aws:states:", Ref: "AWS::Region", ":", Ref: "AWS::AccountId", ":stateMachine:", Ref: "AWS::StackName","-Process"]]
+                  - !Join ["", ["arn:aws:states:", Ref: "AWS::Region", ":", Ref: "AWS::AccountId", ":stateMachine:", Ref: "AWS::StackName","-Publish"]]
+              -
+                Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:GetObject
+                  - s3:PutObjectTagging
+                Resource:
+                  - !Join ["", ["arn:aws:s3:::", Ref: "Source", "/*" ]]
+                  - !Join ["", ["arn:aws:s3:::", Ref: "Mp4Destination", "/*" ]]
+                  - !Join ["", ["arn:aws:s3:::", Ref: "AbrDestination", "/*" ]]
+              -
+                Effect: Allow
+                Action:
+                  - lambda:InvokeFunction
+                Resource:
+                  - !Join ["", ["arn:aws:lambda:", Ref: "AWS::Region", ":", Ref: "AWS::AccountId",":function:", Ref: "AWS::StackName","-error-handler"  ]]
+              -
+                Effect: Allow
+                Action:
+                  - sns:Publish
+                Resource:
+                  - !Ref NotificationSns
+              -
+                Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:Scan
+                Resource:
+                  - !Join ["", ["arn:aws:dynamodb:", Ref: "AWS::Region", ":", Ref: "AWS::AccountId", ":table/",Ref: "DynamoDBTable"]]
+              -
+                Effect: Allow
+                Action:
+                  - mediaconvert:*
+                Resource:
+                  - !Join ["", ["arn:aws:mediaconvert:", Ref: "AWS::Region", ":", Ref: "AWS::AccountId", ":*"]]
+              -
+                Effect: Allow
+                Action:
+                  - iam:PassRole
+                Resource:
+                  - !GetAtt MediaConvertRole.Arn
+              -
+                Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource:
+                  - !Join ["", ["arn:aws:logs:", Ref: "AWS::Region", ":", Ref: "AWS::AccountId", ":log-group:/aws/lambda/*"]]
+
+  MediaConvertRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Principal:
+              Service:
+                - "mediaconvert.amazonaws.com"
+            Action:
+              - sts:AssumeRole
+      Policies:
+        -
+          PolicyName: !Sub "${AWS::StackName}-mediatranscode-role"
+          PolicyDocument:
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - "s3:*"
+                Resource:
+                  - !Join ["", ["arn:aws:s3:::", Ref: "Source", "/*" ]]
+                  - !Join ["", ["arn:aws:s3:::", Ref: "Mp4Destination", "/*" ]]
+                  - !Join ["", ["arn:aws:s3:::", Ref: "AbrDestination", "/*" ]]
+              -
+                Effect: Allow
+                Action:
+                  - "execute-api:Invoke"
+                Resource:
+                  - !Join ["", ["arn:aws:execute-api:", Ref: "AWS::Region", ":", Ref: "AWS::AccountId", ":*"]]
+
+  CloudWatchEventRuleRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Principal:
+              Service: events.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        -
+          PolicyName: !Sub "${AWS::StackName}-event-invoke-role"
+          PolicyDocument:
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - states:StartExecution
+                Resource:
+                  - !Join ["", ["arn:aws:states:", Ref: "AWS::Region", ":", Ref: "AWS::AccountId", ":", "stateMachine:*"]]
+
+# Permissions & Policies
+
+  S3LambdaInvokeVideo:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !If [SourceVideo, !GetAtt IngestExecuteVideo.Arn, !GetAtt IngestExecuteMetadata.Arn]
+      Action: lambda:InvokeFunction
+      Principal: s3.amazonaws.com
+      SourceAccount: !Ref AWS::AccountId
+
+  CloudWatchLambdaInvoke:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt ErrorHandler.Arn
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceAccount: !Ref AWS::AccountId
+
+  AbrBucketPolicy:
+    Type: "AWS::S3::BucketPolicy"
+    Properties:
+      Bucket: !Ref AbrDestination
+      PolicyDocument:
+        Statement:
+          -
+            Action:
+              - "s3:GetObject"
+            Effect: "Allow"
+            Resource: !Join ["", ["arn:aws:s3:::", Ref: "AbrDestination", "/*"]]
+            Principal:
+              CanonicalUser: !GetAtt CloudFrontIdentity.S3CanonicalUserId
+
+  EncodeCompleteRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub ${AWS::StackName}-EncodeComplete
+      Description: MediaConvert Completed jobs event rule
+      EventPattern:
+        source:
+          - aws.mediaconvert
+        detail:
+          status:
+            - COMPLETE
+          userMetadata:
+            workflow:
+              - !Sub ${AWS::StackName}
+      Targets:
+        -
+          Arn: !Join ["", ["arn:aws:states:", Ref: "AWS::Region", ":", Ref: "AWS::AccountId", ":stateMachine:", Ref: "AWS::StackName","-Publish"]]
+          RoleArn: !GetAtt CloudWatchEventRuleRole.Arn
+          Id: !Sub ${AWS::StackName}-EncodeComplete
+
+  EncodeErrorRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub ${AWS::StackName}-EncodeError
+      Description: MediaConvert Error event rule
+      EventPattern:
+        source:
+          - aws.mediaconvert
+        detail:
+          status:
+            - ERROR
+          userMetadata:
+            workflow:
+              - !Sub ${AWS::StackName}
+      Targets:
+        -
+          Arn: !GetAtt ErrorHandler.Arn
+          Id: !Sub ${AWS::StackName}-EncodeError
+
+# Services
+  DynamoDBTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+      - AttributeName: guid
+        AttributeType: S
+      KeySchema:
+      - AttributeName: guid
+        KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: '5'
+        WriteCapacityUnits: '5'
+      TableName: !Ref AWS::StackName
+
+  Source:
+    DeletionPolicy: Retain
+    Type: AWS::S3::Bucket
+    Properties:
+      LifecycleConfiguration:
+        Rules:
+          -
+            Id: !Sub ${AWS::StackName}-source-archive
+            TagFilters:
+              -
+                Key: !Sub ${AWS::StackName}
+                Value: archive
+            Status: !If [ Glacier, Enabled, Disabled]
+            Transitions:
+            - TransitionInDays: 1
+              StorageClass: Glacier
+
+  Mp4Destination:
+    DeletionPolicy: Retain
+    Type: AWS::S3::Bucket
+    Properties:
+      LoggingConfiguration:
+        DestinationBucketName: !Ref Logs
+        LogFilePrefix: mp4-access/
+
+  AbrDestination:
+    DeletionPolicy: Retain
+    Type: AWS::S3::Bucket
+    Properties:
+      LoggingConfiguration:
+        DestinationBucketName: !Ref Logs
+        LogFilePrefix: hls-access/
+      CorsConfiguration:
+        CorsRules:
+          - AllowedMethods: [GET]
+            AllowedOrigins: ['*']
+            AllowedHeaders: ['*']
+            MaxAge: 3000
+
+  Logs:
+    DeletionPolicy: Retain
+    Type: AWS::S3::Bucket
+    Properties:
+      AccessControl: LogDeliveryWrite
+
+  NotificationSns:
+    Type: AWS::SNS::Topic
+    Properties:
+      DisplayName: !Sub ${AWS::StackName}-Notifications
+      Subscription:
+        -
+          Endpoint: !Ref AdminEmail
+          Protocol: email
+
+  CloudFront:
+    DependsOn: CloudFrontIdentity
+    Type: "AWS::CloudFront::Distribution"
+    Properties:
+      DistributionConfig:
+        Origins:
+          - DomainName: !GetAtt AbrDestination.DomainName
+            Id: vodS3Origin
+            S3OriginConfig:
+              OriginAccessIdentity: !Join ["", ["origin-access-identity/cloudfront/", !GetAtt CloudFrontIdentity.Identity]]
+        Enabled: 'true'
+        Logging:
+          IncludeCookies: 'false'
+          Bucket: !GetAtt Logs.DomainName
+          Prefix: cloudfront-logs/
+        DefaultCacheBehavior:
+          AllowedMethods:
+          - GET
+          - HEAD
+          - OPTIONS
+          TargetOriginId: vodS3Origin
+          ForwardedValues:
+            QueryString: 'false'
+            Cookies:
+              Forward: none
+            Headers:
+              - Origin
+              - Access-Control-Request-Method
+              - Access-Control-Request-Headers
+          ViewerProtocolPolicy: allow-all
+        PriceClass: PriceClass_All
+        ViewerCertificate:
+          CloudFrontDefaultCertificate: 'true'
+
+# Custom Resource
+  S3Config:
+    DependsOn: CloudFront
+    Type: Custom::S3
+    Properties:
+      ServiceToken: !GetAtt CustomResource.Arn
+      Source: !Ref Source
+      IngestArn: !If [SourceVideo, !GetAtt IngestExecuteVideo.Arn, !GetAtt IngestExecuteMetadata.Arn]
+      Resource: S3Notification
+      WorkflowTrigger: !Ref WorkflowTrigger
+
+  CloudFrontIdentity:
+    Type: Custom::CloudFrontIdentity
+    Properties:
+      ServiceToken: !GetAtt CustomResource.Arn
+      Bucket: !Ref AbrDestination
+      Resource: CloudFrontIdentity
+
+  MediaConvertEndPoint:
+    Type: "Custom::LoadLambda"
+    Properties:
+      ServiceToken: !GetAtt CustomResource.Arn
+      Resource: "EndPoint"
+
+  MediaConvertPresets:
+    DependsOn: CloudFront
+    Type: "Custom::LoadLambda"
+    Properties:
+      ServiceToken: !GetAtt CustomResource.Arn
+      Resource: "MediaConvertPresets"
+      Workflow: !Sub ${AWS::StackName}
+      EndPoint: !GetAtt MediaConvertEndPoint.EndpointUrl
+
+  Uuid:
+    Condition: Metrics
+    Type: "Custom::UUID"
+    Properties:
+      ServiceToken: !GetAtt CustomResource.Arn
+      Resource: "UUID"
+
+  AnonymousMetric:
+    Condition: Metrics
+    Type: "Custom::LoadLambda"
+    Properties:
+      ServiceToken: !GetAtt CustomResource.Arn
+      SolutionId: "SO0021"
+      UUID: !GetAtt Uuid.UUID
+      Version: "3.0"
+      Transcoder: MediaConvert
+      Parameters:
+        WorkflowTrigger: !Ref WorkflowTrigger
+        UseGlacier: !Ref UseGlacier
+        FrameCapture: !Ref FrameCapture
+        MP4: !Ref MP4
+        HLS: !Ref HLS
+        DASH: !Ref DASH
+      Resource: "SendMetric"
+
+#Custom Resource Lambda Function
+  CustomResource:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub ${AWS::StackName}-deploy-custom-resources
+      Description: Used to deploy ETS, Step Functions and additional, cloudfront s3 and sns Configuration
+      Handler: index.handler
+      Role: !GetAtt CustomResourceRole.Arn
+      Code:
+        S3Bucket: !Join ["-", [!FindInMap ["SourceCode", "General", "S3Bucket"], Ref: "AWS::Region"]]
+        S3Key: !Join ["/", [!FindInMap ["SourceCode", "General", "KeyPrefix"],  "custom-resources.zip"]]
+      Runtime:  nodejs6.10
+      Timeout: 180
+
+# workflow triggers
+  IngestExecuteVideo:
+    Condition: SourceVideo
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "${AWS::StackName}-ingest-execute"
+      Description: Creates a unique identifer (GUID) and executes the Ingest StateMachine
+      Handler: ingest-execute.handler
+      Role: !GetAtt WorkflowRole.Arn
+      Code:
+        S3Bucket: !Join ["-", [!FindInMap ["SourceCode", "General", "S3Bucket"], Ref: "AWS::Region"]]
+        S3Key: !Join ["/", [!FindInMap ["SourceCode", "General", "KeyPrefix"],  "ingest.zip"]]
+      Runtime:  nodejs6.10
+      Timeout: 120
+      Environment:
+        Variables:
+          IngestWorkflow: !Join ["", ["arn:aws:states:", Ref: "AWS::Region", ":", Ref: "AWS::AccountId", ":stateMachine:", Ref: "AWS::StackName","-Ingest"]]
+          ErrorHandler: !GetAtt ErrorHandler.Arn
+          Source: !Ref Source
+          AbrDestination: !Ref AbrDestination
+          Mp4Destination: !Ref Mp4Destination
+          Hls: !Ref HLS
+          Mp4: !Ref MP4
+          Dash: !Ref DASH
+          FrameCapture: !Ref FrameCapture
+
+  IngestExecuteMetadata:
+    Condition: SourceMetadata
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "${AWS::StackName}-ingest-execute"
+      Description: Creates a unique identifer (GUID) and executes the Ingest StateMachine
+      Handler: ingest-execute.handler
+      Role: !GetAtt WorkflowRole.Arn
+      Code:
+        S3Bucket: !Join ["-", [!FindInMap ["SourceCode", "General", "S3Bucket"], Ref: "AWS::Region"]]
+        S3Key: !Join ["/", [!FindInMap ["SourceCode", "General", "KeyPrefix"],  "ingest.zip"]]
+      Runtime:  nodejs6.10
+      Timeout: 120
+      Environment:
+        Variables:
+          IngestWorkflow: !Join ["", ["arn:aws:states:", Ref: "AWS::Region", ":", Ref: "AWS::AccountId", ":stateMachine:", Ref: "AWS::StackName","-Ingest"]]
+          ErrorHandler: !GetAtt ErrorHandler.Arn
+          Source: !Ref Source
+          AbrDestination: !Ref AbrDestination
+          Mp4Destination: !Ref Mp4Destination
+
+  ProcessExecute:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "${AWS::StackName}-process-execute"
+      Description: Executes the processing workflow
+      Handler: process-execute.handler
+      Role: !GetAtt WorkflowRole.Arn
+      Code:
+        S3Bucket: !Join ["-", [!FindInMap ["SourceCode", "General", "S3Bucket"], Ref: "AWS::Region"]]
+        S3Key: !Join ["/", [!FindInMap ["SourceCode", "General", "KeyPrefix"],  "process.zip"]]
+      Runtime: nodejs6.10
+      Timeout: 120
+      Environment:
+        Variables:
+          ProcessWorkflow: !Join ["", ["arn:aws:states:", Ref: "AWS::Region", ":", Ref: "AWS::AccountId", ":stateMachine:", Ref: "AWS::StackName","-Process"]]
+          ErrorHandler: !GetAtt ErrorHandler.Arn
+
+# Workflow Lambda Functions
+  ValidateMetadata:
+    Condition: SourceMetadata
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "${AWS::StackName}-validate-metadata"
+      Description: Validates the source metadata upload to S3
+      Handler: validate-metadata.handler
+      Role: !GetAtt WorkflowRole.Arn
+      Code:
+        S3Bucket: !Join ["-", [!FindInMap ["SourceCode", "General", "S3Bucket"], Ref: "AWS::Region"]]
+        S3Key: !Join ["/", [!FindInMap ["SourceCode", "General", "KeyPrefix"],  "ingest.zip"]]
+      Runtime: nodejs6.10
+      Timeout: 120
+      Environment:
+        Variables:
+          ErrorHandler: !GetAtt ErrorHandler.Arn
+
+  ValidateSource:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "${AWS::StackName}-validate-source"
+      Description: Validate the source content is accessible in S3
+      Handler: validate-source.handler
+      Role: !GetAtt WorkflowRole.Arn
+      Code:
+        S3Bucket: !Join ["-", [!FindInMap ["SourceCode", "General", "S3Bucket"], Ref: "AWS::Region"]]
+        S3Key: !Join ["/", [!FindInMap ["SourceCode", "General", "KeyPrefix"],  "ingest.zip"]]
+      Runtime: nodejs6.10
+      Timeout: 120
+      Environment:
+        Variables:
+          ErrorHandler: !GetAtt ErrorHandler.Arn
+
+  Mediainfo:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "${AWS::StackName}-mediainfo"
+      Description: Runs mediainfo on a pre-signed s3 URL for source and mp4 output files
+      Handler: index.handler
+      Role: !GetAtt WorkflowRole.Arn
+      Code:
+        S3Bucket: !Join ["-", [!FindInMap ["SourceCode", "General", "S3Bucket"], Ref: "AWS::Region"]]
+        S3Key: !Join ["/", [!FindInMap ["SourceCode", "General", "KeyPrefix"],  "mediainfo.zip"]]
+      Runtime: nodejs6.10
+      Timeout: 120
+      Environment:
+        Variables:
+          ErrorHandler: !GetAtt ErrorHandler.Arn
+
+  DynamoDB:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub ${AWS::StackName}-DynamoDB
+      Description: Updates DynamoDB with event data
+      Handler: index.handler
+      Role: !GetAtt WorkflowRole.Arn
+      Code:
+        S3Bucket: !Join ["-", [!FindInMap ["SourceCode", "General", "S3Bucket"], Ref: "AWS::Region"]]
+        S3Key: !Join ["/", [!FindInMap ["SourceCode", "General", "KeyPrefix"],  "dynamo.zip"]]
+      Runtime:  nodejs6.10
+      Timeout: 120
+      Environment:
+        Variables:
+          DynamoDBTable: !Ref DynamoDBTable
+          ErrorHandler: !GetAtt ErrorHandler.Arn
+
+  Profiler:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub ${AWS::StackName}-profiler
+      Description: Sets an Encode Profile based on mediainfo output
+      Handler: profiler.handler
+      Role: !GetAtt WorkflowRole.Arn
+      Code:
+        S3Bucket: !Join ["-", [!FindInMap ["SourceCode", "General", "S3Bucket"], Ref: "AWS::Region"]]
+        S3Key: !Join ["/", [!FindInMap ["SourceCode", "General", "KeyPrefix"],  "process.zip"]]
+      Runtime: nodejs6.10
+      Timeout: 120
+      Environment:
+        Variables:
+          DynamoDBTable: !Ref DynamoDBTable
+          ErrorHandler: !GetAtt ErrorHandler.Arn
+
+  Encode:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub ${AWS::StackName}-encode
+      Description: Creates a MediaConvert encode job
+      Handler: media-convert-encode.handler
+      Role: !GetAtt WorkflowRole.Arn
+      Code:
+        S3Bucket: !Join ["-", [!FindInMap ["SourceCode", "General", "S3Bucket"], Ref: "AWS::Region"]]
+        S3Key: !Join ["/", [!FindInMap ["SourceCode", "General", "KeyPrefix"],  "process.zip"]]
+      Runtime:  nodejs6.10
+      Timeout: 120
+      Environment:
+        Variables:
+          ErrorHandler: !GetAtt ErrorHandler.Arn
+          MediaConvertRole: !GetAtt MediaConvertRole.Arn
+          Workflow: !Sub ${AWS::StackName}
+          EndPoint: !GetAtt MediaConvertEndPoint.EndpointUrl
+
+  GetJobDetails:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub ${AWS::StackName}-get-job-details
+      Description: parse MediaConvert complete message
+      Handler: media-convert-get-details.handler
+      Role: !GetAtt WorkflowRole.Arn
+      Code:
+        S3Bucket: !Join ["-", [!FindInMap ["SourceCode", "General", "S3Bucket"], Ref: "AWS::Region"]]
+        S3Key: !Join ["/", [!FindInMap ["SourceCode", "General", "KeyPrefix"],  "publish.zip"]]
+      Runtime:  nodejs6.10
+      Timeout: 120
+      Environment:
+        Variables:
+          ErrorHandler: !GetAtt ErrorHandler.Arn
+          DynamoDBTable: !Ref DynamoDBTable
+
+  ValidateOutputs:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub ${AWS::StackName}-validate-outputs
+      Description: parse ETS complete message
+      Handler: media-convert-validate-outputs.handler
+      Role: !GetAtt WorkflowRole.Arn
+      Code:
+        S3Bucket: !Join ["-", [!FindInMap ["SourceCode", "General", "S3Bucket"], Ref: "AWS::Region"]]
+        S3Key: !Join ["/", [!FindInMap ["SourceCode", "General", "KeyPrefix"],  "publish.zip"]]
+      Runtime:  nodejs6.10
+      Timeout: 120
+      Environment:
+        Variables:
+          ErrorHandler: !GetAtt ErrorHandler.Arn
+          CloudFront: !GetAtt CloudFront.DomainName
+
+  ArchiveSource:
+    Type: AWS::Lambda::Function
+    Condition: Glacier
+    Properties:
+      FunctionName: !Sub ${AWS::StackName}-glacier
+      Description: updadates tags on source files to enable Glacier
+      Handler: archive-source.handler
+      Role: !GetAtt WorkflowRole.Arn
+      Code:
+        S3Bucket: !Join ["-", [!FindInMap ["SourceCode", "General", "S3Bucket"], Ref: "AWS::Region"]]
+        S3Key: !Join ["/", [!FindInMap ["SourceCode", "General", "KeyPrefix"],  "publish.zip"]]
+      Runtime:  nodejs6.10
+      Timeout: 120
+      Environment:
+        Variables:
+          ErrorHandler: !GetAtt ErrorHandler.Arn
+
+  Sns:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub ${AWS::StackName}-sns-notification
+      Description: checks if all encode jobs are complete
+      Handler: index.handler
+      Role: !GetAtt WorkflowRole.Arn
+      Code:
+        S3Bucket: !Join ["-", [!FindInMap ["SourceCode", "General", "S3Bucket"], Ref: "AWS::Region"]]
+        S3Key: !Join ["/", [!FindInMap ["SourceCode", "General", "KeyPrefix"],  "sns.zip"]]
+      Runtime:  nodejs6.10
+      Timeout: 120
+      Environment:
+        Variables:
+          ErrorHandler: !GetAtt ErrorHandler.Arn
+          NotificationSns: !Ref NotificationSns
+
+  ErrorHandler:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "${AWS::StackName}-error-handler"
+      Description: captures and processes ETS and Step function errors.
+      Handler: index.handler
+      Role: !GetAtt ErrorHandlerRole.Arn
+      Code:
+        S3Bucket: !Join ["-", [!FindInMap ["SourceCode", "General", "S3Bucket"], Ref: "AWS::Region"]]
+        S3Key: !Join ["/", [!FindInMap ["SourceCode", "General", "KeyPrefix"],  "error-handler.zip"]]
+      Runtime:  nodejs6.10
+      Timeout: 120
+      Environment:
+        Variables:
+          DynamoDBTable: !Ref DynamoDBTable
+          NotificationSns: !Ref NotificationSns
+
+  # Step Functions
+
+  IngestWorkflowVideo:
+    Condition: SourceVideo
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      StateMachineName: !Sub ${AWS::StackName}-Ingest
+      DefinitionString: !Sub |
+        {
+          "StartAt": "ValidateSource",
+          "States": {
+            "ValidateSource": {
+              "Type": "Task",
+              "Resource": "${ValidateSource.Arn}",
+              "Next": "Mediainfo"
+            },
+            "Mediainfo": {
+              "Type": "Task",
+              "Resource": "${Mediainfo.Arn}",
+              "Next": "DynamoUpdate"
+            },
+            "DynamoUpdate": {
+              "Type": "Task",
+              "Resource": "${DynamoDB.Arn}",
+              "Next": "IngestSns"
+            },
+            "IngestSns": {
+              "Type": "Task",
+              "Resource": "${Sns.Arn}",
+              "Next": "ProcessExecute"
+            },
+            "ProcessExecute": {
+              "Type": "Task",
+              "Resource": "${ProcessExecute.Arn}",
+              "End": true
+            }
+          }
+        }
+      RoleArn: !GetAtt StepFunctionsServiceRole.Arn
+
+  IngestWorkflowMetadata:
+    Condition: SourceMetadata
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      StateMachineName: !Sub ${AWS::StackName}-Ingest
+      DefinitionString: !Sub |
+        {
+          "StartAt": "ValidateMetadata",
+          "States": {
+            "ValidateMetadata": {
+              "Type": "Task",
+              "Resource": "${ValidateMetadata.Arn}",
+              "Next": "ValidateSource"
+            },
+            "ValidateSource": {
+              "Type": "Task",
+              "Resource": "${ValidateSource.Arn}",
+              "Next": "Mediainfo"
+            },
+            "Mediainfo": {
+              "Type": "Task",
+              "Resource": "${Mediainfo.Arn}",
+              "Next": "DynamoUpdate"
+            },
+            "DynamoUpdate": {
+              "Type": "Task",
+              "Resource": "${DynamoDB.Arn}",
+              "Next": "IngestSns"
+            },
+            "IngestSns": {
+              "Type": "Task",
+              "Resource": "${Sns.Arn}",
+              "Next": "ProcessExecute"
+            },
+            "ProcessExecute": {
+              "Type": "Task",
+              "Resource": "${ProcessExecute.Arn}",
+              "End": true
+            }
+          }
+        }
+      RoleArn: !GetAtt StepFunctionsServiceRole.Arn
+
+  ProcessWorkflow:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      StateMachineName: !Sub ${AWS::StackName}-Process
+      DefinitionString: !Sub |
+        {
+          "StartAt": "Profiler",
+          "States": {
+            "Profiler": {
+              "Type": "Task",
+              "Resource": "${Profiler.Arn}",
+              "Next": "SubmitEncodeJob"
+            },
+            "SubmitEncodeJob": {
+              "Type": "Task",
+              "Resource": "${Encode.Arn}",
+              "Next": "DynamoUpdate"
+            },
+            "DynamoUpdate": {
+              "Type": "Task",
+              "Resource": "${DynamoDB.Arn}",
+              "End": true
+            }
+          }
+        }
+      RoleArn: !GetAtt StepFunctionsServiceRole.Arn
+
+  PublishWorkflowGlacier:
+    Condition: Glacier
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      StateMachineName: !Sub ${AWS::StackName}-Publish
+      DefinitionString: !Sub |
+        {
+          "StartAt": "GetJobDetails",
+          "States": {
+            "GetJobDetails": {
+              "Type": "Task",
+              "Resource": "${GetJobDetails.Arn}",
+              "Next": "ValidateOutputs"
+            },
+            "ValidateOutputs": {
+              "Type": "Task",
+              "Resource": "${ValidateOutputs.Arn}",
+              "Next": "DynamoUpdate"
+            },
+            "DynamoUpdate": {
+              "Type": "Task",
+              "Resource": "${DynamoDB.Arn}",
+              "Next": "ArchiveSource"
+            },
+            "ArchiveSource": {
+              "Type": "Task",
+              "Resource": "${ArchiveSource.Arn}",
+              "Next": "PublishSns"
+            },
+            "PublishSns": {
+              "Type": "Task",
+              "Resource": "${Sns.Arn}",
+              "End": true
+            }
+          }
+        }
+      RoleArn: !GetAtt StepFunctionsServiceRole.Arn
+
+  PublishWorkflowNoGlacier:
+    Condition: NoGlacier
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      StateMachineName: !Sub ${AWS::StackName}-Publish
+      DefinitionString: !Sub |
+        {
+          "StartAt": "GetJobDetails",
+          "States": {
+            "GetJobDetails": {
+              "Type": "Task",
+              "Resource": "${GetJobDetails.Arn}",
+              "Next": "ValidateOutputs"
+            },
+            "ValidateOutputs": {
+              "Type": "Task",
+              "Resource": "${ValidateOutputs.Arn}",
+              "Next": "DynamoUpdate"
+            },
+            "DynamoUpdate": {
+              "Type": "Task",
+              "Resource": "${DynamoDB.Arn}",
+              "Next": "PublishSns"
+            },
+            "PublishSns": {
+              "Type": "Task",
+              "Resource": "${Sns.Arn}",
+              "End": true
+            }
+          }
+        }
+      RoleArn: !GetAtt StepFunctionsServiceRole.Arn
+
+Outputs:
+  DynamoDBTable:
+    Description: DynamoDB Table
+    Value: !Ref DynamoDBTable
+
+  Source:
+    Description: Source Bucket
+    Value: !Ref Source
+
+  Mp4Destination:
+    Description: MP4 Destination Bucket
+    Value: !Ref Mp4Destination
+
+  AbrDestination:
+    Description: HLS Destination Bucket
+    Value: !Ref AbrDestination
+
+  CloudFront:
+    Description: CloudFront Domain Name
+    Value: !GetAtt CloudFront.DomainName
+
+  UUID:
+    Condition: Metrics
+    Description: AnonymousMetric UUID
+    Value: !GetAtt Uuid.UUID

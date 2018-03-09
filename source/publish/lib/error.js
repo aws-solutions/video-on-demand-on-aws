@@ -10,35 +10,35 @@
  *  OR CONDITIONS OF ANY KIND, express or implied. See the License for the specific language governing permissions    *
  *  and limitations under the License.                                                                                *
  *********************************************************************************************************************/
- /**
-  * @author Solution Builders
-  */
- 'use strict';
- const AWS = require('aws-sdk');
+/**
+ * @author Solution Builders
+ */
+'use strict';
+const AWS = require('aws-sdk');
 
- let errSns = function(event,_err) {
-   console.log('Running Error Handler');
+let errPromise = function(event, _err) {
+  console.log('Running Error Handler');
 
-   const sns = new AWS.SNS({region: process.env.AWS_REGION});
+  const lambda = new AWS.Lambda({
+    region: process.env.AWS_REGION
+  });
 
-   let msg = {
-     "guid": event.guid,
-     "event":event,
-     "function":process.env.AWS_LAMBDA_FUNCTION_NAME,
-     "error": _err.toString()
-   };
+  let params;
 
-   let params = {
-         Subject: 'Workflow error: ' + event.guid,
-         Message: JSON.stringify(msg, null, 2),
-         TargetArn: process.env.ErrorsSns
-     };
+  let payload = {
+    "guid": event.guid,
+    "event": event,
+    "function": process.env.AWS_LAMBDA_FUNCTION_NAME,
+    "error": _err.toString()
+  };
 
-   sns.publish(params).promise()
-     .catch(err => console.log(err)
-     );
- };
-
- module.exports = {
-     sns: errSns
- };
+  params = {
+    FunctionName: process.env.ErrorHandler,
+    Payload: JSON.stringify(payload, null, 2)
+  };
+  lambda.invoke(params).promise()
+    .catch(err => console.log(err));
+};
+module.exports = {
+  handler: errPromise
+};

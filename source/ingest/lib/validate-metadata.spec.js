@@ -22,11 +22,14 @@ describe('lambda', function() {
 
   describe('#validate metadata', function() {
 
-    beforeEach(function() {});
+    beforeEach(function() {
+      process.env.ErrorHandler = "errHandler";
+    });
 
     afterEach(function() {
       AWS.restore('S3');
       AWS.restore('SNS');
+      delete process.env.ErrorHandler;
     });
 
     it('should return "data" when s3 getObject successful', function(done) {
@@ -47,7 +50,7 @@ describe('lambda', function() {
 
       AWS.mock('S3', 'getObject', Promise.reject('s3 error'));
 
-      AWS.mock('SNS', 'publish', Promise.resolve('sucess'));
+      AWS.mock('Lambda', 'invoke', Promise.resolve('sucess'));
 
       lambda.handler(_event, null, function(err, data) {
         if (err) {
@@ -62,7 +65,7 @@ describe('lambda', function() {
 
       AWS.mock('S3', 'getObject', Promise.reject('s3 error'));
 
-      AWS.mock('SNS', 'publish', Promise.reject('sns error'));
+      AWS.mock('Lambda', 'invoke', Promise.reject('lambda error'));
 
       lambda.handler(_event, null, function(err, data) {
         if (err) {

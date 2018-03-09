@@ -24,11 +24,13 @@ describe('lambda', function() {
 
     beforeEach(function() {
       process.env.AWS_LAMBDA_FUNCTION_NAME = 'testlambda';
+      process.env.ErrorHandler = "errHandler";
     });
 
     afterEach(function() {
       AWS.restore('S3');
       delete process.env.AWS_LAMBDA_FUNCTION_NAME;
+      delete process.env.ErrorHandler;
     });
 
     it('should return "data" when s3 get successful', function(done) {
@@ -47,7 +49,7 @@ describe('lambda', function() {
 
       AWS.mock('S3', 'headObject', Promise.reject('s3 error'));
 
-      AWS.mock('SNS', 'publish', Promise.resolve('sucess'));
+      AWS.mock('Lambda', 'invoke', Promise.resolve('sucess'));
 
       lambda.handler(_event, null, function(err, data) {
         if (err) {
@@ -62,7 +64,7 @@ describe('lambda', function() {
 
       AWS.mock('S3', 'headObject', Promise.reject('s3 error'));
 
-      AWS.mock('SNS', 'publish', Promise.reject('sns error'));
+      AWS.mock('Lambda', 'invoke', Promise.reject('lambda error'));
 
       lambda.handler(_event, null, function(err, data) {
         if (err) {

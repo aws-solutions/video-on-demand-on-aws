@@ -17,12 +17,11 @@
  Each Create resource has a corrisponding delete functions to clean up the resource on a Stack Delete
  **/
 'use strict';
-const fs = require('fs');
 const response = require('cfn-response');
 const s3Config = require('./lib/s3.js');
 const cfConfig = require('./lib/cloudfront.js');
 const etsConfig = require('./lib/ets.js');
-const stepFunctions = require('./lib/step-functions.js');
+const mcConfig = require('./lib/media-convert.js');
 const MetricsHelper = require('./lib/metrics-helper.js');
 const uuid = require('uuid');
 const moment = require('moment');
@@ -35,19 +34,7 @@ exports.handler = function(event, context) {
 
     switch (event.ResourceProperties.Resource) {
 
-      case 'StepFunction':
-        // Creates the Ingest Process and Publish workflow step functions
-        stepFunctions.createSteps(event)
-          .then(responseData => {
-            response.send(event, context, response.SUCCESS,responseData,responseData.StepsArn);
-          })
-          .catch(err => {
-            console.log(err, err.stack);
-            response.send(event, context, response.FAILED);
-          });
-        break;
-
-      case 'S3':
+      case 'S3Notification':
         //Conigures the s3 source bucket notification configuration to trigger the ingest-execute Lambda function
         s3Config.s3Notification(event)
           .then(() => {
@@ -59,7 +46,7 @@ exports.handler = function(event, context) {
           });
         break;
 
-      case 'Watermark':
+      case 'ImageOverlay':
         //uploads an example watermark file to the s3 source bucket
         s3Config.putObject(event)
           .then(() => {
@@ -83,6 +70,7 @@ exports.handler = function(event, context) {
           });
         break;
 
+      //Elastic Transcoder
       case 'Pipeline':
         // Creates the MP4 and ABR Elastic Transcoder Pipelines
         etsConfig.createPipeline(event)
@@ -95,11 +83,35 @@ exports.handler = function(event, context) {
           });
         break;
 
-      case 'Presets':
+      case 'EtsPresets':
         // Creates the MP4 and ABR Elastic Transcoder custom presets for MP4, HLS and DASH
         etsConfig.createPreset()
           .then(responseData => {
             response.send(event, context, response.SUCCESS,responseData);
+          })
+          .catch(err => {
+            console.log(err, err.stack);
+            response.send(event, context, response.FAILED);
+          });
+        break;
+      //MediaConvert
+      case 'MediaConvertPresets':
+        // Creates custom presets
+        mcConfig.createPreset(event)
+          .then(() => {
+            response.send(event, context, response.SUCCESS);
+          })
+          .catch(err => {
+            console.log(err, err.stack);
+            response.send(event, context, response.FAILED);
+          });
+        break;
+
+      case 'EndPoint':
+        // Get MediaConvert REgional / Account EndPoint
+        mcConfig.endpointUrl(event)
+          .then(responseData => {
+            response.send(event, context, response.SUCCESS, responseData, responseData.EndpointUrl);
           })
           .catch(err => {
             console.log(err, err.stack);
@@ -115,10 +127,11 @@ exports.handler = function(event, context) {
             TimeStamp: moment().utc().format('YYYY-MM-DD HH:mm:ss.S'),
             Data: {
                 Version: event.ResourceProperties.Version,
-                Launched: moment().utc().format()
+                Launched: moment().utc().format(),
+                Transcoder: event.ResourceProperties.Transcoder,
+                Parameters: event.ResourceProperties.Parameters
             }
         };
-
         metricsHelper.sendAnonymousMetric(metric, function(err, data) {
           if (err) {
             console.log(err, err.stack);
@@ -150,20 +163,7 @@ exports.handler = function(event, context) {
 
     switch (event.ResourceProperties.Resource) {
 
-      case 'StepFunction':
-
-        stepFunctions.deleteSteps(event)
-          .then(() => {
-            response.send(event, context, response.SUCCESS);
-          })
-          .catch(err => {
-            console.log(err, err.stack);
-            response.send(event, context, response.FAILED);
-          });
-        break;
-
       case 'Pipeline':
-
         etsConfig.deletePipeline(event)
           .then(() => {
             response.send(event, context, response.SUCCESS);
@@ -174,8 +174,7 @@ exports.handler = function(event, context) {
           });
         break;
 
-      case 'Presets':
-
+      case 'EtsPresets':
         etsConfig.deletePreset()
           .then(res => {
             console.log(res);
@@ -188,7 +187,6 @@ exports.handler = function(event, context) {
         break;
 
       case ('SendMetric'):
-
         let metric = {
             Solution: event.ResourceProperties.solutionId,
             UUID: event.ResourceProperties.UUID,
@@ -198,7 +196,6 @@ exports.handler = function(event, context) {
                 Deleted: moment().utc().format()
             }
         };
-
         metricsHelper.sendAnonymousMetric(metric, function(err, data) {
           if (err) {
             console.log(err, err.stack);

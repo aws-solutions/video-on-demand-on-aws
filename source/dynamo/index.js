@@ -38,7 +38,7 @@
      });
 
      let params = {
-         TableName: process.env.DynamoDB,
+         TableName: process.env.DynamoDBTable,
          Key: {
              guid: guid,
          },
@@ -54,7 +54,7 @@
            callback(null, event);
        })
        .catch(err => {
-           error.sns(event, err);
+           error.handler(event, err);
            callback(err);
        });
  };

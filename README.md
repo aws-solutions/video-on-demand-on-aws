@@ -1,19 +1,18 @@
 
 # Video on Demand on AWS
 
-How to implement a video-on-demand workflow on AWS leveraging AWS Step Functions and Elastic Transcoder.
+How to implement a video-on-demand workflow on AWS leveraging AWS Step Functions and AWS Elemental MediaConvert.
 
 Source code for the AWS solution [Video on Demand on AWS](https://aws.amazon.com/answers/media-entertainment/video-on-demand-on-aws/).
 
 
 ## CloudFormation templates
-There are 2 CloudFormation templates, one for a video only workflow and a second to deploy a workflow that ingest both a source video file and metadata file. For the video only version the encoding options are defined as CloudFormation parameters. For the metadata version the encoding options are defined for each video in the metadata file.
-
+There are 2 CloudFormation templates, one to deploy the workflow with AWS Elemental MediaConvert and a second which deploys ElasticTranscoder.
 
 ## source code node.js 6.10:
 
 **source/custom-resources**:
-A series of CloudFormation custom resources used to deploy ElasticTranscoder, AWS Step Functions and make configuration changes to SNS, S3 and CloudFront.
+A series of CloudFormation custom resources used to deploy Elastic Transcoder, MediaConvert custom presets and make configuration changes to S3 SNS and CloudFront.
 
 **source/dynamo**
 A Lambda function to update DynamoDB, used in each of the Step Functions workflows.
@@ -32,6 +31,9 @@ The Lambda functions that make up the core of the process workflow.
 
 **source/publish**
 The Lambda functions that make up the core of the publish workflow.
+
+**source/sns**
+a lambda function used to send publish and/or error notifications
 
 
 ## Building the Lambda Packages

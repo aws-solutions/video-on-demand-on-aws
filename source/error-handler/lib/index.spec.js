@@ -11,18 +11,10 @@ let lambda = require('../index.js');
 
 describe('lambda', function() {
     let _event = {
-    "Records": [
-        {
-        "Sns": {
-                "Type": "Notification",
-                "MessageId": "33e1def3-f5fd-5296-8894-8cf7a989a823",
-                "TopicArn": "arn",
-                "Subject": "Workflow error: 123",
-                "Message": "{\n  \"event\": \"success\",\n  \"function\": \"meta-dynamo\",\n  \"error\": \"ValidationException: Invalid UpdateExpression: Syntax error; token: \\\"0\\\", near: \\\"set  0 =\\\"\"\n}"
-            }
-        }
-    ]
-};
+        guid:"12345678",
+        function:"test",
+        error:"example error"
+    };
 
     describe('#handler', function() {
 

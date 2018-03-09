@@ -1,0 +1,70 @@
+{
+  "Name": "-dash_1080p",
+  "Description": "Wifi, 1920x1080, 16:9, 29.97fps, 8500kbps",
+  "Category": "DASH",
+  "Settings": {
+    "VideoDescription": {
+      "Height": 1080,
+      "VideoPreprocessors": {
+        "Deinterlacer": {
+          "Algorithm": "INTERPOLATE",
+          "Control": "NORMAL",
+          "Mode": "DEINTERLACE"
+        }
+      },
+      "TimecodeInsertion": "DISABLED",
+      "ColorMetadata": "INSERT",
+      "Sharpness": 50,
+      "AntiAlias": "ENABLED",
+      "DropFrameTimecode": "ENABLED",
+      "CodecSettings": {
+        "H264Settings": {
+          "FramerateControl": "SPECIFIED",
+          "ParControl": "SPECIFIED",
+          "RateControlMode": "CBR",
+          "ParDenominator": 1,
+          "GopBReference": "DISABLED",
+          "FieldEncoding": "PAFF",
+          "RepeatPps": "DISABLED",
+          "GopClosedCadence": 1,
+          "Syntax": "DEFAULT",
+          "SpatialAdaptiveQuantization": "ENABLED",
+          "GopSize": 90.0,
+          "TemporalAdaptiveQuantization": "ENABLED",
+          "QualityTuningLevel": "MULTI_PASS_HQ",
+          "SceneChangeDetect": "ENABLED",
+          "HrdBufferSize": 12750000,
+          "Bitrate": 8500000,
+          "EntropyEncoding": "CABAC",
+          "ParNumerator": 1,
+          "NumberBFramesBetweenReferenceFrames": 2,
+          "Softness": 0,
+          "UnregisteredSeiTimecode": "DISABLED",
+          "Slices": 1,
+          "FramerateNumerator": 30000,
+          "SlowPal": "DISABLED",
+          "HrdBufferInitialFillPercentage": 90,
+          "NumberReferenceFrames": 3,
+          "AdaptiveQuantization": "HIGH",
+          "InterlaceMode": "PROGRESSIVE",
+          "CodecLevel": "LEVEL_4",
+          "GopSizeUnits": "FRAMES",
+          "CodecProfile": "HIGH",
+          "FramerateDenominator": 1001,
+          "FramerateConversionAlgorithm": "DUPLICATE_DROP",
+          "MinIInterval": 0,
+          "Telecine": "NONE",
+          "FlickerAdaptiveQuantization": "DISABLED"
+        },
+        "Codec": "H_264"
+      },
+      "Width": 1920,
+      "AfdSignaling": "NONE",
+      "RespondToAfd": "NONE",
+      "ScalingBehavior": "DEFAULT"
+    },
+    "ContainerSettings": {
+      "Container": "MPD"
+    }
+  }
+}
