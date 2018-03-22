@@ -67,6 +67,27 @@ exports.handler = (event, context, callback) => {
       if (data.Item.dash) {
         event.dash = presetCheck(event.srcHeight,data.Item.dash);
       }
+
+      // Define Height Width for frameCapture thumbnails.
+      if (event.frameCapture) {
+        if (event.srcHeight >= 1080) {
+          event.frameHeight = 1080;
+          event.frameWdith = 1920;
+        } else if (event.srcHeight >= 720) {
+          event.frameHeight = 720;
+          event.frameWdith = 1280;
+        } else if (event.srcHeight >= 540) {
+          event.frameHeight = 540;
+          event.frameWdith = 960;
+        } else if (event.srcHeight >= 360) {
+          event.frameHeight = 360;
+          event.frameWdith = 640;
+        } else {
+          event.frameHeight = 270;
+          event.frameWdith = 480;
+        }
+      }
+      
       callback(null, event);
     })
     .catch(err => {

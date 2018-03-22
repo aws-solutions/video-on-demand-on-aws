@@ -55,7 +55,7 @@ exports.handler = (event, context, callback) => {
     Key: {
       guid: guid
     },
-    UpdateExpression: 'SET workflow_status = :st,' + 'workflow_error_at = :ea,' + 'error_message = :em',
+    UpdateExpression: 'SET workflowStatus = :st,' + 'workflowErrorAt = :ea,' + 'errorMessage = :em',
     ExpressionAttributeValues: values
   };
 

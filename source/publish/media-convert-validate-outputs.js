@@ -49,21 +49,21 @@ exports.handler = (event, context, callback) => {
   let dashBase = event.guid + '/dash/' + event.srcVideo.split(".").slice(0, -1).join(".");
   let key;
 
-  if (event.hls) {
+  if (event.hls && event.hls.length > 0) {
     event.hlsPlaylist = hlsBase + '.m3u8';
     event.hlsUrl = 'https://'+  process.env.CloudFront + '/' + hlsBase + '.m3u8';
     console.log(event.hlsPlaylist);
     promises.push(validate(event.abrBucket, event.hlsPlaylist));
   }
 
-  if (event.dash) {
+  if (event.dash && event.dash.length > 0) {
     event.dashPlaylist = dashBase + '.mpd';
     event.dashUrl = 'https://'+ process.env.CloudFront + '/' + dashBase + '.mpd';
     console.log(event.dashPlaylist);
     promises.push(validate(event.abrBucket, event.dashPlaylist));
   }
 
-  if (event.mp4) {
+  if (event.mp4 && event.mp4.length > 0) {
     event.mp4Outputs = [];
     for (let i = event.mp4.length - 1; i >= 0; i--) {
       key = mp4Base + '_' + event.mp4[i] + 'p.mp4';

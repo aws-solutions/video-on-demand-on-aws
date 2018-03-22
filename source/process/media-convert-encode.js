@@ -4,22 +4,22 @@ const error = require('./lib/error.js');
 
 const presets = {
   //MP4 SYSTEM PRESETS
-  m2160p:"System-Hevc_2160p_25fps_15mbps",
-  m1080p:process.env.Workflow+'-mp4_1080p',
-  m720p:process.env.Workflow+'-mp4_720p',
+  m2160p:process.env.mp4_2160p,
+  m1080p:process.env.mp4_1080p,
+  m720p:process.env.mp4_720p,
   //DASH CUSTOM PRESETS
-  d1080p:process.env.Workflow+'-dash_1080p',
-  d720p:process.env.Workflow+'-dash_720p',
-  d540p:process.env.Workflow+'-dash_540p',
-  d360p:process.env.Workflow+'-dash_360p',
-  d270p:process.env.Workflow+'-dash_270p',
-  audio:process.env.Workflow+'-dash_audio',
+  d1080p:process.env.dash_1080p,
+  d720p:process.env.dash_720p,
+  d540p:process.env.dash_540p,
+  d360p:process.env.dash_360p,
+  d270p:process.env.dash_270p,
+  audio:process.env.dash_audio,
   // HLS SYSTEM PRESETS
-  h1080p:"System-Avc_16x9_1080p_29_97fps_8500kbps",
-  h720p:"System-Avc_16x9_720p_29_97fps_5000kbps",
-  h540p:"System-Avc_16x9_540p_29_97fps_3500kbps",
-  h360p:"System-Avc_16x9_360p_29_97fps_1200kbps",
-  h270p:"System-Avc_16x9_270p_14_99fps_400kbps"
+  h1080p:process.env.hls_1080p,
+  h720p:process.env.hls_720p,
+  h540p:process.env.hls_540p,
+  h360p:process.env.hls_360p,
+  h270p:process.env.hls_270p
 };
 
 exports.handler = (event, context, callback) => {
@@ -127,10 +127,10 @@ exports.handler = (event, context, callback) => {
               "ColorMetadata": "INSERT",
               "AfdSignaling": "NONE",
               "Sharpness": 100,
-              "Height": event.srcHeight,
+              "Height":  event.frameHeight,
               "RespondToAfd": "NONE",
               "TimecodeInsertion": "DISABLED",
-              "Width": event.srcWidth,
+              "Width": event.frameWidth,
               "ScalingBehavior": "DEFAULT",
               "AntiAlias": "ENABLED",
               "CodecSettings": {
@@ -147,17 +147,6 @@ exports.handler = (event, context, callback) => {
       }
     ]
   };
-
-  //define height/width for ABR frameCapture, max size is 1080p
-  let abrHeight;
-  let abrWidth;
-  if (event.srcHeight >= 1080) {
-    abrHeight = 1080;
-    abrWidth = 1920;
-  }  else {
-    abrHeight = event.srcHeight;
-    abrWidth = event.abrWdith;
-  }
 
   let abrFrameCapture = {
     "CustomName": "ABR Frame Capture",
@@ -178,10 +167,10 @@ exports.handler = (event, context, callback) => {
               "ColorMetadata": "INSERT",
               "AfdSignaling": "NONE",
               "Sharpness": 100,
-              "Height": abrHeight,
+              "Height": event.frameHeight,
               "RespondToAfd": "NONE",
               "TimecodeInsertion": "DISABLED",
-              "Width": abrWidth,
+              "Width": event.frameWidth,
               "ScalingBehavior": "DEFAULT",
               "AntiAlias": "ENABLED",
               "CodecSettings": {
@@ -199,7 +188,7 @@ exports.handler = (event, context, callback) => {
     ]
   };
 
-  if (event.mp4) {
+  if (event.mp4 && event.mp4.length > 0) {
     for (let i = event.mp4.length - 1; i >= 0; i--) {
       switch (event.mp4[i]) {
         case 2160:
@@ -236,7 +225,7 @@ exports.handler = (event, context, callback) => {
     params.Settings.OutputGroups.push(mp4Outputs);
   }
 
-  if (event.hls) {
+  if (event.hls && event.hls.length > 0) {
     for (let i = event.hls.length - 1; i >= 0; i--) {
       switch (event.hls[i]) {
         case 1080:
@@ -288,7 +277,7 @@ exports.handler = (event, context, callback) => {
     params.Settings.OutputGroups.push(hlsOutputs);
   }
 
-  if (event.dash) {
+  if (event.dash && event.dash.length > 0) {
     for (let i = event.dash.length - 1; i >= 0; i--) {
       switch (event.dash[i]) {
         case 1080:

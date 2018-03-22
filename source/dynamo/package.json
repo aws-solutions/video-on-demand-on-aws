@@ -7,16 +7,14 @@
   "description": "cfn custom resources for vod workflow",
   "main": "na",
   "scripts": {
-    "test": "nyc mocha lib/*.spec.js"
+    "test": "mocha lib/*.spec.js"
   },
-  "dependencies": {
-    "aws-sdk": "*"
-  },
+  "dependencies": {},
   "devDependencies": {
+    "aws-sdk": "*",
     "aws-sdk-mock": "*",
     "chai": "*",
     "mocha": "*",
-    "nyc": "^11.2.1",
     "sinon": "*",
     "sinon-chai": "*"
   },

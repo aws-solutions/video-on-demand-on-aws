@@ -7,19 +7,18 @@
   "description": "ingest workflow for video on demand",
   "main": "na",
   "scripts": {
-    "test": "nyc mocha lib/*.spec.js"
+    "test": "mocha lib/*.spec.js"
   },
   "dependencies": {
-    "aws-sdk": "*",
     "moment": "^2.18.1",
     "uuid": "*",
     "xml2js": "*"
   },
   "devDependencies": {
+    "aws-sdk": "*",
     "aws-sdk-mock": "*",
     "chai": "*",
     "mocha": "*",
-    "nyc": "^11.2.1",
     "sinon": "*",
     "sinon-chai": "*"
   },

@@ -10,10 +10,10 @@
     "test": "mocha lib/*.spec.js"
   },
   "dependencies": {
-    "xml2js": "^0.4.17",
-    "aws-sdk": "*"
+    "xml2js": "^0.4.17"
   },
   "devDependencies": {
+    "aws-sdk": "*",
     "chai": "*",
     "sinon": "*",
     "sinon-chai": "*",
