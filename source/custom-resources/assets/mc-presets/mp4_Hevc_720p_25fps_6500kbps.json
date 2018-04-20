@@ -30,7 +30,7 @@
           "GopSize": 50,
           "Slices": 4,
           "GopBReference": "ENABLED",
-          "HrdBufferSize": 30000000,
+          "HrdBufferSize": 27500000,
           "SlowPal": "DISABLED",
           "ParDenominator": 1,
           "SpatialAdaptiveQuantization": "ENABLED",
