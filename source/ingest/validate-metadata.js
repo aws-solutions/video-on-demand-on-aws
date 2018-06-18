@@ -75,8 +75,9 @@ exports.handler = (event, context, callback) => {
         });
       }
       // check source metadata for subfolder
-      if (event.srcMetadataFile.indexOf('/') > -1) {
-        event.srcVideo = event.srcMetadataFile.split("/")[0] + '/' + event.srcVideo;
+      let lastSlashIndex = event.srcMetadataFile.lastIndexOf('/');
+      if (lastSlashIndex > -1) {
+        event.srcVideo = event.srcMetadataFile.slice(0,lastSlashIndex) + '/' + event.srcVideo;
       }
       // Check the metadata presets match the presets avaible in ETS.
       let presets = [];
@@ -85,7 +86,7 @@ exports.handler = (event, context, callback) => {
       if (event.mp4) presets = presets.concat(event.mp4);
       presets.forEach(function(p) {
         if (validePresets.indexOf(p) === -1) {
-          throw new Error(p + ' is not a valide preset, valide presets are: ' + validePresets);
+          throw new Error(p + ' is not a valid preset, valid presets are: ' + validePresets);
         }
       });
       callback(null, event);

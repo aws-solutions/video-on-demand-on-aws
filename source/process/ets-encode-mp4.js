@@ -30,9 +30,10 @@ exports.handler = (event, context, callback) => {
     // Define inputs/Outputs
     let key = event.srcVideo;
     let outkey;
-    if (key.indexOf('/') > -1) {
+    let lastSlashIndex = key.lastIndexOf('/');
+    if (lastSlashIndex > -1) {
       // remove folder and file extension
-      outkey = key.split("/")[1].split('.')[0];
+      outkey = key.slice(lastSlashIndex+1).split('.')[0];
     } else {
       outkey = key.split('.')[0];
     }
