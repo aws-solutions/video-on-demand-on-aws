@@ -44,9 +44,9 @@ exports.handler = (event, context, callback) => {
   // create output and validate lists output file
   // output filenames are 'source filename'+'preset'
   let promises = [];
-  let mp4Base = event.guid + '/mp4/' + event.srcVideo.split(".").slice(0, -1).join(".");
-  let hlsBase = event.guid + '/hls/' + event.srcVideo.split(".").slice(0, -1).join(".");
-  let dashBase = event.guid + '/dash/' + event.srcVideo.split(".").slice(0, -1).join(".");
+  let mp4Base = event.guid + '/mp4/' + event.srcVideo.split('/').pop().split(".").slice(0, -1).join(".");
+  let hlsBase = event.guid + '/hls/' + event.srcVideo.split('/').pop().split(".").slice(0, -1).join(".");
+  let dashBase = event.guid + '/dash/' + event.srcVideo.split('/').pop().split(".").slice(0, -1).join(".");
   let key;
 
   if (event.hls && event.hls.length > 0) {
