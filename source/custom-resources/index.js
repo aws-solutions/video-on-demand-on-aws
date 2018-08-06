@@ -20,7 +20,6 @@
 const response = require('cfn-response');
 const s3Config = require('./lib/s3.js');
 const cfConfig = require('./lib/cloudfront.js');
-const etsConfig = require('./lib/ets.js');
 const mcConfig = require('./lib/media-convert.js');
 const MetricsHelper = require('./lib/metrics-helper.js');
 const uuid = require('uuid');
@@ -69,31 +68,7 @@ exports.handler = function(event, context) {
             response.send(event, context, response.FAILED);
           });
         break;
-
-      //Elastic Transcoder
-      case 'Pipeline':
-        // Creates the MP4 and ABR Elastic Transcoder Pipelines
-        etsConfig.createPipeline(event)
-          .then(responseData => {
-            response.send(event, context, response.SUCCESS, responseData, responseData.PipelineId);
-          })
-          .catch(err => {
-            console.log(err, err.stack);
-            response.send(event, context, response.FAILED);
-          });
-        break;
-
-      case 'EtsPresets':
-        // Creates the MP4 and ABR Elastic Transcoder custom presets for MP4, HLS and DASH
-        etsConfig.createPreset()
-          .then(responseData => {
-            response.send(event, context, response.SUCCESS,responseData);
-          })
-          .catch(err => {
-            console.log(err, err.stack);
-            response.send(event, context, response.FAILED);
-          });
-        break;
+      
       //MediaConvert
       case 'MediaConvertPresets':
         // Creates custom presets
@@ -162,29 +137,6 @@ exports.handler = function(event, context) {
   if (event.RequestType === 'Delete') {
 
     switch (event.ResourceProperties.Resource) {
-
-      case 'Pipeline':
-        etsConfig.deletePipeline(event)
-          .then(() => {
-            response.send(event, context, response.SUCCESS);
-          })
-          .catch(err => {
-            console.log(err, err.stack);
-            response.send(event, context, response.FAILED);
-          });
-        break;
-
-      case 'EtsPresets':
-        etsConfig.deletePreset()
-          .then(res => {
-            console.log(res);
-            response.send(event, context, response.SUCCESS);
-          })
-          .catch(function(err) {
-            console.log(err, err.stack);
-            response.send(event, context, response.FAILED);
-          });
-        break;
 
       case ('SendMetric'):
         let metric = {

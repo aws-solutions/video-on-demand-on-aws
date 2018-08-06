@@ -16,20 +16,7 @@ exports.handler = (event, context, callback) => {
   let guid;
   let values;
 
-  if (event.Records) {
-    console.log('ETS SNS Error Mesage');
-    event = JSON.parse(event.Records[0].Sns.Message);
-    console.log('Processing ETS error');
-    consoleUrl = 'https://console.aws.amazon.com/elastictranscoder/home?region=' + process.env.AWS_REGION + '#jobs:pipelineId=' + event.pipelineId + ';ascendingOrder=false;numOfJobs=50';
-    guid = event.outputKeyPrefix.slice(0, -1);
-    values = {
-      ":st": "error",
-      ":ea": "encoding",
-      ":em": JSON.stringify(event, null, 2)
-    };
-
-
-  } else if (event.function) {
+  if (event.function) {
     console.log('Workflow Lambda Error');
     consoleUrl = 'https://console.aws.amazon.com/cloudwatch/home?region=' + process.env.AWS_REGION + '#logStream:group=/aws/lambda/' + event.function;
     guid = event.guid;

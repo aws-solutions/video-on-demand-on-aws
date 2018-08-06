@@ -1,5 +1,5 @@
 #!/bin/bash
-# curently works in the following regions due to the combination of ETS and
+# curently works in the following regions due to the
 # Step Functions
 #EU (Ireland)
 #Asia Pacific (Tokyo)
@@ -17,7 +17,6 @@ fi
 mkdir -p dist
 
 echo "copy cfn template to dist"
-cp video-on-demand-elastic-transcoder.yaml dist/video-on-demand-elastic-transcoder.template
 cp video-on-demand-media-convert.yaml dist/video-on-demand-media-convert.template
 
 
@@ -26,11 +25,9 @@ cp video-on-demand-media-convert.yaml dist/video-on-demand-media-convert.templat
 #     export BUCKET_PREFIX=solutions
 # fi
 bucket="s/CODEBUCKET/$1/g"
-sed -i -e $bucket dist/video-on-demand-elastic-transcoder.template
 sed -i -e $bucket dist/video-on-demand-media-convert.template
 
 bucket="s/CODEVERSION/$2/g"
-sed -i -e $bucket dist/video-on-demand-elastic-transcoder.template
 sed -i -e $bucket dist/video-on-demand-media-convert.template
 
 echo "zip and copy source files to dist/"
