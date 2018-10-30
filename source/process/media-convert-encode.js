@@ -15,6 +15,7 @@ const presets = {
   d270p:process.env.dash_270p,
   audio:process.env.dash_audio,
   // HLS SYSTEM PRESETS
+  h2160p:process.env.hls_2160p,
   h1080p:process.env.hls_1080p,
   h720p:process.env.hls_720p,
   h540p:process.env.hls_540p,
@@ -73,7 +74,7 @@ exports.handler = (event, context, callback) => {
       "Type": "HLS_GROUP_SETTINGS",
       "HlsGroupSettings": {
         "ManifestDurationFormat": "INTEGER",
-        "SegmentLength": 10,
+        "SegmentLength": 4,
         "TimedMetadataId3Period": 10,
         "CaptionLanguageSetting": "OMIT",
         "TimedMetadataId3Frame": "PRIV",
@@ -228,7 +229,15 @@ exports.handler = (event, context, callback) => {
   if (event.hls && event.hls.length > 0) {
     for (let i = event.hls.length - 1; i >= 0; i--) {
       switch (event.hls[i]) {
-        case 1080:
+        case 2160:
+          {
+            hlsOutputs.Outputs.push({
+              "Preset": presets.h2160p,
+              "NameModifier": "_2160p"
+            });
+            break;
+          }
+        case 1080:  
           {
             hlsOutputs.Outputs.push({
               "Preset": presets.h1080p,

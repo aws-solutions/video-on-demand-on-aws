@@ -14,8 +14,8 @@ describe('lambda', function() {
     guid: "12345678",
     srcBucket: "testBucket",
     srcVideo: "example.mpg",
-    mp4: [216,1080,720],
-    hls:[1080,720,540,360,270],
+    mp4: [2160,1080,720],
+    hls:[2160,1080,720,540,360,270],
     dash:[1080,720,540,360,270],
     frameCapture: true
   };
