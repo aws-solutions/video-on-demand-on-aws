@@ -39,30 +39,35 @@ exports.handler = (event, context, callback) => {
     outkey = outkey.replace(/\s/g, '-');
 
     // define presets
+    let out2160p = {
+      Key: outkey + '-hls-2160p',
+      PresetId: process.env.Hls_2160p,
+      SegmentDuration: "2.0",
+    };
     let out1080p = {
       Key: outkey + '-hls-1080p',
       PresetId: process.env.Hls_1080p,
-      SegmentDuration: "5.0",
+      SegmentDuration: "2.0",
     };
     let out720p = {
       Key: outkey + '-hls-720p',
       PresetId: process.env.Hls_720p,
-      SegmentDuration: "5.0"
+      SegmentDuration: "2.0"
     };
     let out540p = {
       Key: outkey + '-hls-540p',
       PresetId: process.env.Hls_540p,
-      SegmentDuration: "5.0"
+      SegmentDuration: "2.0"
     };
     let out360p = {
       Key: outkey + '-hls-360p',
       PresetId: process.env.Hls_360p,
-      SegmentDuration: "5.0"
+      SegmentDuration: "2.0"
     };
     let out270p = {
       Key: outkey + '-hls-270p',
       PresetId: process.env.Hls_270p,
-      SegmentDuration: "5.0"
+      SegmentDuration: "2.0"
     };
 
     let params = {
@@ -92,6 +97,11 @@ exports.handler = (event, context, callback) => {
     for (let i = event.hls.length - 1; i >= 0; i--) {
       switch (event.hls[i]) {
 
+        case 2160: {
+          params.Outputs.push(out2160p);
+          params.Playlists[0].OutputKeys.push(out2160p.Key);
+          break;
+        }
         case 1080: {
           params.Outputs.push(out1080p);
           params.Playlists[0].OutputKeys.push(out1080p.Key);

@@ -26,7 +26,13 @@ const presets = [
 	'./assets/mc-presets/dash_Avc_16x9_540p_29_97fps_3500kbps.json',
 	'./assets/mc-presets/dash_Avc_16x9_360p_29_97fps_1200kbps.json',
 	'./assets/mc-presets/dash_Avc_16x9_270p_14_99fps_400kbps.json',
-	'./assets/mc-presets/dash_AAC_128kps_48_audio.json'
+	'./assets/mc-presets/dash_AAC_128kps_48_audio.json',
+	'./assets/mc-presets/HLS_240.json',
+	'./assets/mc-presets/HLS_360.json',
+	'./assets/mc-presets/HLS_540.json',
+	'./assets/mc-presets/HLS_HD.json',
+	'./assets/mc-presets/HLS_FHD.json',
+	'./assets/mc-presets/HLS_UHD.json'
 ];
 
 let response;

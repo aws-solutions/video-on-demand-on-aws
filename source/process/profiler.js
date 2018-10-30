@@ -70,7 +70,10 @@ exports.handler = (event, context, callback) => {
 
       // Define Height Width for frameCapture thumbnails.
       if (event.frameCapture) {
-        if (event.srcHeight >= 1080) {
+        if (event.srcHeight >= 2160) {
+          event.frameHeight = 2160;
+          event.frameWdith = 3840;
+        } else if (event.srcHeight >= 1080) {
           event.frameHeight = 1080;
           event.frameWdith = 1920;
         } else if (event.srcHeight >= 720) {

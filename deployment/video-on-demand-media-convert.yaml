@@ -28,9 +28,9 @@ Parameters:
     Default: "2160,1080,720"
 
   HLS:
-    Description: Specify the Hls presets to be used, Allowed values are "1080,720,540,360,270" or leave blank to disable
+    Description: Specify the Hls presets to be used, Allowed values are "2160,1080,720,540,360,270" or leave blank to disable
     Type: String
-    Default: "1080,720,540,360,270"
+    Default: "2160,1080,720,540,360,270"
 
   DASH:
     Description: Specify the Dash presets to be used, Allowed values are "1080,720,540,360,270" or leave blank to disable
@@ -787,11 +787,12 @@ Resources:
           dash_360p: !Sub ${AWS::StackName}-dash_360p
           dash_270p: !Sub ${AWS::StackName}-dash_270p
           dash_audio: !Sub ${AWS::StackName}-dash_audio
-          hls_1080p: System-Avc_16x9_1080p_29_97fps_8500kbps
-          hls_720p: System-Avc_16x9_720p_29_97fps_5000kbps
-          hls_540p: System-Avc_16x9_540p_29_97fps_3500kbps
-          hls_360p: System-Avc_16x9_360p_29_97fps_1200kbps
-          hls_270p: System-Avc_16x9_270p_14_99fps_400kbps
+          hls_2160p: !Sub ${AWS::StackName}-HLS_UHD
+          hls_1080p: !Sub ${AWS::StackName}-HLS_FHD
+          hls_720p: !Sub ${AWS::StackName}-HLS_HD
+          hls_540p: !Sub ${AWS::StackName}-HLS_540
+          hls_360p: !Sub ${AWS::StackName}-HLS_360
+          hls_270p: !Sub ${AWS::StackName}-HLS_270
 
   GetJobDetails:
     Type: AWS::Lambda::Function
