@@ -10,7 +10,7 @@
 # Check to see if input has been provided:
 if [ -z "$1" ] || [ -z "$2" ]; then
     echo "Please provide the base source bucket name and version where the lambda code will eventually reside."
-    echo "For example: ./build-s3-dist.sh solutions v1.0.0"
+    echo "For example: ./build.sh solutions v1.0.0"
     exit 1
 fi
 
@@ -66,6 +66,7 @@ zip -q -r9 ../../deployment/dist/sns.zip *
 echo "compile mediainfo, zip and copy to dist/"
 cd ../mediainfo
 npm install --production
+mkdir -p bin
 cd bin
 wget http://mediaarea.net/download/binary/mediainfo/0.7.84/MediaInfo_CLI_0.7.84_GNU_FromSource.tar.xz
 tar xf MediaInfo_CLI_0.7.84_GNU_FromSource.tar.xz
