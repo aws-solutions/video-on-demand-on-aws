@@ -46,15 +46,15 @@ sudo yum groupinstall 'Development Tools' -y
 sudo yum install libcurl-devel -y
 
 cd deployment
-./build-s3-dist.sh source-bucket-base-name
+./build.sh source-bucket-base-name version
 ```
 source-bucket-base-name should be the base name for the S3 bucket location where the template will source the Lambda code from.
 The template will append '-[region_name]' to this value.
-For example: ./build-s3-dist.sh solutions
+For example: ./build.sh solutions
 The template will then expect the source code to be located in the solutions-[region_name] bucket
 
 ## CF template and Lambda functions
-Located in deployment/dist after running build-s3-dist.sh
+Located in deployment/dist after running build.sh
 
 
 ***

@@ -8,7 +8,7 @@
 # Asia Pacific (Sydney)
 
 # Check to see if input has been provided:
-if [ -z "$1" ] || [ -z "$2" ]; then
+if [ "$#" -lt 2 ]; then
     echo "Please provide the base source bucket name and version where the lambda code will eventually reside."
     echo "For example: ./build.sh solutions v1.0.0"
     exit 1
@@ -17,21 +17,10 @@ fi
 mkdir -p dist
 
 echo "copy cfn template to dist"
-cp video-on-demand-elastic-transcoder.yaml dist/video-on-demand-elastic-transcoder.template
-cp video-on-demand-media-convert.yaml dist/video-on-demand-media-convert.template
+cp template.yaml dist/packaged.yaml
 
-
-# export BUCKET_PREFIX=solutions-test
-# if [ $1 = "solutions-master" ]; then
-#     export BUCKET_PREFIX=solutions
-# fi
-bucket="s/CODEBUCKET/$1/g"
-sed -i -e $bucket dist/video-on-demand-elastic-transcoder.template
-sed -i -e $bucket dist/video-on-demand-media-convert.template
-
-bucket="s/CODEVERSION/$2/g"
-sed -i -e $bucket dist/video-on-demand-elastic-transcoder.template
-sed -i -e $bucket dist/video-on-demand-media-convert.template
+sed -i -e "s/CODEBUCKET/$1/g" dist/packaged.yaml
+sed -i -e "s/CODEVERSION/$2/g" dist/packaged.yaml
 
 echo "zip and copy source files to dist/"
 find ../source -name "node_modules" -exec rm -rf "{}" \;
@@ -68,8 +57,8 @@ cd ../mediainfo
 npm install --production
 mkdir -p bin
 cd bin
-wget http://mediaarea.net/download/binary/mediainfo/0.7.84/MediaInfo_CLI_0.7.84_GNU_FromSource.tar.xz
-tar xf MediaInfo_CLI_0.7.84_GNU_FromSource.tar.xz
+wget https://mediaarea.net/download/binary/mediainfo/0.7.84/MediaInfo_CLI_0.7.84_GNU_FromSource.tar.gz
+tar xvzf MediaInfo_CLI_0.7.84_GNU_FromSource.tar.gz
 cd MediaInfo_CLI_GNU_FromSource/
 ./CLI_Compile.sh --with-libcurl
 mv ./MediaInfo/Project/GNU/CLI/mediainfo ../
