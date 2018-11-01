@@ -119,7 +119,7 @@ exports.handler = (event, context, callback) => {
     },
     "Outputs":[
       {
-          "NameModifier": "_mp4_tumb",
+          "NameModifier": "_mp4_thumb",
           "ContainerSettings": {
               "Container": "RAW"
           },
@@ -159,7 +159,7 @@ exports.handler = (event, context, callback) => {
     },
     "Outputs":[
       {
-          "NameModifier": "_abr_tumb",
+          "NameModifier": "_abr_thumb",
           "ContainerSettings": {
               "Container": "RAW"
           },
