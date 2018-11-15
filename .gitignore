@@ -1,0 +1,7 @@
+**/dist
+**/open-source
+**/*.zip
+**/node_modules
+**/.DS_Store
+**/test_files
+**/package-lock.json

@@ -1,0 +1,31 @@
+{
+  "name": "vod-deployment",
+  "version": "1.0.0",
+  "engines": {
+    "node": "^6.10"
+  },
+  "description": "cfn custom resources for vod workflow",
+  "main": "na",
+  "scripts": {
+    "test": "mocha lib/**/*.spec.js"
+  },
+  "dependencies": {
+    "axios": "^0.18.0",
+    "moment": "^2.18.1",
+    "uuid": "*"
+  },
+  "devDependencies": {
+    "aws-sdk": "*",
+    "aws-sdk-mock": "*",
+    "mocha": "*",
+    "chai": "*",
+    "axios-mock-adapter": "*"
+  },
+  "repository": {
+    "type": "git",
+    "url": "na"
+  },
+  "author": "",
+  "license": "Amazon Software License",
+  "readme": "../../ReadMe.md"
+}

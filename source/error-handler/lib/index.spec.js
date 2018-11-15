@@ -1,7 +1,3 @@
-//AWS_REGION='us-east-1' mocha ingest/ingest-sns.spec.js
-'use strict';
-
-let assert = require('chai').assert;
 let expect = require('chai').expect;
 var path = require('path');
 let AWS = require('aws-sdk-mock');
@@ -9,64 +5,64 @@ AWS.setSDK(path.resolve('./node_modules/aws-sdk'));
 
 let lambda = require('../index.js');
 
-describe('lambda', function() {
-    let _event = {
-        guid:"12345678",
-        function:"test",
-        error:"example error"
-    };
+describe('#ERROR HANDLER::', () => {
+  let _lambda = {
+    guid: "1234",
+    error: "FROM LAMBDA",
+    function:"workflow",
+  };
 
-    describe('#handler', function() {
+  let _encode = {
+    guid: "12345678",
+    error: "FROM MEDIACONVERT",
+    detial:{
+      userMetadata:{
+        guid:'abcdefg'
+      }
+    }
+  };
 
-        beforeEach(function() {
-        });
+  afterEach(() => {
+    AWS.restore('DynamoDB.DocumentClient');
+    AWS.restore('SNS');
+  });
 
-        afterEach(function() {
-            AWS.restore('DynamoDB.DocumentClient');
-            AWS.restore('SNS');
-        });
+  it('should return "FROM LAMBDA" processing a lambda error', async () => {
 
-        it('should return "success" when db put success', function(done) {
+    AWS.mock('DynamoDB.DocumentClient', 'update', Promise.resolve());
+    AWS.mock('SNS', 'publish', Promise.resolve());
 
-            AWS.mock('DynamoDB.DocumentClient', 'update', Promise.resolve('sucess'));
+    let response = await lambda.handler(_lambda)
+		expect(response.error).to.equal('FROM LAMBDA');
+	});
 
-            AWS.mock('SNS', 'publish', Promise.resolve('sucess'));
+  it('should return "FROM MEDIACONVERT" processing a mediaconvert error', async () => {
 
-            lambda.handler(_event, null, function(err, data) {
-                if (err) done(err);
-                else {
-                    assert.equal(data, 'sucess');
-                    done();
-                }
-            });
-        });
-        it('should return "db error" when db put fails', function(done) {
+    AWS.mock('DynamoDB.DocumentClient', 'update', Promise.resolve());
+    AWS.mock('SNS', 'publish', Promise.resolve());
 
-            AWS.mock('DynamoDB.DocumentClient', 'update', Promise.reject('db error'))
+    let response = await lambda.handler(_encode)
+    expect(response.error).to.equal('FROM MEDIACONVERT');
+  });
 
-            lambda.handler(_event, null, function(err, data) {
-                if (err) {
-                    expect(err).to.equal('db error');
-                    done();
-                } else {
-                    done('invalid failure for negative test');
-                }
-            });
-        });
-        it('should return "sns error" when db put fails', function(done) {
+  it('should return "DB_ERROR" processing a lambda error', async () => {
 
-            AWS.mock('DynamoDB.DocumentClient', 'update', Promise.resolve('sucess'));
+    AWS.mock('DynamoDB.DocumentClient', 'update', Promise.reject('DB_ERROR'));
+    AWS.mock('SNS', 'publish', Promise.resolve());
 
-            AWS.mock('SNS', 'publish', Promise.reject('sns error'));
+    await lambda.handler(_lambda).catch(err => {
+      expect(err).to.equal('DB_ERROR');
+    })
+  });
 
-            lambda.handler(_event, null, function(err, data) {
-                if (err) {
-                    expect(err).to.equal('sns error');
-                    done();
-                } else {
-                    done('invalid failure for negative test');
-                }
-            });
-        });
-    });
+  it('should return "SNS_ERROR" processing a lambda error', async () => {
+
+    AWS.mock('DynamoDB.DocumentClient', 'update', Promise.resolve());
+    AWS.mock('SNS', 'publish', Promise.reject('SNS_ERROR'));
+
+    await lambda.handler(_encode).catch(err => {
+      expect(err).to.equal('SNS_ERROR');
+    })
+  });
+
 });

@@ -1,6 +1,7 @@
-Video on Demand on AWS
+Live Streaming on AWS
 
-Copyright 2016 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+
 Licensed under the Amazon Software License (the "License"). You may not use this file except
 in compliance with the License. A copy of the License is located at http://aws.amazon.com/asl/
 or in the "license" file accompanying this file. This file is distributed on an "AS IS" BASIS,
@@ -16,8 +17,11 @@ AWS SDK under the Apache License Version 2.0
 
 Stanford Javascript Crypto Library under the BSD license or under the GNU GPL, version 2.0
 Moment.js under the Massachusetts Institute of Technology (MIT) license
-Cfn-response.js under the Apache License Version 2.0
 uuid.js under the Massachusetts Institute of Technology (MIT) license
-xml2js under the Massachusetts Institute of Technology (MIT) license
+axios under the Massachusetts Institute of Technology (MIT) license
+axios-mock-adapter under the Massachusetts Institute of Technology (MIT) license
+chai under the Massachusetts Institute of Technology (MIT) license
+mocha under the Massachusetts Institute of Technology (MIT) license
+aws-sdk-mock under the Massachusetts Institute of Technology (MIT) license
 
 The licenses for these third party components are included in LICENSE.txt
