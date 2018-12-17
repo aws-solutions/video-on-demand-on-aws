@@ -12,7 +12,7 @@
  *                                                                                 *
  * @author Solution Builders
  * @function inputValidate
- * @description tiggered by s3 putObject event for tthe source video file or source metadata
+ * @description tiggered by s3 putObject event for the source video file or source metadata
  * file. build a json object for the workflow configuration. Defualt settings are passed in
  * as enviroment variables, metadata setings (passed in as a json file in s3) override the
  * defaults.
