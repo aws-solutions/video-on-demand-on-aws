@@ -26,7 +26,7 @@ Parameters:
   FrameCapture:
     Description: Create FrameCapture for all MediaConvert outputs
     Type: String
-    Default: No
+    Default: Yes
     AllowedValues:
       - Yes
       - No
@@ -278,29 +278,9 @@ Resources:
                 Resource:
                   - !Join ["", ["arn:aws:execute-api:", Ref: "AWS::Region", ":", Ref: "AWS::AccountId", ":*"]]
 
-  CloudWatchEventRuleRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          -
-            Effect: Allow
-            Principal:
-              Service: events.amazonaws.com
-            Action:
-              - sts:AssumeRole
-      Policies:
-        -
-          PolicyName: !Sub "${AWS::StackName}-event-invoke-role"
-          PolicyDocument:
-            Statement:
-              -
-                Effect: Allow
-                Action:
-                  - lambda:InvokeFunction
-                Resource:
-                  - !Sub ${StepFunctions.Arn}"
+## FEATURE SO-VOD-164:: remvoed cw role as not required with CW Lambda permisssion
+## line 294 and 302
+
 # Permissions & Policies
 
   S3LambdaInvokeVideo:
@@ -854,20 +834,30 @@ Outputs:
   DynamoDBTable:
     Description: DynamoDB Table
     Value: !Ref DynamoDBTable
+    Export:
+      Name: !Join [ ":", [ !Ref "AWS::StackName", DynamoDBTable ] ]
 
   Source:
     Description: Source Bucket
     Value: !Ref Source
+    Export:
+      Name: !Join [ ":", [ !Ref "AWS::StackName", Source ] ]
 
   Destination:
     Description: Destination Bucket
     Value: !Ref Destination
+    Export:
+      Name: !Join [ ":", [ !Ref "AWS::StackName", Destination ] ]
 
   CloudFront:
     Description: CloudFront Domain Name
     Value: !GetAtt CloudFront.DomainName
+    Export:
+      Name: !Join [ ":", [ !Ref "AWS::StackName", CloudFront ] ]
 
   UUID:
     Condition: Metrics
     Description: AnonymousMetric UUID
     Value: !GetAtt Uuid.UUID
+    Export:
+      Name: !Join [ ":", [ !Ref "AWS::StackName", UUID ] ]

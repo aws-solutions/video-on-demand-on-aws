@@ -37,7 +37,7 @@ exports.handler = async (event) => {
             Value: event.guid
           },
           {
-            Key: process.env.AWS_LAMBDA_FUNCTION_NAME.slice(0, -8),
+            Key: process.env.AWS_LAMBDA_FUNCTION_NAME.slice(0, -15),
             Value: 'archive'
           }
         ]

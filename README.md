@@ -70,8 +70,8 @@ The only required field for the metadata file is the srcVideo and the workflow w
     "destination":"string",
     "CloudFront":"string",
     "MediaConvert_Template_2160p":"string",
-    "MediaConvert_Template_2160p":"string",
-    "MediaConvert_Template_2160p":"string",
+    "MediaConvert_Template_1080p":"string",
+    "MediaConvert_Template_720p":"string",
     "JobTemplate":"custom-job-template"
 }
 ```
