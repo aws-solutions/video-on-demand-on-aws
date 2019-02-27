@@ -139,11 +139,8 @@ Example:
   cd deployment/
   ./build-s3-dist.sh bucket 1.01
 ```
- This will deploy the source code to:
-```
-  s3://bucket-us-east-1/video-on-demand-on-aws/1.01/.
-```
-And update the CloudFormation template mappings:
+ This update the CloudFormation template mappings:
+
 ```
   SourceCode:
     General:
@@ -157,12 +154,28 @@ Use the AWS CLI to sync the lambda code and demo console files to amazon S3:
 
  ```
    cd deployment/
-   aws s3 sync .dist/ s3://bucket-us-east-1/video-on-demand-on-aws/1.01/.
+   aws s3 sync dist/ s3://bucket-us-east-1/video-on-demand-on-aws/1.01
  ```
 
 ### 4. Launch the CloudFormation template.
 
 Launch the updated CloudFormation template from ```deployment/dist/``` folder.
+
+To deploy the stack for the first time with AWS CLI, modify the command below with you preferred settings.
+
+  ```
+  cd dist/
+  aws cloudformation deploy --template-file video-on-demand-on-aws.template --stack-name video-on-demand-on-aws --parameter-overrides AdminEmail=example@example.com WorkflowTrigger=MetadataFile Glacier=true FrameCapture=true --capabilities CAPABILITY_IAM
+
+  ```
+
+To deploy a new version, complete step 2 again with a new version number and run
+
+  ```
+  aws cloudformation deploy --template-file video-on-demand-on-aws.template --capabilities CAPABILITY_IAM
+
+  ```
+
 
 
 ## Additional Resources
