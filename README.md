@@ -169,7 +169,7 @@ To deploy the stack for the first time with AWS CLI, modify the command below wi
 
   ```
 
-To deploy a new version, complete step 2 again with a new version number and run
+To deploy a new version, after completing steps 2 and 3 again with a new version, run the deploy again. You only have to provide `--parameter-overrides` when you create the stack for the first time.
 
   ```
   aws cloudformation deploy --template-file video-on-demand-on-aws.template --capabilities CAPABILITY_IAM
