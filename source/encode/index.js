@@ -120,7 +120,8 @@ exports.handler = async (event) => {
           "FragmentLength": 3,
           "Destination": outputPath + '/cmaf/',
         }
-      }
+      },
+      "Outputs": []
     };
 
     let mss = {
