@@ -84,7 +84,8 @@ exports.handler = async (event) => {
         if (!metadataFile.srcVideo) throw new Error('srcVideo is not defined in metadata::',metadataFile);
 
         Object.keys(metadataFile).forEach((key) => {
-    			data[key] = metadataFile[key];
+          let normalizedKey = key.charAt(0).toLowerCase() + key.substr(1);
+    			data[normalizedKey] = metadataFile[key];
     		});
     		//check source file is ccessible in s3
     		params = {
