@@ -72,26 +72,26 @@ exports.handler = async (event) => {
         console.log('Validating Metadata file::');
         let key= decodeURIComponent(event.Records[0].s3.object.key.replace(/\+/g, " "));
         data.srcMetadataFile = key;
-    		//download json metadata file from s3::
-    		params = {
-    			Bucket: data.srcBucket,
-    			Key: key
-    		};
-    		let metadata = await s3.getObject(params).promise();
-    		let metadataFile = JSON.parse(metadata.Body);
+        //download json metadata file from s3::
+        params = {
+          Bucket: data.srcBucket,
+          Key: key
+        };
+        let metadata = await s3.getObject(params).promise();
+        let metadataFile = JSON.parse(metadata.Body);
 
         //Check metadata for srcVideo::
         if (!metadataFile.srcVideo) throw new Error('srcVideo is not defined in metadata::',metadataFile);
 
         Object.keys(metadataFile).forEach((key) => {
           let normalizedKey = key.charAt(0).toLowerCase() + key.substr(1);
-    			data[normalizedKey] = metadataFile[key];
-    		});
-    		//check source file is ccessible in s3
-    		params = {
-    			Bucket: data.srcBucket,
-    			Key: data.srcVideo
-    		};
+          data[normalizedKey] = metadataFile[key];
+        });
+        //check source file is ccessible in s3
+        params = {
+          Bucket: data.srcBucket,
+          Key: data.srcVideo
+        };
     		await s3.headObject(params).promise();
         break;
 
