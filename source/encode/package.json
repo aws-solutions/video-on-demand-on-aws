@@ -9,9 +9,10 @@
   "scripts": {
     "test": "mocha lib/*.spec.js"
   },
-  "dependencies": {},
+  "dependencies": {
+    "aws-sdk": "^2.414.0"
+  },
   "devDependencies": {
-    "aws-sdk": "*",
     "aws-sdk-mock": "*",
     "chai": "*",
     "mocha": "*",

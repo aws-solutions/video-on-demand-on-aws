@@ -72,7 +72,8 @@ The only required field for the metadata file is the srcVideo and the workflow w
     "MediaConvert_Template_2160p":"string",
     "MediaConvert_Template_1080p":"string",
     "MediaConvert_Template_720p":"string",
-    "JobTemplate":"custom-job-template"
+    "JobTemplate":"custom-job-template",
+    "InputRotate": "DEGREE_0"
 }
 ```
 

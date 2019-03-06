@@ -38,6 +38,7 @@ exports.handler = async (event) => {
       startTime: moment().utc().format('YYYY-MM-DD HH:mm.S'),
       workflowTrigger:event.workflowTrigger,
       workflowStatus: 'Ingest',
+      inputRotate: 'DEGREE_0',
       workflowName:process.env.WorkflowName,
       srcBucket: process.env.Source,
       destBucket: process.env.Destination,
