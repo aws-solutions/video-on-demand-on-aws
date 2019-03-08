@@ -69,15 +69,14 @@ exports.handler = async (event) => {
 		//Send SNS notification
 		let msg = {
 			workflowStatus: 'error',
-			guid: event.guid,
-			srcVideo: event.srcVideo
+			guid: guid
 		};
-		let params = {
+		let snsParams = {
 			Message: JSON.stringify(msg, null, 2),
 			Subject: ' workflow error: ' + guid,
 			TargetArn: process.env.SnsTopic
 		};
-		await sns.publish(params).promise();
+		await sns.publish(snsParams).promise();
 	} catch (err) {
 		console.log(err);
 		throw err;
