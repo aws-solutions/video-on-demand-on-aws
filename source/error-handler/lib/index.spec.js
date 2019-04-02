@@ -1,3 +1,18 @@
+/*******************************************************************************
+* Copyright 2019 Amazon.com, Inc. and its affiliates. All Rights Reserved.
+*
+* Licensed under the Amazon Software License (the "License").
+* You may not use this file except in compliance with the License.
+* A copy of the License is located at
+*
+*   http://aws.amazon.com/asl/
+*
+* or in the "license" file accompanying this file. This file is distributed
+* on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+* express or implied. See the License for the specific language governing
+* permissions and limitations under the License.
+*
+********************************************************************************/
 let expect = require('chai').expect;
 var path = require('path');
 let AWS = require('aws-sdk-mock');
@@ -8,14 +23,16 @@ let lambda = require('../index.js');
 describe('#ERROR HANDLER::', () => {
   let _lambda = {
     guid: "1234",
-    error: "FROM LAMBDA",
+    error: "LAMBDA",
     function:"workflow",
   };
 
   let _encode = {
     guid: "12345678",
-    error: "FROM MEDIACONVERT",
-    detial:{
+    error: "MEDIACONVERT",
+    errorMessage:'Encoding Error',
+    detail:{
+      jobId:'1111111',
       userMetadata:{
         guid:'abcdefg'
       }
@@ -33,7 +50,7 @@ describe('#ERROR HANDLER::', () => {
     AWS.mock('SNS', 'publish', Promise.resolve());
 
     let response = await lambda.handler(_lambda)
-		expect(response.error).to.equal('FROM LAMBDA');
+		expect(response.error).to.equal('LAMBDA');
 	});
 
   it('should return "FROM MEDIACONVERT" processing a mediaconvert error', async () => {
@@ -42,7 +59,7 @@ describe('#ERROR HANDLER::', () => {
     AWS.mock('SNS', 'publish', Promise.resolve());
 
     let response = await lambda.handler(_encode)
-    expect(response.error).to.equal('FROM MEDIACONVERT');
+    expect(response.error).to.equal('MEDIACONVERT');
   });
 
   it('should return "DB_ERROR" processing a lambda error', async () => {

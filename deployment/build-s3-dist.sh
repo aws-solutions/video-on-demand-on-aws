@@ -34,6 +34,7 @@ for folder in */ ; do
 		echo "==creating deployment package ${PWD##*/}"
     rm -rf node_modules/
     npm install --production
+    rm package-lock.json
     zip -q -r9 ../../deployment/dist/${PWD##*/}.zip *
     cd ../
 done

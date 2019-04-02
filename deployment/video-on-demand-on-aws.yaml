@@ -26,31 +26,40 @@ Parameters:
   FrameCapture:
     Description: Create FrameCapture for all MediaConvert outputs
     Type: String
+    Default: No
+    AllowedValues:
+      - Yes
+      - No
+
+  QVBR:
+    Description: Enable Quality Defined Variable Bitrate Encoding (Recomended)
+    Type: String
     Default: Yes
     AllowedValues:
       - Yes
       - No
 
 Metadata:
-    AWS::CloudFormation::Interface:
-        ParameterGroups:
-            -
-              Label:
-                  default: Workflow Configuration
-              Parameters:
-                  - AdminEmail
-                  - WorkflowTrigger
-                  - Glacier
-                  - FrameCapture
-        ParameterLabels:
-          AdminEmail:
-            default: Administrator email address
-          Glacier:
-            default: Archive source content
-          WorkflowTrigger:
-            default: Workflow trigger
-          FrameCapture:
-            default: Enable Frame Capture
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+        -
+          Parameters:
+              - AdminEmail
+              - WorkflowTrigger
+              - Glacier
+              - FrameCapture
+              - QVBR
+    ParameterLabels:
+      AdminEmail:
+        default: Administrator email address
+      Glacier:
+        default: Archive source content
+      WorkflowTrigger:
+        default: Workflow trigger
+      FrameCapture:
+        default: Enable Frame Capture
+      QVBR:
+        default: Enable QVBR
 
 Mappings:
   SourceCode:
@@ -65,6 +74,7 @@ Mappings:
 Conditions:
   Metrics: !Equals [ !FindInMap [AnonymousData,SendAnonymousData,Data], Yes ]
   Archive: !Equals [ !Ref Glacier, Yes ]
+  EnableQvbr: !Equals [!Ref QVBR, Yes]
 
 Resources:
 
@@ -127,7 +137,10 @@ Resources:
                 Action:
                   - mediaconvert:CreatePreset
                   - mediaconvert:CreateJobTemplate
+                  - mediaconvert:DeletePreset
+                  - mediaconvert:DeleteJobTemplate
                   - mediaconvert:DescribeEndpoints
+                  - mediaconvert:ListJobTemplates
                 Resource:
                   - !Join ["", ["arn:aws:mediaconvert:", Ref: "AWS::Region", ":", Ref: "AWS::AccountId", ":*"]]
 
@@ -501,6 +514,7 @@ Resources:
       Resource: "MediaConvertTemplates"
       StackName: !Sub ${AWS::StackName}
       EndPoint: !GetAtt MediaConvertEndPoint.EndpointUrl
+      Qvbr: !Ref QVBR
 
 #Custom Resource Lambda Function
   CustomResource:
@@ -559,9 +573,9 @@ Resources:
           Destination: !Ref Destination
           FrameCapture: !Ref FrameCapture
           ArchiveSource: !Ref Glacier
-          MediaConvert_Template_2160p: !Sub ${AWS::StackName}_Ott_2160p_Avc_Aac_16x9
-          MediaConvert_Template_1080p: !Sub ${AWS::StackName}_Ott_1080p_Avc_Aac_16x9
-          MediaConvert_Template_720p: !Sub ${AWS::StackName}_Ott_720p_Avc_Aac_16x9
+          MediaConvert_Template_2160p: !Join ["", [ Ref: "AWS::StackName", !If ["EnableQvbr", "_Ott_2160p_Avc_Aac_16x9_qvbr", "_Ott_2160p_Avc_Aac_16x9"]]]
+          MediaConvert_Template_1080p: !Join ["", [ Ref: "AWS::StackName", !If ["EnableQvbr", "_Ott_1080p_Avc_Aac_16x9_qvbr", "_Ott_1080p_Avc_Aac_16x9"]]]
+          MediaConvert_Template_720p: !Join ["", [ Ref: "AWS::StackName", !If ["EnableQvbr", "_Ott_720p_Avc_Aac_16x9_qvbr", "_Ott_720p_Avc_Aac_16x9"]]]
           CloudFront: !GetAtt CloudFront.DomainName
 
   Mediainfo:
@@ -631,6 +645,7 @@ Resources:
           ErrorHandler: !GetAtt ErrorHandler.Arn
           MediaConvertRole: !GetAtt MediaConvertRole.Arn
           EndPoint: !GetAtt MediaConvertEndPoint.EndpointUrl
+          Qvbr: !Ref QVBR
 
   OutputValidate:
     Type: AWS::Lambda::Function
@@ -828,6 +843,7 @@ Resources:
       WorkflowTrigger: !Ref WorkflowTrigger
       Glacier: !Ref Glacier
       FrameCapture: !Ref FrameCapture
+      Qvbr: !Ref QVBR
       Resource: "AnonymousMetric"
 
 Outputs:

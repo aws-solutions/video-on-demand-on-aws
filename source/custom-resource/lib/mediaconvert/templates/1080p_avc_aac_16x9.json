@@ -1,6 +1,6 @@
 {
 	"Category": "VOD",
-	"Description": "video on demand on aws solution template for 1080p MP4, HLS and DASH",
+	"Description": "video on demand on aws",
 	"Name": "_Ott_1080p_Avc_Aac_16x9",
 	"Settings": {
 		"AdAvailOffset": 0,

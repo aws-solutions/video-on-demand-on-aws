@@ -1,48 +1,19 @@
-// ---------------------------------------------------------------------------
-// Elemental Technologies Inc. Company Confidential Strictly Private
-//
-// ---------------------------------------------------------------------------
-//                           COPYRIGHT NOTICE
-// ---------------------------------------------------------------------------
-// Copyright 2016 (c) Elemental Technologies Inc.
-//
-// Elemental Technologies owns the sole copyright to this software. Under
-// international copyright laws you (1) may not make a copy of this software
-// except for the purposes of maintaining a single archive copy, (2) may not
-// derive works herefrom, (3) may not distribute this work to others. These
-// rights are provided for information clarification, other restrictions of
-// rights may apply as well.
-//
-// This is an unpublished work.
-// ---------------------------------------------------------------------------
-//                              WARRANTY
-// ---------------------------------------------------------------------------
-// Elemental Technologies Inc. MAKES NO WARRANTY OF ANY KIND WITH REGARD TO THE
-// USE OF THIS SOFTWARE, EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO,
-// THE IMPLIED WARRANTIES OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR
-// PURPOSE.
-// ---------------------------------------------------------------------------
-
-// ============================================================================
-//
-//                           Program Description
-//
-// ============================================================================
-//
-// Name: mediaInfo.js
-// Desc: MediaInfo class
-//
-//
-
-/* eslint-disable strict */
-/* eslint-disable no-param-reassign */
-/* eslint-disable no-underscore-dangle */
-/* eslint-disable import/no-extraneous-dependencies */
-/* eslint-disable import/no-unresolved */
-/* eslint-disable no-console */
-
+/*******************************************************************************
+* Copyright 2019 Amazon.com, Inc. and its affiliates. All Rights Reserved.
+*
+* Licensed under the Amazon Software License (the "License").
+* You may not use this file except in compliance with the License.
+* A copy of the License is located at
+*
+*   http://aws.amazon.com/asl/
+*
+* or in the "license" file accompanying this file. This file is distributed
+* on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+* express or implied. See the License for the specific language governing
+* permissions and limitations under the License.
+*
+********************************************************************************/
 'use strict';
-
 const OS = require('os');
 const FS = require('fs');
 const URL = require('url');

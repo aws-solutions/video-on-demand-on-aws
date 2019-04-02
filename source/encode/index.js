@@ -1,27 +1,18 @@
-/***********************************************************************************************
- *  Copyright 2016 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- *
- *  Licensed under the Amazon Software License (the "License"). You may not use
- *  this file except in compliance with the License. A copy of the License is located at
- *
- *      http://aws.amazon.com/asl/
- *
- *  or in the "license" file accompanying this file. This file is distributed on an "AS IS"
- *  BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, express or implied. See the License
- *  for the specific language governing permissions and limitations under the License.
- *                                                                                 *
- * @author Solution Builders
- * @function encode
- * @description tag the source video in s3 with guid and archive to enable a lifecycle
- * policy in s3 to move the file to glaicer
- *  @param {string} event.jobTemplate encoding jobtemplate
- *  @param {string} event.guid a unique identifier for the source file
- *  @param {string} event.srcVideo the path and filename of the source video in s3
- *  @param {string} event.srcBucket Source Bucket
- *  @param {string} event.destBucket Destination Bucket
- *  @param {boolean} event.frameCapture enable/disable framecapture
- *
- *********************************************************************************************/
+/*******************************************************************************
+* Copyright 2019 Amazon.com, Inc. and its affiliates. All Rights Reserved.
+*
+* Licensed under the Amazon Software License (the "License").
+* You may not use this file except in compliance with the License.
+* A copy of the License is located at
+*
+*   http://aws.amazon.com/asl/
+*
+* or in the "license" file accompanying this file. This file is distributed
+* on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+* express or implied. See the License for the specific language governing
+* permissions and limitations under the License.
+*
+********************************************************************************/
 
 const AWS = require('aws-sdk');
 const error = require('./lib/error.js');
@@ -44,7 +35,8 @@ exports.handler = async (event) => {
       "Role": process.env.MediaConvertRole,
       "UserMetadata": {
         "guid": event.guid,
-        "workflow": event.workflowName
+        "workflow": event.workflowName,
+        "Qvbr": process.env.Qvbr
       },
       "Settings": {
         "Inputs": [{
@@ -120,7 +112,8 @@ exports.handler = async (event) => {
           "FragmentLength": 3,
           "Destination": outputPath + '/cmaf/',
         }
-      }
+      },
+      "Outputs": []
     };
 
     let mss = {
@@ -132,7 +125,8 @@ exports.handler = async (event) => {
           "ManifestEncoding": "UTF8",
           "Destination": outputPath + '/mss/',
         }
-      }
+      },
+      "Outputs": []
     };
 
     let frameCapture = {

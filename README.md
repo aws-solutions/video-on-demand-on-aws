@@ -6,10 +6,12 @@ How to implement a video-on-demand workflow on AWS leveraging AWS Step Functions
 ## On this Page
 - [Architecture Overview](#architecture-overview)
 - [Deployment](#deployment)
+- [Deployment Update](#update)
 - [Workflow Configuration](#workflow-configuration)
 - [Source Metadata Option](#source-metadata-option)
 - [Source Code](#source-code)
 - [Encoding Templates](#encoding-profiles)
+- [QVBR Mode](#qvbr-mode)
 - [Creating a custom Build](#creating-a-custom-build)
 - [Additional Resources](#additional-resources)
 
@@ -22,9 +24,18 @@ How to implement a video-on-demand workflow on AWS leveraging AWS Step Functions
 ## Deployment
 The solution is deployed using a CloudFormation template with a lambda backed custom resource. For details on deploying the solution please see the details on the solution home page: [Video on Demand on AWS](https://aws.amazon.com/answers/media-entertainment/video-on-demand-on-aws/)
 
+## Deployment Update
+Version 4.2.0 introduces new MediaConvert Encoding templates and Presets that leverage the new QVBR support in Elemental MediaConvert (see below). To update an existing deployment to use these new setting you can perform a CloudFormation Stack Update with the **QVBR** Parameter set to **true**.
+
+Please note:
+* The update option is only valid for version 4+ of the solution.
+* The QVBR, Archive Source and Frame Capture Parameters can all be changed by doing a Stack update, the workflow Trigger must be updated manually (see workflow section below).
+
+> **Please insure you test the new template before updating any production deployments.**
+
 
 ## Workflow Configuration
-The workflow configuration is defined as environment variables for the Ingest Validate lambda function which is the first step in the ingest process.
+The workflow configuration is set at deployment and is defined as environment variables for the Ingest Validate lambda function which is the first step in the ingest process.
 
 #### Environment Variable::
 * **Archive Source:**	If enabled the source video file will be tagged for archiving to glacier and the end of the workflow
@@ -37,14 +48,17 @@ The workflow configuration is defined as environment variables for the Ingest Va
 * **Source:**	The name of the Source S3 bucket.
 * **WorkflowName:**	Used to tag all of the MediaConvert Encoding Jobs.
 
- These are the default settings for the workflow, configured when deploying the CloudFormation template and apply to all source videos uploaded to the Source S3 bucket. If the solution is deployed with the source metadata option any of the settings can be overwritten using a source metadata file.
+
+### WorkFlow Triggers
+
+#### Source Video Option
+If deployed with the workflow trigger parameter set to VideoFile the CloudFormation template will configure S3 event notifications on the source S3 bucket to trigger the workflow whenever a video file (mp4, m4v, mpg or m2ts) is uploaded. With this option the default workflow configuration is apply to all source.
+
+#### Source Metadata Option
+If the solution is deployed with the workflow trigger parameter set to MetadataFile the S3 notification is configured to trigger the workflow whenever a JSON file is uploaded. This allows different workflow configuration to be defined for each source video processed by the workflow.
 
 
-## Source Metadata Option
-When the solution is deployed with the source metadata parameter the source S3 bucket is configured with an event notification that will trigger the workflow when a JSON file is uploaded. This allow different workflow configuration to be defined for each source video processed by the workflow.
-
-
-> **Important::** The source video file MUST be uploaded to S3 before the metadata file is uploaded, the metadata file must be valid JSON with a .json file extention. With source metadata enabled uploading video files to Amazon S3 will not trigger the workflow.
+> **Important::** The source video file MUST be uploaded to S3 before the metadata file is uploaded, the metadata file must be valid JSON with a .json file extension. With source metadata enabled uploading video files to Amazon S3 will not trigger the workflow.
 
 **Example JSON metadata file::**
 ```
@@ -98,6 +112,24 @@ By default, the profiler step in the process step function will check the source
 2.	Use the system templates or create a new templates through the MediaConvert console, see the Elemental MediaConvert documentation for details.
 3.	Add “JobTemplate”:”name of the template” to the metadata file, this will overwrite the profiler step in the process Step Functions.
 
+## QVBR Mode
+AWS MediaConvert Quality-defined Variable Bit-Rate (QVBR) control mode get the best video quality for a given file size and is recommended for OTT and Video On Demand Content. The solution supports this feature and if enabled at deployment the solution will create HLS, MP4 and DASH custom presets with the following QVBR levels and Single Pass HQ encoding:
+
+| Resolution   |      MaxBitrate      |  QvbrQualityLevel |
+|----------|:-------------:|------:|
+| 2160p |  20000kbps | 8 |
+| 1080p |  8500Kbps  | 8 |
+| 720p  |  6500Kbps  | 8 |
+| 720p  |  5000Kbps  | 8 |
+| 720p  |  3500Kbps  | 7 |
+| 540p  |  6500Kbps  | 7 |
+| 540p  |  3500Kbps  | 7 |
+| 360p  |  1200Kbps  | 7 |
+| 360p  |  600Kbps   | 7 |
+| 270p  |  400Kbps   | 7 |
+
+
+For more detail please see [QVBR and MediaConvert](https://docs.aws.amazon.com/mediaconvert/latest/ug/cbr-vbr-qvbr.html).
 
 ## Source code (Nodejs 8.10)
 * **archive-source:** Lambda function to tag the source video in s3 to enable the Glacier lifecycle policy.
@@ -109,7 +141,7 @@ event notifications.
 * **output-validate:** Lambda function to parse MediaConvert CloudWatch Events
 * **step-functions:** Lambda function to trigger AWS Step Functions
 * **dynamo:** Lambda function to Update DynamoDB
-* **input-validate:** Lambda function to parse S3 event notfications and define the workflow parameters.
+* **input-validate:** Lambda function to parse S3 event notifications and define the workflow parameters.
 * **profiler:** Lambda function used to send publish and/or error notifications.
 
 
@@ -139,17 +171,22 @@ Example:
   cd deployment/
   ./build-s3-dist.sh bucket 1.01
 ```
- This will deploy the source code to:
-```
-  s3://bucket-us-east-1/video-on-demand-on-aws/1.01/.
-```
-And update the CloudFormation template mappings:
+This will update the CloudFormation template mappings:
 ```
   SourceCode:
     General:
       S3Bucket: bucket
       KeyPrefix: video-on-demand-on-aws/1.01
 ```
+And the lambda functions deployment will expect the lambda code to be in:
+```
+ s3://bucket`-region`/video-on-demand-on-aws/1.01/.
+```
+In the example for us-east-1 this would be:
+```
+ s3://bucket-us-east-1/video-on-demand-on-aws/1.01/.
+```
+
 
 ### 3. Upload the Code to Amazon S3.
 
@@ -173,6 +210,7 @@ Launch the updated CloudFormation template from ```deployment/dist/``` folder.
 - [AWS Lambda](https://aws.amazon.com/lambda/)
 - [Amazon CloudFront](https://aws.amazon.com/cloudfront/)
 - [OTT Workflows](https://www.elemental.com/applications/ott-workflows)
+- [QVBR and MediaConvert](https://docs.aws.amazon.com/mediaconvert/latest/ug/cbr-vbr-qvbr.html)
 
 ### Other Solutions and Demos
 - [Live Streaming On AWS](https://aws.amazon.com/answers/media-entertainment/live-streaming/)
