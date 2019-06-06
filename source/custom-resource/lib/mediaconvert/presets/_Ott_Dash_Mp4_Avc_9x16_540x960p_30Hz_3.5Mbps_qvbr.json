@@ -1,72 +1,67 @@
 {
-  "Description": "video on demand on aws",
-  "Category": "VOD",
-  "Name": "_Ott_Dash_Mp4_Avc_9x16_540x960p_30Hz_3.5Mbps_qvbr",
-  "Settings": {
-    "VideoDescription": {
-      "Width": 540,
-      "ScalingBehavior": "DEFAULT",
-      "Height": 960,
-      "VideoPreprocessors": {
-        "Deinterlacer": {
-          "Algorithm": "INTERPOLATE",
-          "Mode": "DEINTERLACE",
-          "Control": "NORMAL"
-        }
-      },
-      "TimecodeInsertion": "DISABLED",
-      "AntiAlias": "ENABLED",
-      "Sharpness": 50,
-      "CodecSettings": {
-        "Codec": "H_264",
-        "H264Settings": {
-          "InterlaceMode": "PROGRESSIVE",
-          "ParNumerator": 1,
-          "NumberReferenceFrames": 3,
-          "Syntax": "DEFAULT",
-          "FramerateDenominator": 1001,
-          "GopClosedCadence": 1,
-          "HrdBufferInitialFillPercentage": 90,
-          "GopSize": 90,
-          "Slices": 1,
-          "GopBReference": "ENABLED",
-          "HrdBufferSize": 7000000,
-          "MaxBitrate": 3500000,
-          "SlowPal": "DISABLED",
-          "ParDenominator": 1,
-          "SpatialAdaptiveQuantization": "ENABLED",
-          "TemporalAdaptiveQuantization": "ENABLED",
-          "FlickerAdaptiveQuantization": "ENABLED",
-          "EntropyEncoding": "CABAC",
-          "FramerateControl": "SPECIFIED",
-          "RateControlMode": "QVBR",
-          "QvbrSettings": {
-            "QvbrQualityLevel": 7
-          },
-          "CodecProfile": "HIGH",
-          "Telecine": "NONE",
-          "FramerateNumerator": 30000,
-          "MinIInterval": 0,
-          "AdaptiveQuantization": "HIGH",
-          "CodecLevel": "LEVEL_4",
-          "FieldEncoding": "PAFF",
-          "SceneChangeDetect": "ENABLED",
-          "QualityTuningLevel": "SINGLE_PASS_HQ",
-          "FramerateConversionAlgorithm": "DUPLICATE_DROP",
-          "UnregisteredSeiTimecode": "DISABLED",
-          "GopSizeUnits": "FRAMES",
-          "ParControl": "SPECIFIED",
-          "NumberBFramesBetweenReferenceFrames": 3,
-          "RepeatPps": "DISABLED"
-        }
-      },
-      "AfdSignaling": "NONE",
-      "DropFrameTimecode": "ENABLED",
-      "RespondToAfd": "NONE",
-      "ColorMetadata": "INSERT"
+  "VideoDescription": {
+    "CodecSettings": {
+      "Codec": "H_264",
+      "H264Settings": {
+        "CodecProfile": "HIGH",
+        "SpatialAdaptiveQuantization": "ENABLED",
+        "TemporalAdaptiveQuantization": "ENABLED",
+        "Syntax": "DEFAULT",
+        "FramerateNumerator": 30000,
+        "MinIInterval": 0,
+        "UnregisteredSeiTimecode": "DISABLED",
+        "FramerateControl": "SPECIFIED",
+        "NumberReferenceFrames": 3,
+        "FramerateDenominator": 1001,
+        "QvbrSettings": {
+          "QvbrQualityLevel": 7
+        },
+        "MaxBitrate": 3500000,
+        "RateControlMode": "QVBR",
+        "GopBReference": "ENABLED",
+        "EntropyEncoding": "CABAC",
+        "GopSizeUnits": "FRAMES",
+        "FlickerAdaptiveQuantization": "ENABLED",
+        "Telecine": "NONE",
+        "ParDenominator": 1,
+        "AdaptiveQuantization": "HIGH",
+        "InterlaceMode": "PROGRESSIVE",
+        "QualityTuningLevel": "SINGLE_PASS_HQ",
+        "HrdBufferInitialFillPercentage": 90,
+        "RepeatPps": "DISABLED",
+        "FieldEncoding": "PAFF",
+        "SlowPal": "DISABLED",
+        "GopClosedCadence": 1,
+        "GopSize": 90.0,
+        "ParControl": "SPECIFIED",
+        "Slices": 1,
+        "FramerateConversionAlgorithm": "DUPLICATE_DROP",
+        "ParNumerator": 1,
+        "SceneChangeDetect": "ENABLED",
+        "CodecLevel": "LEVEL_4",
+        "NumberBFramesBetweenReferenceFrames": 3,
+        "HrdBufferSize": 7000000
+      }
     },
-    "ContainerSettings": {
-      "Container": "MPD"
-    }
+    "DropFrameTimecode": "ENABLED",
+    "VideoPreprocessors": {
+      "Deinterlacer": {
+        "Control": "NORMAL",
+        "Mode": "DEINTERLACE",
+        "Algorithm": "INTERPOLATE"
+      }
+    },
+    "RespondToAfd": "NONE",
+    "Sharpness": 50,
+    "AfdSignaling": "NONE",
+    "Height": 960,
+    "Width": 540,
+    "ScalingBehavior": "DEFAULT",
+    "ColorMetadata": "INSERT",
+    "AntiAlias": "ENABLED",
+    "TimecodeInsertion": "DISABLED"
+  },
+  "ContainerSettings": {
+    "Container": "MPD"
   }
 }
