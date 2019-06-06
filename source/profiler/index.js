@@ -49,7 +49,7 @@ exports.handler = async (event) => {
     }
 
     //Determine Encoding profile by matching the src Height to the nearest profile.
-    const profiles = [2160, 1080,720];
+    const profiles = [2160, 1080, 720];
     let lastProfile;
     let encodeProfile;
 
@@ -78,22 +78,16 @@ exports.handler = async (event) => {
     // solution defaults
     if (!event.jobTemplate) {
       // Match the jobTemplate to the encoding Profile.
-      let jobTemplates;
-      if (event.isRotated) {
-        jobTemplates = {
-          '2160': event.jobTemplate_2160p_portrait,
-          '1080': event.jobTemplate_1080p_portrait,
-          '720': event.jobTemplate_720p_portrait
-        };
-      } else {
-        jobTemplates = {
-          '2160': event.jobTemplate_2160p,
-          '1080': event.jobTemplate_1080p,
-          '720': event.jobTemplate_720p
-        };
-      }
+      const jobTemplates = {
+        '2160': event.jobTemplate_2160p,
+        '1080': event.jobTemplate_1080p,
+        '720': event.jobTemplate_720p,
+        '2160p': event.jobTemplate_2160p_portrait,
+        '1080p': event.jobTemplate_1080p_portrait,
+        '720p': event.jobTemplate_720p_portrait
+      };
 
-      event.jobTemplate = jobTemplates[encodeProfile];
+      event.jobTemplate = jobTemplates[encodeProfile+(event.isRotated ? 'p' : '')];
       console.log('Encoding jobTemplates:: ', event.jobTemplate);
     }
   }
