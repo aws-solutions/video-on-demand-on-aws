@@ -48,6 +48,8 @@ exports.handler = async (event) => {
       event.srcWidth = mediaInfo.video[0].width;
     }
 
+    event.isPortrait = event.srcHeight > event.srcWidth;
+
     //Determine Encoding profile by matching the src Height to the nearest profile.
     const profiles = [2160, 1080, 720];
     let lastProfile;
@@ -87,7 +89,7 @@ exports.handler = async (event) => {
         '720p': event.jobTemplate_720p_portrait
       };
 
-      event.jobTemplate = jobTemplates[encodeProfile+(event.isRotated ? 'p' : '')];
+      event.jobTemplate = jobTemplates[encodeProfile+(event.isPortrait ? 'p' : '')];
       console.log('Encoding jobTemplates:: ', event.jobTemplate);
     }
   }
