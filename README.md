@@ -45,6 +45,9 @@ The workflow configuration is set at deployment and is defined as environment va
 * **MediaConvert_Template_2160p:**	The name of the UHD template in MediaConvert
 * **MediaConvert_Template_1080p:**	The name of the HD template in MediaConvert
 * **MediaConvert_Template_720p:**	The name of the SD template in MediaConvert
+* **MediaConvert_Template_2160p_Portrait:**  The name of the UHD portrait template in MediaConvert
+* **MediaConvert_Template_1080p_Portrait:**  The name of the HD portrait template in MediaConvert
+* **MediaConvert_Template_720p_Portrait:** The name of the SD portrait template in MediaConvert
 * **Source:**	The name of the Source S3 bucket.
 * **WorkflowName:**	Used to tag all of the MediaConvert Encoding Jobs.
 

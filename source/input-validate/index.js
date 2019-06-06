@@ -40,7 +40,10 @@ exports.handler = async (event) => {
       archiveSource: JSON.parse(process.env.ArchiveSource),
       jobTemplate_2160p: process.env.MediaConvert_Template_2160p,
       jobTemplate_1080p: process.env.MediaConvert_Template_1080p,
-      jobTemplate_720p: process.env.MediaConvert_Template_720p
+      jobTemplate_720p: process.env.MediaConvert_Template_720p,
+      jobTemplate_2160p_portrait: process.env.MediaConvert_Template_2160p_Portrait,
+      jobTemplate_1080p_portrait: process.env.MediaConvert_Template_1080p_Portrait,
+      jobTemplate_720p_portrait: process.env.MediaConvert_Template_720p_Portrait
     };
 
     switch(event.workflowTrigger) {

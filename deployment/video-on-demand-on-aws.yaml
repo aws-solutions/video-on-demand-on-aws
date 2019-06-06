@@ -576,6 +576,9 @@ Resources:
           MediaConvert_Template_2160p: !Join ["", [ Ref: "AWS::StackName", !If ["EnableQvbr", "_Ott_2160p_Avc_Aac_16x9_qvbr", "_Ott_2160p_Avc_Aac_16x9"]]]
           MediaConvert_Template_1080p: !Join ["", [ Ref: "AWS::StackName", !If ["EnableQvbr", "_Ott_1080p_Avc_Aac_16x9_qvbr", "_Ott_1080p_Avc_Aac_16x9"]]]
           MediaConvert_Template_720p: !Join ["", [ Ref: "AWS::StackName", !If ["EnableQvbr", "_Ott_720p_Avc_Aac_16x9_qvbr", "_Ott_720p_Avc_Aac_16x9"]]]
+          MediaConvert_Template_2160p_Portrait: !Join ["", [ Ref: "AWS::StackName", !If ["EnableQvbr", "_Ott_2160p_Avc_Aac_9x16_qvbr", "_Ott_2160p_Avc_Aac_16x9"]]]
+          MediaConvert_Template_1080p_Portrait: !Join ["", [ Ref: "AWS::StackName", !If ["EnableQvbr", "_Ott_1080p_Avc_Aac_9x16_qvbr", "_Ott_1080p_Avc_Aac_16x9"]]]
+          MediaConvert_Template_720p_Portrait: !Join ["", [ Ref: "AWS::StackName", !If ["EnableQvbr", "_Ott_720p_Avc_Aac_9x16_qvbr", "_Ott_720p_Avc_Aac_16x9"]]]
           CloudFront: !GetAtt CloudFront.DomainName
 
   Mediainfo:
