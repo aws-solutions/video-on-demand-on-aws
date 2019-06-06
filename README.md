@@ -89,6 +89,9 @@ The only required field for the metadata file is the srcVideo and the workflow w
     "MediaConvert_Template_2160p":"string",
     "MediaConvert_Template_1080p":"string",
     "MediaConvert_Template_720p":"string",
+    "MediaConvert_Template_2160p_Portrait":"string",
+    "MediaConvert_Template_1080p_Portrait":"string",
+    "MediaConvert_Template_720p_Portrait":"string",
     "JobTemplate":"custom-job-template"
 }
 ```
@@ -103,6 +106,12 @@ At launch the Solution creates 3 MediaConvert job templates which are used as th
 **MediaConvert_Template_1080p::** 2 mp4 outputs AVC 2160p through 720p, 8 HLS outputs AVC 1080p through 270p and 8 DASH outputs AVC 1080p through 270p
 
 **MediaConvert_Template_720p::** 1 mp4 720p AVC output, 7 HLS outputs AVC 720p through 270p and 7 DASH outputs AVC 720p through 270p
+
+**MediaConvert_Template_2160p_Portrait::** NOTE: portrait conversion only works when QVBR is enabled. 2 mp4 outputs AVC 2160p through 720p, 8 HLS outputs AVC 1080p through 270p and 8 DASH outputs AVC 1080p through 270p
+
+**MediaConvert_Template_1080p_Portrait::** NOTE: portrait conversion only works when QVBR is enabled. 2 mp4 outputs AVC 2160p through 720p, 8 HLS outputs AVC 1080p through 270p and 8 DASH outputs AVC 1080p through 270p
+
+**MediaConvert_Template_720p_Portrait::** NOTE: portrait conversion only works when QVBR is enabled. 1 mp4 720p AVC output, 7 HLS outputs AVC 720p through 270p and 7 DASH outputs AVC 720p through 270p
 
 By default, the profiler step in the process step function will check the source video height and set the parameter “JobTemplate” to one of the available templates. This variable is then passed to the encoding step which submits a job to Elemental MediaConvert. To customizing the encoding templates used by the solution you can either replace the existing templates or you can use the source metadata version of the workflow and define the JobTemplate as part of the source metadata file.
 
