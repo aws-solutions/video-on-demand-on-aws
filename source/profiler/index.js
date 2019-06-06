@@ -49,14 +49,15 @@ exports.handler = async (event) => {
     }
 
     event.isPortrait = event.srcHeight > event.srcWidth;
+    event.lesserDimension = event.isPortrait ? event.srcWidth : event.srcHeight;
 
-    //Determine Encoding profile by matching the src Height to the nearest profile.
+    //Determine Encoding profile by matching the src to the nearest profile.
     const profiles = [2160, 1080, 720];
     let lastProfile;
     let encodeProfile;
 
     profiles.some(function(p) {
-      let profile = Math.abs(event.srcHeight - p);
+      let profile = Math.abs(event.lesserDimension - p);
       if (profile > lastProfile) {
         return true;
       }
