@@ -52,7 +52,8 @@ exports.handler = async (event) => {
             }
           },
           "VideoSelector": {
-            "ColorSpace": "FOLLOW"
+            "ColorSpace": "FOLLOW",
+            "Rotate": "AUTO"
           },
           "FilterEnable": "AUTO",
           "PsiControl": "USE_PSI",
