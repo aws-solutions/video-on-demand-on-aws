@@ -1,0 +1,120 @@
+{
+	"Category": "VOD",
+	"Description": "video on demand on aws",
+	"Name": "_Ott_720p_Avc_Aac_9x16_qvbr",
+	"Settings": {
+		"AdAvailOffset": 0,
+		"OutputGroups": [{
+				"Name": "File Group",
+				"OutputGroupSettings": {
+					"Type": "FILE_GROUP_SETTINGS",
+					"FileGroupSettings": {}
+				},
+				"Outputs": [
+					{
+						"Preset": "_Mp4_Avc_Aac_9x16_720x1280p_24Hz_4.5Mbps_qvbr",
+						"Extension": "mp4",
+						"NameModifier": "_Mp4_Avc_Aac_9x16_720x1280p_24Hz_4.5Mbps_qvbr"
+					}
+				]
+			},
+			{
+				"Name": "Apple HLS",
+				"Outputs": [{
+								"Preset": "_Ott_Hls_Ts_Avc_Aac_9x16_270x480p_15Hz_0.4Mbps_qvbr",
+								"NameModifier": "_Ott_Hls_Ts_Avc_Aac_9x16_270x480p_15Hz_0.4Mbps_qvbr"
+							},
+							{
+								"Preset": "_Ott_Hls_Ts_Avc_Aac_9x16_360x640p_30Hz_0.6Mbps_qvbr",
+								"NameModifier": "_Ott_Hls_Ts_Avc_Aac_9x16_360x640p_30Hz_0.6Mbps_qvbr"
+							},
+							{
+								"Preset": "_Ott_Hls_Ts_Avc_Aac_9x16_360x640p_30Hz_1.2Mbps_qvbr",
+								"NameModifier": "_Ott_Hls_Ts_Avc_Aac_9x16_360x640p_30Hz_1.2Mbps_qvbr"
+							},
+							{
+								"Preset": "_Ott_Hls_Ts_Avc_Aac_9x16_540x960p_30Hz_3.5Mbps_qvbr",
+								"NameModifier": "_Ott_Hls_Ts_Avc_Aac_9x16_540x960p_30Hz_3.5Mbps_qvbr"
+							},
+							{
+								"Preset": "_Ott_Hls_Ts_Avc_Aac_9x16_720x1280p_30Hz_3.5Mbps_qvbr",
+								"NameModifier": "_Ott_Hls_Ts_Avc_Aac_9x16_720x1280p_30Hz_3.5Mbps_qvbr"
+							},
+							{
+								"Preset": "_Ott_Hls_Ts_Avc_Aac_9x16_720x1280p_30Hz_5.0Mbps_qvbr",
+								"NameModifier": "_Ott_Hls_Ts_Avc_Aac_9x16_720x1280p_30Hz_5.0Mbps_qvbr"
+							},
+							{
+								"Preset": "_Ott_Hls_Ts_Avc_Aac_9x16_720x1280p_30Hz_6.5Mbps_qvbr",
+								"NameModifier": "_Ott_Hls_Ts_Avc_Aac_9x16_720x1280p_30Hz_6.5Mbps_qvbr"
+							}
+						],
+						"OutputGroupSettings": {
+							"Type": "HLS_GROUP_SETTINGS",
+							"HlsGroupSettings": {
+								"ManifestDurationFormat": "INTEGER",
+								"SegmentLength": 3,
+								"TimedMetadataId3Period": 10,
+								"CaptionLanguageSetting": "OMIT",
+								"TimedMetadataId3Frame": "PRIV",
+								"CodecSpecification": "RFC_4281",
+								"OutputSelection": "MANIFESTS_AND_SEGMENTS",
+								"ProgramDateTimePeriod": 600,
+								"MinSegmentLength": 0,
+								"DirectoryStructure": "SINGLE_DIRECTORY",
+								"ProgramDateTime": "EXCLUDE",
+								"SegmentControl": "SEGMENTED_FILES",
+								"ManifestCompression": "NONE",
+								"ClientCache": "ENABLED",
+								"StreamInfResolution": "INCLUDE"
+							}
+						}
+					},
+					{
+						"Name": "DASH ISO",
+						"Outputs": [{
+								"Preset": "_Ott_Dash_Mp4_Avc_9x16_270x480p_15Hz_0.4Mbps_qvbr",
+								"NameModifier": "_Ott_Dash_Mp4_Avc_9x16_270x480p_15Hz_0.4Mbps_qvbr"
+							},
+							{
+								"Preset": "_Ott_Dash_Mp4_Avc_9x16_360x640p_30Hz_0.6Mbps_qvbr",
+								"NameModifier": "_Ott_Dash_Mp4_Avc_9x16_360x640p_30Hz_0.6Mbps_qvbr"
+							},
+							{
+								"Preset": "_Ott_Dash_Mp4_Avc_9x16_360x640p_30Hz_1.2Mbps_qvbr",
+								"NameModifier": "_Ott_Dash_Mp4_Avc_9x16_360x640p_30Hz_1.2Mbps_qvbr"
+							},
+							{
+								"Preset": "_Ott_Dash_Mp4_Avc_9x16_540x960p_30Hz_3.5Mbps_qvbr",
+								"NameModifier": "_Ott_Dash_Mp4_Avc_9x16_540x960p_30Hz_3.5Mbps_qvbr"
+							},
+							{
+								"Preset": "_Ott_Dash_Mp4_Avc_9x16_720x1280p_30Hz_3.5Mbps_qvbr",
+								"NameModifier": "_Ott_Dash_Mp4_Avc_9x16_720x1280p_30Hz_3.5Mbps_qvbr"
+							},
+							{
+								"Preset": "_Ott_Dash_Mp4_Avc_9x16_720x1280p_30Hz_5.0Mbps_qvbr",
+								"NameModifier": "_Ott_Dash_Mp4_Avc_9x16_720x1280p_30Hz_5.0Mbps_qvbr"
+							},
+							{
+								"Preset": "_Ott_Dash_Mp4_Avc_9x16_720x1280p_30Hz_6.5Mbps_qvbr",
+								"NameModifier": "_Ott_Dash_Mp4_Avc_9x16_720x1280p_30Hz_6.5Mbps_qvbr"
+							},
+							{
+								"Preset": "System-Ott_Dash_Mp4_Aac_He_96Kbps",
+								"NameModifier": "_Ott_Dash_Mp4_Aac_He_96Kbps"
+							}
+						],
+						"OutputGroupSettings": {
+							"Type": "DASH_ISO_GROUP_SETTINGS",
+							"DashIsoGroupSettings": {
+								"SegmentLength": 30,
+								"FragmentLength": 3,
+								"SegmentControl": "SEGMENTED_FILES",
+								"HbbtvCompliance": "NONE"
+							}
+						}
+					}
+				]
+			}
+		}

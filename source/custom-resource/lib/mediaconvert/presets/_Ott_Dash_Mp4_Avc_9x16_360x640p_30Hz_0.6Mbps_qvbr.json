@@ -1,0 +1,72 @@
+{
+  "Description": "video on demand on aws",
+  "Category": "VOD",
+  "Name": "_Ott_Dash_Mp4_Avc_9x16_360x640p_30Hz_0.6Mbps_qvbr",
+  "Settings": {
+    "VideoDescription": {
+      "Width": 360,
+      "ScalingBehavior": "DEFAULT",
+      "Height": 640,
+      "VideoPreprocessors": {
+        "Deinterlacer": {
+          "Algorithm": "INTERPOLATE",
+          "Mode": "DEINTERLACE",
+          "Control": "NORMAL"
+        }
+      },
+      "TimecodeInsertion": "DISABLED",
+      "AntiAlias": "ENABLED",
+      "Sharpness": 50,
+      "CodecSettings": {
+        "Codec": "H_264",
+        "H264Settings": {
+          "InterlaceMode": "PROGRESSIVE",
+          "ParNumerator": 1,
+          "NumberReferenceFrames": 3,
+          "Syntax": "DEFAULT",
+          "FramerateDenominator": 1001,
+          "GopClosedCadence": 1,
+          "HrdBufferInitialFillPercentage": 90,
+          "GopSize": 90,
+          "Slices": 1,
+          "GopBReference": "ENABLED",
+          "HrdBufferSize": 1200000,
+          "MaxBitrate": 600000,
+          "SlowPal": "DISABLED",
+          "ParDenominator": 1,
+          "SpatialAdaptiveQuantization": "ENABLED",
+          "TemporalAdaptiveQuantization": "ENABLED",
+          "FlickerAdaptiveQuantization": "ENABLED",
+          "EntropyEncoding": "CABAC",
+          "FramerateControl": "SPECIFIED",
+          "RateControlMode": "QVBR",
+          "QvbrSettings": {
+            "QvbrQualityLevel": 8
+          },
+          "CodecProfile": "MAIN",
+          "Telecine": "NONE",
+          "FramerateNumerator": 30000,
+          "MinIInterval": 0,
+          "AdaptiveQuantization": "MEDIUM",
+          "CodecLevel": "LEVEL_3_1",
+          "FieldEncoding": "PAFF",
+          "SceneChangeDetect": "ENABLED",
+          "QualityTuningLevel": "SINGLE_PASS_HQ",
+          "FramerateConversionAlgorithm": "DUPLICATE_DROP",
+          "UnregisteredSeiTimecode": "DISABLED",
+          "GopSizeUnits": "FRAMES",
+          "ParControl": "SPECIFIED",
+          "NumberBFramesBetweenReferenceFrames": 3,
+          "RepeatPps": "DISABLED"
+        }
+      },
+      "AfdSignaling": "NONE",
+      "DropFrameTimecode": "ENABLED",
+      "RespondToAfd": "NONE",
+      "ColorMetadata": "INSERT"
+    },
+    "ContainerSettings": {
+      "Container": "MPD"
+    }
+  }
+}
