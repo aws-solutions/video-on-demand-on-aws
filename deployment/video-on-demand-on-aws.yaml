@@ -650,7 +650,7 @@ Resources:
       Description: Creates a MediaConvert encode job
       Handler: index.handler
       Layers:
-        - !GetAtt LatestAWSSDK.Arn
+        - !Ref LatestAWSSDK
       Role: !GetAtt WorkflowRole.Arn
       Code:
         S3Bucket: !Join ["-", [!FindInMap ["SourceCode", "General", "S3Bucket"], Ref: "AWS::Region"]]
