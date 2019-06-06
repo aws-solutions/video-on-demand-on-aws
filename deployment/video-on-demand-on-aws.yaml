@@ -553,6 +553,18 @@ Resources:
 # Workflow Lambda Functions
 
 # workflow triggers
+  LatestAWSSDK:
+    Type: "AWS::Lambda::LayerVersion"
+    Properties:
+      CompatibleRuntimes: 
+        - nodejs8.10
+      Content: 
+        S3Bucket: !Join ["-", [!FindInMap ["SourceCode", "General", "S3Bucket"], Ref: "AWS::Region"]]
+        S3Key: !Join ["/", [!FindInMap ["SourceCode", "General", "KeyPrefix"],  "nodejs.zip"]]
+      Description: Latest AWS SDK Package
+      LayerName: latest-aws-sdk
+      LicenseInfo: MIT
+
   InputValidate:
     Type: AWS::Lambda::Function
     Properties:
@@ -637,6 +649,8 @@ Resources:
       FunctionName: !Sub ${AWS::StackName}-encode
       Description: Creates a MediaConvert encode job
       Handler: index.handler
+      Layers:
+        - !GetAtt LatestAWSSDK.Arn
       Role: !GetAtt WorkflowRole.Arn
       Code:
         S3Bucket: !Join ["-", [!FindInMap ["SourceCode", "General", "S3Bucket"], Ref: "AWS::Region"]]
