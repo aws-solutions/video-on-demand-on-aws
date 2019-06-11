@@ -669,7 +669,7 @@ Resources:
     Type: AWS::Lambda::Function
     Properties:
       FunctionName: !Sub ${AWS::StackName}-archive-source
-      Description: updadates tags on source files to enable Glacier
+      Description: updates tags on source files to enable Glacier
       Handler: index.handler
       Role: !GetAtt WorkflowRole.Arn
       Code:
