@@ -38,7 +38,7 @@ Please note:
 The workflow configuration is set at deployment and is defined as environment variables for the Ingest Validate lambda function which is the first step in the ingest process.
 
 #### Environment Variable::
-* **Archive Source:**	If enabled the source video file will be tagged for archiving to glacier and the end of the workflow
+* **Archive Source:**	If enabled the source video file will be tagged for archiving to glacier at the end of the workflow
 * **CloudFront**	CloudFront Domain name, used to generate the playback URLs for the MediaConvert outputs
 * **Destination:**	The name of the Destination S3 bucket for all of the MediaConvert outputs
 * **FrameCapture:**	If enabled frame capture is added to the job submitted to MediaConvert
