@@ -59,7 +59,7 @@ let PutNotification = async (config) => {
 									Key: {
 										FilterRules: [{
 											Name: 'suffix',
-											Value: '.mv4'
+											Value: '.m4v'
 										}]
 									}
 								}
