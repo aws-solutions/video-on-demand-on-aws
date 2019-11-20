@@ -23,8 +23,7 @@ exports.handler = async (event, context) => {
 
     console.log('REQUEST:: ', JSON.stringify(event, null, 2));
     let config = event.ResourceProperties;
-    let responseData = {},
-        Id;
+    let responseData = {};
 
     //Each resource returns a promise with a json object to return cloudformation.
     try {
@@ -86,11 +85,11 @@ exports.handler = async (event, context) => {
             }
         }
 
-        let response = await cfn.send(event, context, 'SUCCESS', responseData, Id);
+        let response = await cfn.send(event, context, 'SUCCESS', responseData);
         console.log('RESPONSE:: ', responseData);
         console.log('CFN STATUS:: ', response);
     } catch (err) {
         console.log('ERROR:: ', err, err.stack);
-        cfn.send(event, context, 'FAILED');
+        await cfn.send(event, context, 'FAILED');
     }
 };

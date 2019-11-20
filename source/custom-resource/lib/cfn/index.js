@@ -15,13 +15,13 @@
 ********************************************************************************/
 const axios = require('axios');
 
-let  sendResponse = async (event, context, responseStatus, responseData, physicalResourceId) => {
+let  sendResponse = async (event, context, responseStatus, responseData) => {
   let data;
   try {
     let responseBody = JSON.stringify({
       Status: responseStatus,
       Reason: "See the details in CloudWatch Log Stream: " + context.logStreamName,
-      PhysicalResourceId: physicalResourceId || context.logStreamName,
+      PhysicalResourceId: event.LogicalResourceId,
       StackId: event.StackId,
       RequestId: event.RequestId,
       LogicalResourceId: event.LogicalResourceId,

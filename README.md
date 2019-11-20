@@ -131,10 +131,9 @@ AWS MediaConvert Quality-defined Variable Bit-Rate (QVBR) control mode get the b
 
 For more detail please see [QVBR and MediaConvert](https://docs.aws.amazon.com/mediaconvert/latest/ug/cbr-vbr-qvbr.html).
 
-## Source code (Nodejs 8.10)
+## Source code (Node.js 10)
 * **archive-source:** Lambda function to tag the source video in s3 to enable the Glacier lifecycle policy.
-* **encode:** Lambda function to submit an encoding job to Elemental MediaConvert  
-* **mediainfo:** Lambda function to run mediainfo on s3 signed url. https://mediaarea.net/en/MediaInfo. bin/mediainfo must be made executable before deploying to lambda.
+* **encode:** Lambda function to submit an encoding job to Elemental MediaConvert
 * **custom-resource:** Lambda backed CloudFormation custom resource to deploy MediaConvert templates configure S3
 event notifications.
 * **error-handler:** Lambda function to handler any errors created by the workflow or MediaConvert.
@@ -143,7 +142,12 @@ event notifications.
 * **dynamo:** Lambda function to Update DynamoDB
 * **input-validate:** Lambda function to parse S3 event notifications and define the workflow parameters.
 * **profiler:** Lambda function used to send publish and/or error notifications.
+* **media-package-assets:** Lambda function to ingest an asset into MediaPackage-VOD.
 
+## Source code (Python 3.7)
+> **Note**: The _mediainfo_ function uses the python3.7 runtime since the distributable was compiled on Amazon Linux, and the [Operating System for the node version 10 runtime](https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtimes.html) is Amazon Linux 2.
+
+* **mediainfo:** Lambda function to run mediainfo on s3 signed url. https://mediaarea.net/en/MediaInfo. bin/mediainfo must be made executable before deploying to lambda.
 
 ## Creating a custom Build
 The solution can be deployed through the CloudFormation template available on the solution home page: [Video on Demand on AWS](https://aws.amazon.com/answers/media-entertainment/video-on-demand-on-aws/).
@@ -151,25 +155,22 @@ The solution can be deployed through the CloudFormation template available on th
 
 ### Pre-requirements:
 * [AWS Command Line Interface](https://aws.amazon.com/cli/)
-* Node.js 8.x or Python 3.x
+* Node.js 10.x and Python 3.x
 
 ### 1. Create an Amazon S3 Bucket.
 The CloudFormation template is configured to pull the Lambda deployment packages from Amazon S3 bucket in the region the template is being launched in. Create a bucket in the desired region with the region name appended to the name of the bucket. eg: for us-east-1 create a bucket named: ```bucket-us-east-1```
 
 ### 2. Create the deployment packages:
-Run the build-s3-dist.sh script, passing in 2 variables:
+Run the build-s3-dist.sh script, passing in 3 variables:
 * CODEBUCKET = the name of the S3 bucket (do NOT include the -region extension)
-* CODEVERSION = this will be the subfolder containing the code (video-on-demand-on-aws/*codeversion*).
-
-This will:
-* copy the console files to ./deployment/dist/.
-* copy the CloudFormation template to ./deployment/dist/ and updates the source code mappings.
-* zip and copy the source code to ./deployment/dist/
+* SOLUTIONNAME = name of the solution (video-on-demand-on-aws)
+* v4.3.0 = this will be the subfolder containing the code
 
 Example:
 ```
   cd deployment/
-  ./build-s3-dist.sh bucket 1.01
+  chmod +x ./build-s3-dist.sh
+  ./build-s3-dist.sh bucket video-on-demand-on-aws 1.01
 ```
 This will update the CloudFormation template mappings:
 ```
@@ -189,17 +190,16 @@ In the example for us-east-1 this would be:
 
 
 ### 3. Upload the Code to Amazon S3.
-
 Use the AWS CLI to sync the lambda code and demo console files to amazon S3:
 
  ```
    cd deployment/
-   aws s3 sync .dist/ s3://bucket-us-east-1/video-on-demand-on-aws/1.01/.
+   aws s3 sync ./regional-s3-assets/ s3://bucket-us-east-1/video-on-demand-on-aws/1.01/ --recursive --acl bucket-owner-full-control
  ```
 
 ### 4. Launch the CloudFormation template.
-
-Launch the updated CloudFormation template from ```deployment/dist/``` folder.
+* Get the link of the video-on-demand-on-aws.template uploaded to your Amazon S3 bucket.
+* Deploy the Video on Demand to your account by launching a new AWS CloudFormation stack using the link of the video-on-demand-on-aws.template.
 
 
 ## Additional Resources

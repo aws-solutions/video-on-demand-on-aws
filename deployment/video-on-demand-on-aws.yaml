@@ -65,7 +65,7 @@ Mappings:
   SourceCode:
     General:
       S3Bucket: CODEBUCKET
-      KeyPrefix: video-on-demand-on-aws/CODEVERSION
+      KeyPrefix: SOLUTION_NAME/CODEVERSION
 
   AnonymousData:
     SendAnonymousData:
@@ -73,7 +73,6 @@ Mappings:
 
 Conditions:
   Metrics: !Equals [ !FindInMap [AnonymousData,SendAnonymousData,Data], Yes ]
-  Archive: !Equals [ !Ref Glacier, Yes ]
   EnableQvbr: !Equals [!Ref QVBR, Yes]
 
 Resources:
@@ -143,6 +142,11 @@ Resources:
                   - mediaconvert:ListJobTemplates
                 Resource:
                   - !Join ["", ["arn:aws:mediaconvert:", Ref: "AWS::Region", ":", Ref: "AWS::AccountId", ":*"]]
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W11
+            reason: "* is required for actions that do not support resource level permissions"
 
   StepFunctionsServiceRole:
     Type: AWS::IAM::Role
@@ -168,6 +172,11 @@ Resources:
                   - lambda:InvokeFunction
                 Resource:
                   - !Join ["", ["arn:aws:lambda:", Ref: "AWS::Region", ":", Ref: "AWS::AccountId", ":", "function:*" ]]
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W11
+            reason: "The * resource is required since the functions need to be created before the state machine"
 
   WorkflowRole:
     Type: AWS::IAM::Role
@@ -257,6 +266,11 @@ Resources:
                   - logs:PutLogEvents
                 Resource:
                   - !Join ["", ["arn:aws:logs:", Ref: "AWS::Region", ":", Ref: "AWS::AccountId", ":log-group:/aws/lambda/*"]]
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W11
+            reason: "* is required for actions that do not support resource level permissions"
 
   MediaConvertRole:
     Type: AWS::IAM::Role
@@ -290,6 +304,11 @@ Resources:
                   - "execute-api:Invoke"
                 Resource:
                   - !Join ["", ["arn:aws:execute-api:", Ref: "AWS::Region", ":", Ref: "AWS::AccountId", ":*"]]
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W11
+            reason: "/* required to get/put objects to S3"
 
 ## FEATURE SO-VOD-164:: remvoed cw role as not required with CW Lambda permisssion
 ## line 294 and 302
@@ -397,17 +416,25 @@ Resources:
           Projection:
             ProjectionType: "ALL"
           ProvisionedThroughput:
-            ReadCapacityUnits: "5"
-            WriteCapacityUnits: "5"
+            ReadCapacityUnits: 5
+            WriteCapacityUnits: 5
       ProvisionedThroughput:
-        ReadCapacityUnits: '5'
-        WriteCapacityUnits: '5'
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
       TableName: !Ref AWS::StackName
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W28
+            reason: "Table name is set to the stack name"
 
   Source:
     DeletionPolicy: Retain
     Type: AWS::S3::Bucket
     Properties:
+      LoggingConfiguration:
+        DestinationBucketName: !Ref Logs
+        LogFilePrefix: s3-access/
       LifecycleConfiguration:
         Rules:
           -
@@ -420,6 +447,15 @@ Resources:
             Transitions:
             - TransitionInDays: 1
               StorageClass: Glacier
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W51
+            reason: "Bucket is private and does not need a bucket policy"
 
   Destination:
     DeletionPolicy: Retain
@@ -434,12 +470,27 @@ Resources:
             AllowedOrigins: ['*']
             AllowedHeaders: ['*']
             MaxAge: 3000
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
 
   Logs:
     DeletionPolicy: Retain
     Type: AWS::S3::Bucket
     Properties:
       AccessControl: LogDeliveryWrite
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W35
+            reason: "Used to store access logs for other buckets"
+          - id: W51
+            reason: "Bucket is private and does not need a bucket policy"
 
   SnsTopic:
     Type: AWS::SNS::Topic
@@ -465,9 +516,9 @@ Resources:
             Id: vodS3Origin
             S3OriginConfig:
               OriginAccessIdentity: !Sub "origin-access-identity/cloudfront/${DestinationOriginAccessIdentity}"
-        Enabled: 'true'
+        Enabled: true
         Logging:
-          IncludeCookies: 'false'
+          IncludeCookies: false
           Bucket: !GetAtt Logs.DomainName
           Prefix: cloudfront-logs/
         DefaultCacheBehavior:
@@ -477,7 +528,7 @@ Resources:
           - OPTIONS
           TargetOriginId: vodS3Origin
           ForwardedValues:
-            QueryString: 'false'
+            QueryString: false
             Cookies:
               Forward: none
             Headers:
@@ -487,7 +538,7 @@ Resources:
           ViewerProtocolPolicy: allow-all
         PriceClass: PriceClass_100
         ViewerCertificate:
-          CloudFrontDefaultCertificate: 'true'
+          CloudFrontDefaultCertificate: true
 
 # Custom Resource
 
@@ -527,7 +578,7 @@ Resources:
       Code:
         S3Bucket: !Join ["-", [!FindInMap ["SourceCode", "General", "S3Bucket"], Ref: "AWS::Region"]]
         S3Key: !Join ["/", [!FindInMap ["SourceCode", "General", "KeyPrefix"],  "custom-resource.zip"]]
-      Runtime:  nodejs8.10
+      Runtime: nodejs10.x
       Timeout: 180
 
 # workflow triggers
@@ -541,7 +592,7 @@ Resources:
       Code:
         S3Bucket: !Join ["-", [!FindInMap ["SourceCode", "General", "S3Bucket"], Ref: "AWS::Region"]]
         S3Key: !Join ["/", [!FindInMap ["SourceCode", "General", "KeyPrefix"],  "step-functions.zip"]]
-      Runtime:  nodejs8.10
+      Runtime: nodejs10.x
       Timeout: 120
       Environment:
         Variables:
@@ -563,7 +614,7 @@ Resources:
       Code:
         S3Bucket: !Join ["-", [!FindInMap ["SourceCode", "General", "S3Bucket"], Ref: "AWS::Region"]]
         S3Key: !Join ["/", [!FindInMap ["SourceCode", "General", "KeyPrefix"],  "input-validate.zip"]]
-      Runtime:  nodejs8.10
+      Runtime: nodejs10.x
       Timeout: 120
       Environment:
         Variables:
@@ -583,12 +634,12 @@ Resources:
     Properties:
       FunctionName: !Sub ${AWS::StackName}-mediainfo
       Description: Runs mediainfo on a pre-signed s3 URL for source and mp4 output files
-      Handler: index.handler
+      Handler: lambda_function.lambda_handler
       Role: !GetAtt WorkflowRole.Arn
       Code:
         S3Bucket: !Join ["-", [!FindInMap ["SourceCode", "General", "S3Bucket"], Ref: "AWS::Region"]]
         S3Key: !Join ["/", [!FindInMap ["SourceCode", "General", "KeyPrefix"],  "mediainfo.zip"]]
-      Runtime: nodejs8.10
+      Runtime: python3.7
       Timeout: 120
       Environment:
         Variables:
@@ -604,7 +655,7 @@ Resources:
       Code:
         S3Bucket: !Join ["-", [!FindInMap ["SourceCode", "General", "S3Bucket"], Ref: "AWS::Region"]]
         S3Key: !Join ["/", [!FindInMap ["SourceCode", "General", "KeyPrefix"],  "dynamo.zip"]]
-      Runtime:  nodejs8.10
+      Runtime: nodejs10.x
       Timeout: 120
       Environment:
         Variables:
@@ -621,7 +672,7 @@ Resources:
       Code:
         S3Bucket: !Join ["-", [!FindInMap ["SourceCode", "General", "S3Bucket"], Ref: "AWS::Region"]]
         S3Key: !Join ["/", [!FindInMap ["SourceCode", "General", "KeyPrefix"],  "profiler.zip"]]
-      Runtime: nodejs8.10
+      Runtime: nodejs10.x
       Timeout: 120
       Environment:
         Variables:
@@ -638,7 +689,7 @@ Resources:
       Code:
         S3Bucket: !Join ["-", [!FindInMap ["SourceCode", "General", "S3Bucket"], Ref: "AWS::Region"]]
         S3Key: !Join ["/", [!FindInMap ["SourceCode", "General", "KeyPrefix"],  "encode.zip"]]
-      Runtime:  nodejs8.10
+      Runtime: nodejs10.x
       Timeout: 120
       Environment:
         Variables:
@@ -657,7 +708,7 @@ Resources:
       Code:
         S3Bucket: !Join ["-", [!FindInMap ["SourceCode", "General", "S3Bucket"], Ref: "AWS::Region"]]
         S3Key: !Join ["/", [!FindInMap ["SourceCode", "General", "KeyPrefix"],  "output-validate.zip"]]
-      Runtime:  nodejs8.10
+      Runtime: nodejs10.x
       Timeout: 120
       Environment:
         Variables:
@@ -675,7 +726,7 @@ Resources:
       Code:
         S3Bucket: !Join ["-", [!FindInMap ["SourceCode", "General", "S3Bucket"], Ref: "AWS::Region"]]
         S3Key: !Join ["/", [!FindInMap ["SourceCode", "General", "KeyPrefix"],  "archive-source.zip"]]
-      Runtime:  nodejs8.10
+      Runtime: nodejs10.x
       Timeout: 120
       Environment:
         Variables:
@@ -691,7 +742,7 @@ Resources:
       Code:
         S3Bucket: !Join ["-", [!FindInMap ["SourceCode", "General", "S3Bucket"], Ref: "AWS::Region"]]
         S3Key: !Join ["/", [!FindInMap ["SourceCode", "General", "KeyPrefix"],  "sns-notification.zip"]]
-      Runtime:  nodejs8.10
+      Runtime: nodejs10.x
       Timeout: 120
       Environment:
         Variables:
@@ -708,7 +759,7 @@ Resources:
       Code:
         S3Bucket: !Join ["-", [!FindInMap ["SourceCode", "General", "S3Bucket"], Ref: "AWS::Region"]]
         S3Key: !Join ["/", [!FindInMap ["SourceCode", "General", "KeyPrefix"],  "error-handler.zip"]]
-      Runtime:  nodejs8.10
+      Runtime: nodejs10.x
       Timeout: 120
       Environment:
         Variables:
