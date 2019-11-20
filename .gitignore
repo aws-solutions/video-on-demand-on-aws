@@ -1,7 +1,32 @@
+# compiled output
 **/dist
+**/global-s3-assets
+**/regional-s3-assets
 **/open-source
-**/*.zip
+**/.zip
+**/tmp
+**/out-tsc
+
+# python output
+**/__pycache__
+**/pytests
+**/*.egg-info
+**/*.pyc
+**/pypackage
+
+# dependencies
 **/node_modules
-**/.DS_Store
-**/test_files
+
+# e2e
+**/e2e/*.js
+**/e2e/*.map
+
+# misc
+**/npm-debug.log
+**/testem.log
 **/package-lock.json
+**/.vscode/settings.json
+
+# System Files
+**/.DS_Store
+**/.vscode
