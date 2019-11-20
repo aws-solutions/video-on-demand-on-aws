@@ -1,10 +1,10 @@
 {
-  "name": "vod-error-handler",
+  "name": "vod-media-package-asset",
   "version": "1.0.0",
   "engines": {
     "node": ">=8"
   },
-  "description": "error handler for video on demand",
+  "description": "ingest function for video on demand",
   "main": "index.js",
   "scripts": {
     "pretest": "npm install --quiet",
@@ -18,7 +18,8 @@
     "chai": "^4.2.0",
     "mocha": "^6.2.2",
     "sinon": "^7.5.0",
-    "sinon-chai": "^3.3.0"
+    "sinon-chai": "^3.3.0",
+    "lodash": "^4.17.15"
   },
   "private": true,
   "author": {

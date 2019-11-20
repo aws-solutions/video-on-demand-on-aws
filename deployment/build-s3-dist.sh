@@ -44,15 +44,15 @@ echo "CloudFormation Template"
 echo "------------------------------------------------------------------------------"
 cp $template_dir/video-on-demand-on-aws.yaml $template_dist_dir/video-on-demand-on-aws.template
 
-replace="s/CODEBUCKET/$1/g"
+replace="s/%%BUCKET_NAME%%/$1/g"
 echo "sed -i -e $replace"
 sed -i -e $replace $template_dist_dir/video-on-demand-on-aws.template
 
-replace="s/SOLUTION_NAME/$2/g"
+replace="s/%%SOLUTION_NAME%%/$2/g"
 echo "sed -i -e $replace"
 sed -i -e $replace $template_dist_dir/video-on-demand-on-aws.template
 
-replace="s/CODEVERSION/$3/g"
+replace="s/%%VERSION%%/$3/g"
 echo "sed -i -e $replace"
 sed -i -e $replace $template_dist_dir/video-on-demand-on-aws.template
 sed -i -e $replace $template_dir/../README.md

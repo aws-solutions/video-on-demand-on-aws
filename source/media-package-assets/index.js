@@ -12,34 +12,55 @@
  *********************************************************************************************************************/
 
 const AWS = require('aws-sdk');
+const crypto = require('crypto');
+const error = require('./lib/error');
+const cloudfrontHelper = require('./lib/cloudfront');
 
-let errHandler = async (event, _err) => {
-    const lambda = new AWS.Lambda({
-        region: process.env.AWS_REGION
-    });
+const buildArnFromUri = (s3Uri) => {
+    const S3_URI_ID = 's3://';
+
+    if (!s3Uri.startsWith(S3_URI_ID)) {
+        throw new Error(`Unexpected S3Uri: ${s3Uri}`);
+    }
+
+    const source = s3Uri.replace(S3_URI_ID, '');
+    return `arn:aws:s3:::${source}`;
+};
+
+const handler = async (event) => {
+    console.log(`REQUEST:: ${JSON.stringify(event, null, 2)}`);
+
+    const mediaPackageVod = new AWS.MediaPackageVod();
+    const randomId = crypto.randomBytes(16).toString('hex').toLowerCase();
 
     try {
-        let payload = {
-            "guid": event.guid,
-            "event": event,
-            "function": process.env.AWS_LAMBDA_FUNCTION_NAME,
-            "error": _err.toString()
+        const params = {
+            Id: randomId,
+            PackagingGroupId: process.env.GroupId,
+            SourceArn: buildArnFromUri(event.hlsPlaylist),
+            SourceRoleArn: process.env.MediaPackageVodRole,
+            ResourceId: randomId
         };
 
-        let params = {
-            FunctionName: process.env.ErrorHandler,
-            Payload: JSON.stringify(payload, null, 2)
-        };
+        console.log(`Ingesting asset:: ${JSON.stringify(params, null, 2)}`);
+        const response = await mediaPackageVod.createAsset(params).promise();
 
-        await lambda.invoke(params).promise();
+        event.egressEndpoints = await cloudfrontHelper.convertEndpoints(
+            process.env.DistributionId,
+            event.cloudFront,
+            response.EgressEndpoints
+        );
+
+        console.log(`ENDPOINTS:: ${JSON.stringify(event.egressEndpoints, null, 2)}`);
     } catch (err) {
-        console.log(err);
+        await error.handler(event, err);
         throw err;
     }
 
-    return 'success';
+    return event;
 };
 
 module.exports = {
-    handler: errHandler
+    handler,
+    buildArnFromUri
 };

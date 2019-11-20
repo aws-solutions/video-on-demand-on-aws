@@ -1,107 +1,169 @@
-/*******************************************************************************
-* Copyright 2019 Amazon.com, Inc. and its affiliates. All Rights Reserved.
-*
-* Licensed under the Amazon Software License (the "License").
-* You may not use this file except in compliance with the License.
-* A copy of the License is located at
-*
-*   http://aws.amazon.com/asl/
-*
-* or in the "license" file accompanying this file. This file is distributed
-* on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
-* express or implied. See the License for the specific language governing
-* permissions and limitations under the License.
-*
-********************************************************************************/
-let expect = require('chai').expect;
-var path = require('path');
-let AWS = require('aws-sdk-mock');
+/*********************************************************************************************************************
+ *  Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
+ *                                                                                                                    *
+ *  Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file except in compliance    *
+ *  with the License. A copy of the License is located at                                                             *
+ *                                                                                                                    *
+ *      http://www.apache.org/licenses/LICENSE-2.0                                                                    *
+ *                                                                                                                    *
+ *  or in the 'license' file accompanying this file. This file is distributed on an 'AS IS' BASIS, WITHOUT WARRANTIES *
+ *  OR CONDITIONS OF ANY KIND, express or implied. See the License for the specific language governing permissions    *
+ *  and limitations under the License.                                                                                *
+ *********************************************************************************************************************/
+
+const expect = require('chai').expect;
+const path = require('path');
+const AWS = require('aws-sdk-mock');
 AWS.setSDK(path.resolve('./node_modules/aws-sdk'));
 
-let lambda = require('../index.js');
+const lambda = require('../index.js');
 
 describe('#ENCODE::', () => {
+    process.env.MediaConvertRole = 'Role';
+    process.env.Workflow = 'vod';
+    process.env.ErrorHandler = 'error_handler';
 
-  process.env.MediaConvertRole = 'Role';
-  process.env.Workflow = 'vod';
-  process.env.ErrorHandler = 'error_handler';
+    const _event = {
+        guid: '12345678',
+        jobTemplate: 'jobTemplate',
+        srcVideo: 'video.mp4',
+        srcBucket: 'src',
+        destBucket: 'dest'
+    };
 
-  let _event = {
-    guid: "12345678",
-    jobTemplate: "jobTemplate",
-    srcVideo:"video.mp4",
-    srcBucket:"src",
-    destBucket:"dest"
-  };
+    const _withframe = {
+        guid: '12345678',
+        jobTemplate: 'jobTemplate',
+        srcVideo: 'video.mp4',
+        srcBucket: 'src',
+        destBucket: 'dest',
+        frameCapture: true
+    };
 
-  let _withframe = {
-    guid: "12345678",
-    jobTemplate: "jobTemplate",
-    srcVideo:"video.mp4",
-    srcBucket:"src",
-    destBucket:"dest",
-    frameCapture:true
-  };
+    const data = {
+        Job: {
+            Id: '12345',
+        }
+    };
 
-  let data = {
-    Job:{
-      Id:'12345',
-    }
-  };
-
-  let tmpl = {
-    JobTemplate: {
-      Settings:{
-        OutputGroups: [
-          {
-            OutputGroupSettings:{
-              Type:'HLS_GROUP_SETTINGS'
+    const tmpl = {
+        JobTemplate: {
+            Settings: {
+                OutputGroups: [
+                    {
+                        OutputGroupSettings: {
+                            Type: 'HLS_GROUP_SETTINGS'
+                        },
+                        Name: 'test-output-group'
+                    }
+                ]
             }
-          }
-        ]
-      }
-    }
-  }
+        }
+    };
 
-  afterEach(() => {
-    AWS.restore('MediaConvert');
-  });
+    afterEach(() => AWS.restore('MediaConvert'));
 
-  it('should return "success" No FrameCapture Enode success', async () => {
-    AWS.mock('MediaConvert', 'getJobTemplate', Promise.resolve(tmpl));
-    AWS.mock('MediaConvert', 'createJob', Promise.resolve(data));
+    it('should succeed when FrameCapture is disabled', async () => {
+        AWS.mock('MediaConvert', 'getJobTemplate', Promise.resolve(tmpl));
+        AWS.mock('MediaConvert', 'createJob', Promise.resolve(data));
 
-    let response = await lambda.handler(_event)
-		expect(response.ecodeJobId).to.equal('12345');
-    expect(response.encodingJob.Settings.OutputGroups[0].Name).to.equal('HLS Group');
-  });
-
-  it('should return "success" FrameCapture Enode success', async () => {
-    AWS.mock('MediaConvert', 'getJobTemplate', Promise.resolve(tmpl));
-    AWS.mock('MediaConvert', 'createJob', Promise.resolve(data));
-
-    let response = await lambda.handler(_withframe)
-		expect(response.ecodeJobId).to.equal('12345');
-    expect(response.encodingJob.Settings.OutputGroups[1].CustomName).to.equal('Frame Capture');
-  });
-
-  it('should return "GET ERROR" when get template fails', async () => {
-    AWS.mock('MediaConvert', 'getJobTemplate', Promise.reject('GET ERROR'));
-    AWS.mock('Lambda','invoke', Promise.resolve());
-
-    await lambda.handler(_event).catch(err => {
-      expect(err).to.equal('GET ERROR');
+        const response = await lambda.handler(_event);
+        expect(response.encodeJobId).to.equal('12345');
+        expect(response.encodingJob.Settings.OutputGroups[0].Name).to.equal('HLS Group');
     });
-  });
 
-  it('should return "JOB ERROR" when get template fails', async () => {
-    AWS.mock('MediaConvert', 'getJobTemplate', Promise.resolve(tmpl));
-    AWS.mock('MediaConvert', 'createJob', Promise.reject('JOB ERROR'));
-    AWS.mock('Lambda','invoke', Promise.resolve());
+    it('should succeed when FrameCapture is enabled', async () => {
+        AWS.mock('MediaConvert', 'getJobTemplate', Promise.resolve(tmpl));
+        AWS.mock('MediaConvert', 'createJob', Promise.resolve(data));
 
-    await lambda.handler(_event).catch(err => {
-      expect(err).to.equal('JOB ERROR');
+        const response = await lambda.handler(_withframe);
+        expect(response.encodeJobId).to.equal('12345');
+        expect(response.encodingJob.Settings.OutputGroups[1].CustomName).to.equal('Frame Capture');
     });
-  });
 
+    it('should apply custom settings when template is custom', async () => {
+        const event = {
+            guid: '12345678',
+            jobTemplate: 'custom-template',
+            srcVideo: 'video.mp4',
+            srcBucket: 'src',
+            destBucket: 'dest',
+            isCustomTemplate: true
+        };
+
+        const customTemplate = {
+            JobTemplate: {
+                Name: 'custom-template',
+                Type: 'CUSTOM',
+                Settings: {
+                    OutputGroups: [{
+                        OutputGroupSettings: {
+                            Type: 'HLS_GROUP_SETTINGS',
+                            HlsGroupSettings: {
+                                SegmentLength: 10,
+                                MinSegmentLength: 2
+                            }
+                        },
+                        Name: 'custom-output-group'
+                    }]
+                }
+            }
+        };
+
+        const newJob = { Job: { Id: '12345678' } };
+
+        AWS.mock('MediaConvert', 'getJobTemplate', Promise.resolve(customTemplate));
+        AWS.mock('MediaConvert', 'createJob', Promise.resolve(newJob));
+
+        const response = await lambda.handler(event);
+
+        const output = response.encodingJob.Settings.OutputGroups[0];
+        const settings = output.OutputGroupSettings.HlsGroupSettings;
+
+        expect(settings).not.to.be.null;
+        expect(settings.SegmentLength).to.equal(10);
+        expect(settings.MinSegmentLength).to.equal(2);
+    });
+
+    it('should not apply custom settings when template is default', async () => {
+        const event = {
+            guid: '12345678',
+            jobTemplate: 'default-template',
+            srcVideo: 'video.mp4',
+            srcBucket: 'src',
+            destBucket: 'dest',
+            isCustomTemplate: false
+        };
+
+        AWS.mock('MediaConvert', 'getJobTemplate', Promise.resolve(tmpl));
+        AWS.mock('MediaConvert', 'createJob', Promise.resolve(data));
+
+        const response = await lambda.handler(event);
+
+        const output = response.encodingJob.Settings.OutputGroups[0];
+        const settings = output.OutputGroupSettings.HlsGroupSettings;
+
+        expect(settings).not.to.be.null;
+        expect(settings.SegmentLength).to.equal(5);
+        expect(settings.MinSegmentLength).to.equal(0);
+    });
+
+    it('should fail when getJobTemplate throws an exception', async () => {
+        AWS.mock('MediaConvert', 'getJobTemplate', Promise.reject('GET ERROR'));
+        AWS.mock('Lambda', 'invoke', Promise.resolve());
+
+        await lambda.handler(_event).catch(err => {
+            expect(err).to.equal('GET ERROR');
+        });
+    });
+
+    it('should fail when createJob throws an exception', async () => {
+        AWS.mock('MediaConvert', 'getJobTemplate', Promise.resolve(tmpl));
+        AWS.mock('MediaConvert', 'createJob', Promise.reject('JOB ERROR'));
+        AWS.mock('Lambda', 'invoke', Promise.resolve());
+
+        await lambda.handler(_event).catch(err => {
+            expect(err).to.equal('JOB ERROR');
+        });
+    });
 });

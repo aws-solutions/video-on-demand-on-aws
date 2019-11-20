@@ -1,77 +1,67 @@
-/*******************************************************************************
-* Copyright 2019 Amazon.com, Inc. and its affiliates. All Rights Reserved.
-*
-* Licensed under the Amazon Software License (the "License").
-* You may not use this file except in compliance with the License.
-* A copy of the License is located at
-*
-*   http://aws.amazon.com/asl/
-*
-* or in the "license" file accompanying this file. This file is distributed
-* on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
-* express or implied. See the License for the specific language governing
-* permissions and limitations under the License.
-*
-********************************************************************************/
+/*********************************************************************************************************************
+ *  Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
+ *                                                                                                                    *
+ *  Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file except in compliance    *
+ *  with the License. A copy of the License is located at                                                             *
+ *                                                                                                                    *
+ *      http://www.apache.org/licenses/LICENSE-2.0                                                                    *
+ *                                                                                                                    *
+ *  or in the 'license' file accompanying this file. This file is distributed on an 'AS IS' BASIS, WITHOUT WARRANTIES *
+ *  OR CONDITIONS OF ANY KIND, express or implied. See the License for the specific language governing permissions    *
+ *  and limitations under the License.                                                                                *
+ *********************************************************************************************************************/
+
 'use strict';
-let assert = require('chai').assert;
-let expect = require('chai').expect;
-var path = require('path');
-let AWS = require('aws-sdk-mock');
+const expect = require('chai').expect;
+const path = require('path');
+const AWS = require('aws-sdk-mock');
 AWS.setSDK(path.resolve('./node_modules/aws-sdk'));
 
-let lambda = require('./index.js');
+const lambda = require('./index.js');
 
-  let _video = {
-    WorkflowTrigger:'VideoFile',
-    IngestArn:'arn',
-    Source:'srcBucket'
-  }
+const _video = {
+    WorkflowTrigger: 'VideoFile',
+    IngestArn: 'arn',
+    Source: 'srcBucket'
+};
 
-  let _metadata = {
-    WorkflowTrigger:'MetadataFile',
-    IngestArn:'arn',
-    Source:'srcBucket'
-  }
+const _metadata = {
+    WorkflowTrigger: 'MetadataFile',
+    IngestArn: 'arn',
+    Source: 'srcBucket'
+};
 
-  let _api = {
-    WorkflowTrigger:'Api',
-    IngestArn:'arn',
-    Source:'srcBucket'
-  }
+describe('#S3 PUT NOTIFICATION::', () => {
+    afterEach(() => AWS.restore('S3'));
 
-  let res = 'success';
+    it('should succeed on VideoFile trigger', async () => {
+        AWS.mock('S3', 'putBucketNotificationConfiguration', Promise.resolve());
 
-  describe('#S3 PUT NOTIFICATION::',() => {
-
-    it('should return "success" on Video s3 s3 event type ', async () => {
-
-      AWS.mock('S3', 'putBucketNotificationConfiguration', Promise.resolve());
-
-      let response = await lambda.putNotification(_video)
-      expect(response).to.equal('success');
+        const response = await lambda.putNotification(_video);
+        expect(response).to.equal('success');
     });
 
-    it('should return "success" on Metadata s3 event type', async () => {
+    it('should succeed on MetadataFile trigger', async () => {
+        AWS.mock('S3', 'putBucketNotificationConfiguration', Promise.resolve());
 
-      AWS.mock('S3', 'putBucketNotificationConfiguration', Promise.resolve());
-
-      let response = await lambda.putNotification(_metadata)
-      expect(response).to.equal('success');
+        const response = await lambda.putNotification(_metadata);
+        expect(response).to.equal('success');
     });
 
-    it('should return "success" on Api s3 event type', async () => {
+    it('should throw an exception when putBucketNotificationConfiguration fails', async () => {
+        AWS.mock('S3', 'putBucketNotificationConfiguration', Promise.reject('ERROR'));
 
-      let response = await lambda.putNotification(_api)
-      expect(response).to.equal('success');
+        await lambda.putNotification(_video).catch(err => {
+            expect(err).to.equal('ERROR');
+        });
     });
 
-    it('should return "ERROR" on Video s3 s3 event type', async () => {
-  		AWS.mock('S3', 'putBucketNotificationConfiguration', Promise.reject('ERROR'));
+    it('should throw an exception when trigger is unknown', async () => {
+        AWS.mock('S3', 'putBucketNotificationConfiguration', Promise.resolve());
+        const invalid = { WorkflowTrigger: 'bogus' };
 
-  		await lambda.putNotification(_video).catch(err => {
-  			expect(err).to.equal('ERROR');
-  		});
-  	});
-
+        await lambda.putNotification(invalid).catch(err => {
+            expect(err.message).to.equal('Unknown WorkflowTrigger: bogus');
+        });
+    });
 });

@@ -1,119 +1,101 @@
 # Video on Demand on AWS
 
-How to implement a video-on-demand workflow on AWS leveraging AWS Step Functions and AWS Elemental MediaConvert. Source code for the AWS solution [Video on Demand on AWS](https://aws.amazon.com/answers/media-entertainment/video-on-demand-on-aws/).
-
+How to implement a video-on-demand workflow on AWS leveraging AWS Step Functions, AWS Elemental MediaConvert, and AWS Elemental MediaPackage.
+Source code for [Video on Demand on AWS](https://aws.amazon.com/answers/media-entertainment/video-on-demand-on-aws/) solution.
 
 ## On this Page
 - [Architecture Overview](#architecture-overview)
 - [Deployment](#deployment)
-- [Deployment Update](#update)
 - [Workflow Configuration](#workflow-configuration)
 - [Source Metadata Option](#source-metadata-option)
-- [Source Code](#source-code)
-- [Encoding Templates](#encoding-profiles)
+- [Encoding Templates](#encoding-templates)
 - [QVBR Mode](#qvbr-mode)
 - [Creating a custom Build](#creating-a-custom-build)
 - [Additional Resources](#additional-resources)
 
-
 ## Architecture Overview
-
 ![Architecture](architecture.png)
-
 
 ## Deployment
 The solution is deployed using a CloudFormation template with a lambda backed custom resource. For details on deploying the solution please see the details on the solution home page: [Video on Demand on AWS](https://aws.amazon.com/answers/media-entertainment/video-on-demand-on-aws/)
 
-## Deployment Update
-Version 4.2.0 introduces new MediaConvert Encoding templates and Presets that leverage the new QVBR support in Elemental MediaConvert (see below). To update an existing deployment to use these new setting you can perform a CloudFormation Stack Update with the **QVBR** Parameter set to **true**.
-
-Please note:
-* The update option is only valid for version 4+ of the solution.
-* The QVBR, Archive Source and Frame Capture Parameters can all be changed by doing a Stack update, the workflow Trigger must be updated manually (see workflow section below).
-
-> **Please insure you test the new template before updating any production deployments.**
-
+> **Please ensure you test the new template before updating any production deployments.**
 
 ## Workflow Configuration
-The workflow configuration is set at deployment and is defined as environment variables for the Ingest Validate lambda function which is the first step in the ingest process.
+The workflow configuration is set at deployment and is defined as environment variables for the input-validate lambda function (which is the first step in the ingest process).
 
-#### Environment Variable::
-* **Archive Source:**	If enabled the source video file will be tagged for archiving to glacier and the end of the workflow
-* **CloudFront**	CloudFront Domain name, used to generate the playback URLs for the MediaConvert outputs
-* **Destination:**	The name of the Destination S3 bucket for all of the MediaConvert outputs
+#### Environment Variables:
+* **Archive Source:**	If enabled, the source video file will be tagged for archiving to glacier at the end of the workflow
+* **CloudFront:**	CloudFront domain name, used to generate the playback URLs for the MediaConvert outputs
+* **Destination:**	The name of the destination S3 bucket for all of the MediaConvert outputs
 * **FrameCapture:**	If enabled frame capture is added to the job submitted to MediaConvert
+* **InputRotate:**	Defines how the MediaConvert rotates your video
 * **MediaConvert_Template_2160p:**	The name of the UHD template in MediaConvert
 * **MediaConvert_Template_1080p:**	The name of the HD template in MediaConvert
 * **MediaConvert_Template_720p:**	The name of the SD template in MediaConvert
-* **Source:**	The name of the Source S3 bucket.
-* **WorkflowName:**	Used to tag all of the MediaConvert Encoding Jobs.
-
+* **Source:**	The name of the source S3 bucket
+* **WorkflowName:**	Used to tag all of the MediaConvert encoding jobs
 
 ### WorkFlow Triggers
 
 #### Source Video Option
-If deployed with the workflow trigger parameter set to VideoFile the CloudFormation template will configure S3 event notifications on the source S3 bucket to trigger the workflow whenever a video file (mp4, m4v, mpg or m2ts) is uploaded. With this option the default workflow configuration is apply to all source.
+If deployed with the workflow trigger parameter set to VideoFile, the CloudFormation template will configure S3 event notifications on the source S3 bucket to trigger the workflow whenever a video file (mpg, mp4, m4v, mov, or m2ts) is uploaded.
 
 #### Source Metadata Option
-If the solution is deployed with the workflow trigger parameter set to MetadataFile the S3 notification is configured to trigger the workflow whenever a JSON file is uploaded. This allows different workflow configuration to be defined for each source video processed by the workflow.
+If deployed with the workflow trigger parameter set to MetadataFile, the S3 notification is configured to trigger the workflow whenever a JSON file is uploaded. This allows different workflow configuration to be defined for each source video processed by the workflow.
 
+> **Important:** The source video file must be uploaded to S3 before the metadata file is uploaded, and the metadata file must be valid JSON with a .json file extension. With source metadata enabled uploading video files to Amazon S3 will not trigger the workflow.
 
-> **Important::** The source video file MUST be uploaded to S3 before the metadata file is uploaded, the metadata file must be valid JSON with a .json file extension. With source metadata enabled uploading video files to Amazon S3 will not trigger the workflow.
-
-**Example JSON metadata file::**
+**Example JSON metadata file:**
 ```
 {
     "srcVideo": "example.mpg",
-    "ArchiveSource": true,
-    "FrameCapture":false,
-    "JobTemplate":"custom-job-template"
+    "archiveSource": true,
+    "frameCapture": false,
+    "jobTemplate": "custom-job-template"
 }
 ```
 
-The example metadata file above will overwrite the default settings for the workflow for ArchiveSource, FrameCapture and set the template to use for the encoding.
+The only required field for the metadata file is the **srcVideo**. The workflow will default to the environment variables settings for the ingest validate lambda function for any settings not defined in the metadata file.
 
-The only required field for the metadata file is the srcVideo and the workflow will default to the environment variables settings for the ingest validate lambda function for any settings not defined in the metadata file.
-
-**Full list of options::**
+**Full list of options:**
 ```
 {
     "srcVideo": "string",
-    "ArchiveSource": boolean,
-    "FrameCapture": boolean,
-    "Source":"string",
-    "destination":"string",
-    "CloudFront":"string",
-    "MediaConvert_Template_2160p":"string",
-    "MediaConvert_Template_1080p":"string",
-    "MediaConvert_Template_720p":"string",
-    "JobTemplate":"custom-job-template"
+    "archiveSource": boolean,
+    "frameCapture": boolean,
+    "srcBucket": "string",
+    "destBucket": "string",
+    "cloudFront": "string",
+    "jobTemplate_2160p": "string",
+    "jobTemplate_1080p": "string",
+    "jobTemplate_720p": "string",
+    "jobTemplate": "custom-job-template",
+    "inputRotate": "DEGREE_0|DEGREES_90|DEGREES_180|DEGREES_270|AUTO"
 }
 ```
 
-The video-on-demand solution also supports adding additional metadata, such as title, genre, or any other information, you want to store in Amazon DynamoDB.
+The solution also supports adding additional metadata, such as title, genre, or any other information, you want to store in Amazon DynamoDB.
 
 ## Encoding Templates
 At launch the Solution creates 3 MediaConvert job templates which are used as the default encoding templates for the workflow:
+- **MediaConvert_Template_2160p**
+- **MediaConvert_Template_1080p**
+- **MediaConvert_Template_720p**
 
-**MediaConvert_Template_2160p::** 3 mp4 outputs including HEVC and AVC 2160p through 720p, 8 HLS outputs AVC 1080p through 270p and 8 DASH outputs AVC 1080p through 270p
+By default, the profiler step in the process step function will check the source video height and set the parameter "jobTemplate" to one of the available templates. This variable is then passed to the encoding step which submits a job to Elemental MediaConvert. To customize the encoding templates used by the solution you can either replace the existing templates or you can use the source metadata version of the workflow and define the jobTemplate as part of the source metadata file.
 
-**MediaConvert_Template_1080p::** 2 mp4 outputs AVC 2160p through 720p, 8 HLS outputs AVC 1080p through 270p and 8 DASH outputs AVC 1080p through 270p
+**To replace the templates:**
+1.	Use the system templates or create 3 new templates through the MediaConvert console (see the Elemental MediaConvert documentation for details).
+2.	Update the environment variables for the input validate lambda function with the names of the new templates.
 
-**MediaConvert_Template_720p::** 1 mp4 720p AVC output, 7 HLS outputs AVC 720p through 270p and 7 DASH outputs AVC 720p through 270p
-
-By default, the profiler step in the process step function will check the source video height and set the parameter “JobTemplate” to one of the available templates. This variable is then passed to the encoding step which submits a job to Elemental MediaConvert. To customizing the encoding templates used by the solution you can either replace the existing templates or you can use the source metadata version of the workflow and define the JobTemplate as part of the source metadata file.
-
-**To replace the templates::**
-1.	Use the system templates or create 3 new templates through the MediaConvert console, see the Elemental MediaConvert documentation for details.
-2.	Update the environment variables for the ingest validate lambda function with the names of the new templates.
-
-**To define the job template using metadata::**
+**To define the job template using metadata:**
 1.	Launch the solution with source metadata parameter. See Appendix E for more details.
-2.	Use the system templates or create a new templates through the MediaConvert console, see the Elemental MediaConvert documentation for details.
-3.	Add “JobTemplate”:”name of the template” to the metadata file, this will overwrite the profiler step in the process Step Functions.
+2.	Use the system templates or create a new template through the MediaConvert console (see the Elemental MediaConvert documentation for details).
+3.	Add "jobTemplate":"name of the template" to the metadata file, this will overwrite the profiler step in the process Step Functions.
 
 ## QVBR Mode
-AWS MediaConvert Quality-defined Variable Bit-Rate (QVBR) control mode get the best video quality for a given file size and is recommended for OTT and Video On Demand Content. The solution supports this feature and if enabled at deployment the solution will create HLS, MP4 and DASH custom presets with the following QVBR levels and Single Pass HQ encoding:
+AWS MediaConvert Quality-defined Variable Bit-Rate (QVBR) control mode gets the best video quality for a given file size and is recommended for OTT and Video On Demand Content. The solution supports this feature and it will create HLS, MP4 and DASH custom presets with the following QVBR levels and Single Pass HQ encoding:
 
 | Resolution   |      MaxBitrate      |  QvbrQualityLevel |
 |----------|:-------------:|------:|
@@ -128,84 +110,71 @@ AWS MediaConvert Quality-defined Variable Bit-Rate (QVBR) control mode get the b
 | 360p  |  600Kbps   | 7 |
 | 270p  |  400Kbps   | 7 |
 
-
 For more detail please see [QVBR and MediaConvert](https://docs.aws.amazon.com/mediaconvert/latest/ug/cbr-vbr-qvbr.html).
 
 ## Source code (Node.js 10)
 * **archive-source:** Lambda function to tag the source video in s3 to enable the Glacier lifecycle policy.
-* **encode:** Lambda function to submit an encoding job to Elemental MediaConvert
-* **custom-resource:** Lambda backed CloudFormation custom resource to deploy MediaConvert templates configure S3
-event notifications.
+* **custom-resource:** Lambda backed CloudFormation custom resource to deploy MediaConvert templates configure S3 event notifications.
+* **dynamo:** Lambda function to Update DynamoDB.
+* **encode:** Lambda function to submit an encoding job to Elemental MediaConvert.
 * **error-handler:** Lambda function to handler any errors created by the workflow or MediaConvert.
-* **output-validate:** Lambda function to parse MediaConvert CloudWatch Events
-* **step-functions:** Lambda function to trigger AWS Step Functions
-* **dynamo:** Lambda function to Update DynamoDB
 * **input-validate:** Lambda function to parse S3 event notifications and define the workflow parameters.
-* **profiler:** Lambda function used to send publish and/or error notifications.
 * **media-package-assets:** Lambda function to ingest an asset into MediaPackage-VOD.
+* **output-validate:** Lambda function to parse MediaConvert CloudWatch Events.
+* **profiler:** Lambda function used to send publish and/or error notifications.
+* **step-functions:** Lambda function to trigger AWS Step Functions.
 
 ## Source code (Python 3.7)
 > **Note**: The _mediainfo_ function uses the python3.7 runtime since the distributable was compiled on Amazon Linux, and the [Operating System for the node version 10 runtime](https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtimes.html) is Amazon Linux 2.
 
 * **mediainfo:** Lambda function to run mediainfo on s3 signed url. https://mediaarea.net/en/MediaInfo. bin/mediainfo must be made executable before deploying to lambda.
 
-## Creating a custom Build
+## Creating a custom build
 The solution can be deployed through the CloudFormation template available on the solution home page: [Video on Demand on AWS](https://aws.amazon.com/answers/media-entertainment/video-on-demand-on-aws/).
- To make changes to the solution, download or clone this repo, update the source code and then run the deployment/build-s3-dist.sh script to deploy the updated Lambda code to an S3 bucket in your account.
+To make changes to the solution, download or clone this repo, update the source code and then run the deployment/build-s3-dist.sh script to deploy the updated Lambda code to an Amazon S3 bucket in your account.
 
-### Pre-requirements:
+### Prerequisites:
 * [AWS Command Line Interface](https://aws.amazon.com/cli/)
-* Node.js 10.x and Python 3.x
+* Node.js 10.x or later
+* Python 3.7 or later
 
-### 1. Create an Amazon S3 Bucket.
-The CloudFormation template is configured to pull the Lambda deployment packages from Amazon S3 bucket in the region the template is being launched in. Create a bucket in the desired region with the region name appended to the name of the bucket. eg: for us-east-1 create a bucket named: ```bucket-us-east-1```
-
-### 2. Create the deployment packages:
-Run the build-s3-dist.sh script, passing in 3 variables:
-* CODEBUCKET = the name of the S3 bucket (do NOT include the -region extension)
-* SOLUTIONNAME = name of the solution (video-on-demand-on-aws)
-* v4.3.0 = this will be the subfolder containing the code
-
-Example:
+### 1. Running unit tests for customization
+Run unit tests to make sure added customization passes the tests:
 ```
-  cd deployment/
-  chmod +x ./build-s3-dist.sh
-  ./build-s3-dist.sh bucket video-on-demand-on-aws 1.01
-```
-This will update the CloudFormation template mappings:
-```
-  SourceCode:
-    General:
-      S3Bucket: bucket
-      KeyPrefix: video-on-demand-on-aws/1.01
-```
-And the lambda functions deployment will expect the lambda code to be in:
-```
- s3://bucket`-region`/video-on-demand-on-aws/1.01/.
-```
-In the example for us-east-1 this would be:
-```
- s3://bucket-us-east-1/video-on-demand-on-aws/1.01/.
+cd ./deployment
+chmod +x ./run-unit-tests.sh
+./run-unit-tests.sh
 ```
 
+### 2. Create an Amazon S3 Bucket
+The CloudFormation template is configured to pull the Lambda deployment packages from Amazon S3 bucket in the region the template is being launched in. Create a bucket in the desired region with the region name appended to the name of the bucket (e.g. for us-east-1 create a bucket named ```my-bucket-us-east-1```).
+```
+aws s3 mb s3://my-bucket-us-east-1
+```
 
-### 3. Upload the Code to Amazon S3.
-Use the AWS CLI to sync the lambda code and demo console files to amazon S3:
+### 3. Create the deployment packages
+Build the distributable:
+```
+chmod +x ./build-s3-dist.sh
+./build-s3-dist.sh my-bucket video-on-demand-on-aws v5.0.0-custom
+```
 
- ```
-   cd deployment/
-   aws s3 sync ./regional-s3-assets/ s3://bucket-us-east-1/video-on-demand-on-aws/1.01/ --recursive --acl bucket-owner-full-control
- ```
+> **Notes**: The _build-s3-dist_ script expects the bucket name as one of its parameters, and this value should not include the region suffix.
+
+Deploy the distributable to the Amazon S3 bucket in your account:
+```
+aws s3 cp ./regional-s3-assets/ s3://my-bucket-us-east-1/video-on-demand-on-aws/v5.0.0-custom/ --recursive --acl bucket-owner-full-control
+```
 
 ### 4. Launch the CloudFormation template.
 * Get the link of the video-on-demand-on-aws.template uploaded to your Amazon S3 bucket.
 * Deploy the Video on Demand to your account by launching a new AWS CloudFormation stack using the link of the video-on-demand-on-aws.template.
 
-
 ## Additional Resources
 
 ### Services
 - [AWS Elemental MediaConvert](https://aws.amazon.com/mediaconvert/)
+- [AWS Elemental MediaPackage](https://aws.amazon.com/mediapackage/)
 - [AWS Step Functions](https://aws.amazon.com/mediapackage/)
 - [AWS Lambda](https://aws.amazon.com/lambda/)
 - [Amazon CloudFront](https://aws.amazon.com/cloudfront/)
@@ -219,14 +188,18 @@ Use the AWS CLI to sync the lambda code and demo console files to amazon S3:
 - [Live to VOD with Machine Learning](https://github.com/aws-samples/aws-elemental-instant-video-highlights)
 - [Demo SPEKE Reference Server](https://github.com/awslabs/speke-reference-server)
 
-
-
 ***
 
-Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 
-Licensed under the Amazon Software License (the "License"). You may not use this file except in compliance with the License. A copy of the License is located at
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-    http://aws.amazon.com/asl/
+    http://www.apache.org/licenses/LICENSE-2.0
 
-or in the "license" file accompanying this file. This file is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, express or implied. See the License for the specific language governing permissions and limitations under the License.
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.

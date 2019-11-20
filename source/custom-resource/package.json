@@ -1,31 +1,30 @@
 {
-  "name": "vod-deployment",
+  "name": "vod-custom-resource",
   "version": "1.0.0",
   "engines": {
-    "node": "^6.10"
+    "node": ">=8"
   },
-  "description": "cfn custom resources for vod workflow",
-  "main": "na",
+  "description": "cfn custom resources for video on demand",
+  "main": "index.js",
   "scripts": {
+    "pretest": "npm install --quiet",
     "test": "mocha lib/**/*.spec.js"
   },
   "dependencies": {
-    "aws-sdk": "*",
-    "axios": "^0.18.0",
-    "moment": "^2.18.1",
-    "uuid": "*"
+    "aws-sdk": "^2.574.0",
+    "axios": "^0.19.0",
+    "moment": "^2.24.0",
+    "uuid": "^3.3.3"
   },
   "devDependencies": {
-    "aws-sdk-mock": "*",
-    "mocha": "*",
-    "chai": "*",
-    "axios-mock-adapter": "*"
+    "aws-sdk-mock": "^4.5.0",
+    "mocha": "^6.2.2",
+    "chai": "^4.2.0",
+    "axios-mock-adapter": "^1.17.0"
   },
-  "repository": {
-    "type": "git",
-    "url": "na"
+  "private": true,
+  "author": {
+    "name": "aws-solutions-builder"
   },
-  "author": "",
-  "license": "Amazon Software License",
-  "readme": "../../ReadMe.md"
+  "license": "Apache-2.0"
 }
