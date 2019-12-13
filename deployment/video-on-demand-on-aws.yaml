@@ -1439,3 +1439,9 @@ Outputs:
     Value: !GetAtt Uuid.UUID
     Export:
       Name: !Join [":", [!Ref "AWS::StackName", UUID]]
+
+  SnsTopic:
+    Description: SNS Notification Topic
+    Value: !Ref SnsTopic
+    Export:
+      Name: !Join [":", [!Ref "AWS::StackName", SnsTopic]]
