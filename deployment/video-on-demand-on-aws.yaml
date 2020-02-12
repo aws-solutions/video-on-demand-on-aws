@@ -677,17 +677,17 @@ Resources:
             !If
               - IsMediaPackageEnabled
               - !Sub "${AWS::StackName}_Ott_2160p_Avc_Aac_16x9_mvod"
-              - !Sub "${AWS::StackName}_Ott_2160p_Avc_Aac_16x9_qvbr"
+              - !Sub "${AWS::StackName}System-Ott_Hls_Ts_Hevc_Aac"
           MediaConvert_Template_1080p:
             !If
               - IsMediaPackageEnabled
               - !Sub "${AWS::StackName}_Ott_1080p_Avc_Aac_16x9_mvod"
-              - !Sub "${AWS::StackName}_Ott_1080p_Avc_Aac_16x9_qvbr"
+              - !Sub "${AWS::StackName}System-Ott_Hls_Ts_Hevc_Aac"
           MediaConvert_Template_720p:
             !If
               - IsMediaPackageEnabled
               - !Sub "${AWS::StackName}_Ott_720p_Avc_Aac_16x9_mvod"
-              - !Sub "${AWS::StackName}_Ott_720p_Avc_Aac_16x9_qvbr"
+              - !Sub "${AWS::StackName}System-Ott_Hls_Ts_Hevc_Aac"
           CloudFront: !GetAtt CloudFront.DomainName
           EnableMediaPackage: !Ref EnableMediaPackage
           InputRotate: DEGREE_0

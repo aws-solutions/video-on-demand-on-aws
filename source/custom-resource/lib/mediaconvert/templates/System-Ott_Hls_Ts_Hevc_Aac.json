@@ -1,0 +1,66 @@
+{
+  "Description": "OTT Profile - HLS, TS, HEVC, AAC",
+  "Category": "OTT-HLS",
+  "Name": "System-Ott_Hls_Ts_Hevc_Aac",
+  "Settings": {
+    "OutputGroups": [
+      {
+        "Name": "Apple HLS",
+        "Outputs": [
+          {
+            "Preset": "System-Ott_Hls_Ts_Hevc_Aac_16x9_640x360p_24Hz_0.8Mbps",
+            "NameModifier": "_Ott_Hls_Ts_Hevc_16x9_640x360p_24Hz_800Kbps"
+          },
+          {
+            "Preset": "System-Ott_Hls_Ts_Hevc_Aac_16x9_768x432p_24Hz_1.0Mbps",
+            "NameModifier": "_Ott_Hls_Ts_Hevc_16x9_768x432p_24Hz_1000Kbps"
+          },
+          {
+            "Preset": "System-Ott_Hls_Ts_Hevc_Aac_16x9_960x540p_24Hz_1.5Mbps",
+            "NameModifier": "_Ott_Hls_Ts_Hevc_16x9_960x540p_24Hz_1500Kbps"
+          },
+          {
+            "Preset": "System-Ott_Hls_Ts_Hevc_Aac_16x9_1280x720p_24Hz_2.0Mbps",
+            "NameModifier": "_Ott_Hls_Ts_Hevc_16x9_1280x720p_24Hz_2000Kbps"
+          },
+          {
+            "Preset": "System-Ott_Hls_Ts_Hevc_Aac_16x9_1280x720p_24Hz_4.0Mbps",
+            "NameModifier": "_Ott_Hls_Ts_Hevc_16x9_1280x720p_24Hz_4000Kbps"
+          },
+          {
+            "Preset": "System-Ott_Hls_Ts_Hevc_Aac_16x9_1920x1080p_24Hz_6.0Mbps",
+            "NameModifier": "_Ott_Hls_Ts_Hevc_16x9_1920x1080p_24Hz_6000Kbps"
+          },
+          {
+            "Preset": "System-Ott_Hls_Ts_Hevc_Aac_4x3_1600x1200p_24Hz_6.0Mbps",
+            "NameModifier": "_Ott_Hls_Ts_Hevc_16x9_1600x1200p_24Hz_6000Kbps"
+          }
+        ],
+        "OutputGroupSettings": {
+          "Type": "HLS_GROUP_SETTINGS",
+          "HlsGroupSettings": {
+            "ManifestDurationFormat": "INTEGER",
+            "SegmentLength": 3,
+            "TimedMetadataId3Period": 10,
+            "CaptionLanguageSetting": "OMIT",
+            "TimedMetadataId3Frame": "PRIV",
+            "CodecSpecification": "RFC_4281",
+            "OutputSelection": "MANIFESTS_AND_SEGMENTS",
+            "ProgramDateTimePeriod": 600,
+            "MinSegmentLength": 0,
+            "DirectoryStructure": "SINGLE_DIRECTORY",
+            "ProgramDateTime": "EXCLUDE",
+            "SegmentControl": "SEGMENTED_FILES",
+            "ManifestCompression": "NONE",
+            "ClientCache": "ENABLED",
+            "StreamInfResolution": "INCLUDE"
+          }
+        }
+      }
+    ],
+    "AdAvailOffset": 0
+  },
+  "AccelerationSettings": {
+    "Mode": "DISABLED"
+  }
+}
