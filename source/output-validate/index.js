@@ -15,7 +15,7 @@ const AWS = require('aws-sdk');
 const error = require('./lib/error.js');
 const moment = require('moment');
 
-const buildUrl = (originalValue) => originalValue.slice(5).split('/').splice(1, 3).join('/');
+const buildUrl = (originalValue) => originalValue.slice(5).split('/').splice(1).join('/');
 
 exports.handler = async (event) => {
     console.log(`REQUEST:: ${JSON.stringify(event, null, 2)}`);

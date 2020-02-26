@@ -71,6 +71,14 @@ describe('#OUTPUT VALIDATE::', () => {
         expect(response.mp4Urls[0]).to.equal('https://cloudfront/12345/mp4/dude_3.0Mbps.mp4');
     });
 
+    it('should return "SUCCESS" on parsing outputs that are not on root path of bucket', async () => {
+        AWS.mock('DynamoDB.DocumentClient', 'get', Promise.resolve(data));
+
+        let response = await lambda.handler(_events.notRoot);
+        expect(response.mp4Outputs[0]).to.equal('s3://vod4-destination-fr0ao9hz7tbo/folder1/folder2/12345/mp4/dude_3.0Mbps.mp4');
+        expect(response.mp4Urls[0]).to.equal('https://cloudfront/folder1/folder2/12345/mp4/dude_3.0Mbps.mp4');
+    });
+
     it('should return "DB ERROR" when db get fails', async () => {
         AWS.mock('DynamoDB.DocumentClient', 'get', Promise.reject('DB ERROR'));
         AWS.mock('Lambda', 'invoke', Promise.resolve());
