@@ -1,5 +1,5 @@
 /*********************************************************************************************************************
- *  Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
+ *  Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
  *                                                                                                                    *
  *  Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file except in compliance    *
  *  with the License. A copy of the License is located at                                                             *
@@ -11,23 +11,23 @@
  *  and limitations under the License.                                                                                *
  *********************************************************************************************************************/
 
-let expect = require('chai').expect;
-var path = require('path');
-let AWS = require('aws-sdk-mock');
+const expect = require('chai').expect;
+const path = require('path');
+const AWS = require('aws-sdk-mock');
 AWS.setSDK(path.resolve('./node_modules/aws-sdk'));
 
-let lambda = require('../index.js');
+const lambda = require('../index.js');
 
 describe('#ERROR HANDLER::', () => {
-    let _lambda = {
-        guid: "1234",
-        error: "LAMBDA",
-        function: "workflow",
+    const _lambda = {
+        guid: '1234',
+        error: 'LAMBDA',
+        function: 'workflow',
     };
 
-    let _encode = {
-        guid: "12345678",
-        error: "MEDIACONVERT",
+    const _encode = {
+        guid: '12345678',
+        error: 'MEDIACONVERT',
         errorMessage: 'Encoding Error',
         detail: {
             jobId: '1111111',
@@ -46,7 +46,7 @@ describe('#ERROR HANDLER::', () => {
         AWS.mock('DynamoDB.DocumentClient', 'update', Promise.resolve());
         AWS.mock('SNS', 'publish', Promise.resolve());
 
-        let response = await lambda.handler(_lambda)
+        const response = await lambda.handler(_lambda);
         expect(response.error).to.equal('LAMBDA');
     });
 
@@ -54,7 +54,7 @@ describe('#ERROR HANDLER::', () => {
         AWS.mock('DynamoDB.DocumentClient', 'update', Promise.resolve());
         AWS.mock('SNS', 'publish', Promise.resolve());
 
-        let response = await lambda.handler(_encode)
+        const response = await lambda.handler(_encode);
         expect(response.error).to.equal('MEDIACONVERT');
     });
 

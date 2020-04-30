@@ -1,5 +1,5 @@
 /*********************************************************************************************************************
- *  Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
+ *  Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
  *                                                                                                                    *
  *  Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file except in compliance    *
  *  with the License. A copy of the License is located at                                                             *
@@ -14,43 +14,25 @@
 const AWS = require('aws-sdk');
 const error = require('./lib/error.js');
 
+
 exports.handler = async (event) => {
     console.log(`REQUEST:: ${JSON.stringify(event, null, 2)}`);
 
-    const dynamo = new AWS.DynamoDB.DocumentClient({
+    const sqs = new AWS.SQS({
         region: process.env.AWS_REGION
     });
 
     try {
-        // Remove guid from event data (primary db table key) and iterate over event objects
-        // to build the update parameters
-        let guid = event.guid;
-        delete event.guid;
-        let expression = '';
-        let values = {};
-        let i = 0;
 
-        Object.keys(event).forEach((key) => {
-            i++;
-            expression += ' ' + key + ' = :' + i + ',';
-            values[':' + i] = event[key];
-        });
+        console.log(`SEND SQS:: ${JSON.stringify(event, null, 2)}`);
 
         let params = {
-            TableName: process.env.DynamoDBTable,
-            Key: {
-                guid: guid,
-            },
-            // remove the trailing ',' from the update expression added by the forEach loop
-            UpdateExpression: 'set ' + expression.slice(0, -1),
-            ExpressionAttributeValues: values
+            MessageBody: JSON.stringify(event, null, 2),
+            QueueUrl: process.env.SqsQueue
         };
 
-        console.log(`UPDATE:: ${JSON.stringify(params, null, 2)}`);
-        await dynamo.update(params).promise();
+        await sqs.sendMessage(params).promise();
 
-        // Get updated data and reconst event data to return
-        event.guid = guid;
     } catch (err) {
         await error.handler(event, err);
         throw err;

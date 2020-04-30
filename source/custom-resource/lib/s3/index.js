@@ -1,5 +1,5 @@
 /*********************************************************************************************************************
- *  Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
+ *  Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
  *                                                                                                                    *
  *  Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file except in compliance    *
  *  with the License. A copy of the License is located at                                                             *
@@ -16,15 +16,15 @@ const AWS = require('aws-sdk');
 let PutNotification = async (config) => {
     const s3 = new AWS.S3();
 
-    try {
-        let params;
+    let params;
 
-        switch (config.WorkflowTrigger) {
-            case 'VideoFile':
-                params = {
-                    Bucket: config.Source,
-                    NotificationConfiguration: {
-                        LambdaFunctionConfigurations: [{
+    switch (config.WorkflowTrigger) {
+        case 'VideoFile':
+            params = {
+                Bucket: config.Source,
+                NotificationConfiguration: {
+                    LambdaFunctionConfigurations: [
+                        {
                             Events: ['s3:ObjectCreated:*'],
                             LambdaFunctionArn: config.IngestArn,
                             Filter: {
@@ -84,43 +84,39 @@ let PutNotification = async (config) => {
                                 }
                             }
                         }
-                        ]
-                    }
-                };
+                    ]
+                }
+            };
 
-                console.log('configuring S3 event for Video');
-                await s3.putBucketNotificationConfiguration(params).promise();
-                break;
+            console.log(`Configuring S3 event for ${config.WorkflowTrigger}`);
+            await s3.putBucketNotificationConfiguration(params).promise();
+            break;
 
-            case 'MetadataFile':
-                params = {
-                    Bucket: config.Source,
-                    NotificationConfiguration: {
-                        LambdaFunctionConfigurations: [{
-                            Events: ['s3:ObjectCreated:*'],
-                            LambdaFunctionArn: config.IngestArn,
-                            Filter: {
-                                Key: {
-                                    FilterRules: [{
-                                        Name: 'suffix',
-                                        Value: 'json'
-                                    }]
-                                }
+        case 'MetadataFile':
+            params = {
+                Bucket: config.Source,
+                NotificationConfiguration: {
+                    LambdaFunctionConfigurations: [{
+                        Events: ['s3:ObjectCreated:*'],
+                        LambdaFunctionArn: config.IngestArn,
+                        Filter: {
+                            Key: {
+                                FilterRules: [{
+                                    Name: 'suffix',
+                                    Value: 'json'
+                                }]
                             }
                         }
-                        ]
-                    }
-                };
+                    }]
+                }
+            };
 
-                console.log('configuring S3 event for Metadata');
-                await s3.putBucketNotificationConfiguration(params).promise();
-                break;
+            console.log(`Configuring S3 event for ${config.WorkflowTrigger}`);
+            await s3.putBucketNotificationConfiguration(params).promise();
+            break;
 
-            default:
-                throw new Error(`Unknown WorkflowTrigger: ${config.WorkflowTrigger}`);
-        }
-    } catch (err) {
-        throw err;
+        default:
+            throw new Error(`Unknown WorkflowTrigger: ${config.WorkflowTrigger}`);
     }
 
     return 'success';

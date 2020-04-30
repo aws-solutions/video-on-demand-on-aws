@@ -99,7 +99,8 @@ def parse_text_attributes(track):
 
 def get_signed_url(bucket, obj):
     SIGNED_URL_EXPIRATION = 60 * 60 * 2
-    s3_client = boto3.client('s3')
+    AWS_REGION = os.environ['AWS_REGION']
+    s3_client = boto3.client('s3', endpoint_url=f'https://s3.{AWS_REGION}.amazonaws.com', region_name=AWS_REGION)
 
     return s3_client.generate_presigned_url(
         'get_object',

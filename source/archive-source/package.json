@@ -2,21 +2,20 @@
   "name": "vod-archive-source",
   "version": "1.0.0",
   "engines": {
-    "node": ">=8"
+    "node": ">=12"
   },
   "description": "ingest workflow for video on demand",
   "main": "index.js",
   "scripts": {
-    "pretest": "npm install --quiet",
+    "pretest": "npm i --quiet",
     "test": "mocha lib/*.spec.js"
   },
-  "dependencies": {
-    "aws-sdk": "^2.574.0"
-  },
+  "dependencies": {},
   "devDependencies": {
-    "aws-sdk-mock": "^4.5.0",
+    "aws-sdk": "^2.609.0",
+    "aws-sdk-mock": "^5.0.0",
     "chai": "^4.2.0",
-    "mocha": "^6.2.2"
+    "mocha": "^7.0.0"
   },
   "private": true,
   "author": {

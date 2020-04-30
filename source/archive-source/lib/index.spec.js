@@ -1,5 +1,5 @@
 /*********************************************************************************************************************
- *  Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
+ *  Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
  *                                                                                                                    *
  *  Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file except in compliance    *
  *  with the License. A copy of the License is located at                                                             *
@@ -11,31 +11,31 @@
  *  and limitations under the License.                                                                                *
  *********************************************************************************************************************/
 
-let expect = require('chai').expect;
-var path = require('path');
-let AWS = require('aws-sdk-mock');
+const expect = require('chai').expect;
+const path = require('path');
+const AWS = require('aws-sdk-mock');
 AWS.setSDK(path.resolve('./node_modules/aws-sdk'));
 
-let lambda = require('../index.js');
+const lambda = require('../index.js');
 
 describe('#SOURCE ARCHIVE::', () => {
-    let _event = {
-        guid: "1234",
-        srcVideo: "example.mpg",
-        srcBucket: "bucket"
+    const _event = {
+        guid: '1234',
+        srcVideo: 'example.mpg',
+        srcBucket: 'bucket',
+        archiveSource: 'GLACIER'
+
     };
 
     process.env.ErrorHandler = 'error_handler';
     process.env.AWS_LAMBDA_FUNCTION_NAME = 'Lambda';
 
-    afterEach(() => {
-        AWS.restore('S3');
-    });
+    afterEach(() => AWS.restore('S3'));
 
     it('should return "SUCCESS" when s3 tag object returns success', async () => {
         AWS.mock('S3', 'putObjectTagging', Promise.resolve());
 
-        let response = await lambda.handler(_event);
+        const response = await lambda.handler(_event);
         expect(response.guid).to.equal('1234');
     });
 

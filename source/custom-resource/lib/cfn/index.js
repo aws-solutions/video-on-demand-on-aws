@@ -1,5 +1,5 @@
 /*********************************************************************************************************************
- *  Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
+ *  Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
  *                                                                                                                    *
  *  Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file except in compliance    *
  *  with the License. A copy of the License is located at                                                             *
@@ -16,32 +16,28 @@ const axios = require('axios');
 let sendResponse = async (event, context, responseStatus, responseData) => {
     let data;
 
-    try {
-        let responseBody = JSON.stringify({
-            Status: responseStatus,
-            Reason: "See the details in CloudWatch Log Stream: " + context.logStreamName,
-            PhysicalResourceId: event.LogicalResourceId,
-            StackId: event.StackId,
-            RequestId: event.RequestId,
-            LogicalResourceId: event.LogicalResourceId,
-            Data: responseData
-        });
+    const responseBody = JSON.stringify({
+        Status: responseStatus,
+        Reason: 'See the details in CloudWatch Log Stream: ' + context.logStreamName,
+        PhysicalResourceId: event.LogicalResourceId,
+        StackId: event.StackId,
+        RequestId: event.RequestId,
+        LogicalResourceId: event.LogicalResourceId,
+        Data: responseData
+    });
 
-        let params = {
-            url: event.ResponseURL,
-            port: 443,
-            method: "put",
-            headers: {
-                "content-type": "",
-                "content-length": responseBody.length
-            },
-            data: responseBody
-        };
+    const params = {
+        url: event.ResponseURL,
+        port: 443,
+        method: 'put',
+        headers: {
+            'content-type': '',
+            'content-length': responseBody.length
+        },
+        data: responseBody
+    };
 
-        data = await axios(params);
-    } catch (err) {
-        throw err;
-    }
+    data = await axios(params);
 
     return data.status;
 };

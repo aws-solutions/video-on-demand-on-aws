@@ -37,11 +37,7 @@ class BuildPackageCommand(Command):
         assert self.zip_path is not None, 'Invalid zip_path'
 
     def run(self):
-        run_bash_command('rm -rf ./pypackage')
-        run_bash_command('pip3 install -r requirements.txt -t ./pypackage')
-        run_bash_command(f'cd pypackage && zip -rq9 {self.zip_path} . && cd ..')
-        run_bash_command(f'zip -g {self.zip_path} lambda_function.py requirements.txt ./bin/*')
-        run_bash_command('rm -rf ./pypackage')
+        run_bash_command(f'zip -rq9 {self.zip_path} lambda_function.py ./bin/*')
 
 class UnitTestsCommand(TestCommand):
     description = 'Run unit tests'
@@ -49,7 +45,6 @@ class UnitTestsCommand(TestCommand):
     def run_tests(self):
         run_bash_command('rm -rf ./pytests && mkdir ./pytests')
         run_bash_command('cp lambda_function.py ./test*.py ./pytests')
-        run_bash_command('pip3 install -r requirements.txt -t ./pytests')
         run_bash_command('python3 -m unittest discover -s ./pytests -v')
         run_bash_command('rm -rf ./pytests')
 

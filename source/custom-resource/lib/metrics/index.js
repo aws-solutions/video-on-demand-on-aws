@@ -1,5 +1,5 @@
 /*********************************************************************************************************************
- *  Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
+ *  Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
  *                                                                                                                    *
  *  Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file except in compliance    *
  *  with the License. A copy of the License is located at                                                             *
@@ -25,29 +25,24 @@ const sanitizeData = (config) => {
 const send = async (config) => {
     let data;
 
-    try {
-        const metrics = {
-            Solution: config.SolutionId,
-            UUID: config.UUID,
-            TimeStamp: moment().utc().toISOString(),
-            Data: sanitizeData(config)
-        };
+    const metrics = {
+        Solution: config.SolutionId,
+        UUID: config.UUID,
+        TimeStamp: moment().utc().toISOString(),
+        Data: sanitizeData(config)
+    };
 
-        const params = {
-            method: 'post',
-            port: 443,
-            url: 'https://metrics.awssolutionsbuilder.com/generic',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            data: metrics
-        };
+    const params = {
+        method: 'post',
+        port: 443,
+        url: 'https://metrics.awssolutionsbuilder.com/generic',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        data: metrics
+    };
 
-        // Send Metrics & retun status code.
-        data = await axios(params);
-    } catch (err) {
-        throw err;
-    }
+    data = await axios(params);
 
     return data.status;
 };
