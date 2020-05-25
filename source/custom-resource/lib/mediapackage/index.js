@@ -1,5 +1,5 @@
 /*********************************************************************************************************************
- *  Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
+ *  Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
  *                                                                                                                    *
  *  Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file except in compliance    *
  *  with the License. A copy of the License is located at                                                             *
@@ -13,13 +13,14 @@
 
 const AWS = require('aws-sdk');
 const crypto = require('crypto');
+const cloudfrontHelper = require('./cloudfront');
 
 const DEFAULT_SEGMENT_LENGTH = 6;
 const DEFAULT_PROGRAM_DATETIME_INTERVAL = 60;
 const DEFAULT_MANIFEST_NAME = 'index';
 
-const getHlsParameters = (groupId, randomId) => ({
-    Id: `packaging-config-${randomId}-hls`,
+const getHlsParameters = (groupId, configId) => ({
+    Id: configId,
     PackagingGroupId: groupId,
     HlsPackage: {
         HlsManifests: [{
@@ -34,8 +35,8 @@ const getHlsParameters = (groupId, randomId) => ({
     }
 });
 
-const getDashParameters = (groupId, randomId) => ({
-    Id: `packaging-config-${randomId}-dash`,
+const getDashParameters = (groupId, configId) => ({
+    Id: configId,
     PackagingGroupId: groupId,
     DashPackage: {
         DashManifests: [{
@@ -47,8 +48,8 @@ const getDashParameters = (groupId, randomId) => ({
     }
 });
 
-const getMssParameters = (groupId, randomId) => ({
-    Id: `packaging-config-${randomId}-mss`,
+const getMssParameters = (groupId, configId) => ({
+    Id: configId,
     PackagingGroupId: groupId,
     MssPackage: {
         MssManifests: [{
@@ -58,8 +59,8 @@ const getMssParameters = (groupId, randomId) => ({
     }
 });
 
-const getCmafParameters = (groupId, randomId) => ({
-    Id: `packaging-config-${randomId}-cmaf`,
+const getCmafParameters = (groupId, configId) => ({
+    Id: configId,
     PackagingGroupId: groupId,
     CmafPackage: {
         HlsManifests: [{
@@ -69,7 +70,7 @@ const getCmafParameters = (groupId, randomId) => ({
             ProgramDateTimeIntervalSeconds: DEFAULT_PROGRAM_DATETIME_INTERVAL,
             RepeatExtXKey: false
         }],
-        SegmentDurationSeconds: DEFAULT_SEGMENT_LENGTH,
+        SegmentDurationSeconds: DEFAULT_SEGMENT_LENGTH
     }
 });
 
@@ -77,30 +78,28 @@ const create = async (properties) => {
     const mediaPackageVod = new AWS.MediaPackageVod();
     const randomId = crypto.randomBytes(8).toString('hex');
 
-    const groupId = properties.GroupId;
-    await mediaPackageVod.createPackagingGroup({ Id: groupId }).promise();
-
+    const packagingGroup = await mediaPackageVod.createPackagingGroup({ Id: properties.GroupId }).promise();
     let created = false;
 
-    let configurations = Array.from(new Set(properties.PackagingConfigurations.split(',')));
+    const configurations = Array.from(new Set(properties.PackagingConfigurations.split(',')));
     for (let config of configurations) {
         let params = {};
 
         switch (config.toLowerCase()) {
             case 'hls':
-                params = getHlsParameters(groupId, randomId);
+                params = getHlsParameters(packagingGroup.Id, `packaging-config-${randomId}-hls`);
                 break;
 
             case 'dash':
-                params = getDashParameters(groupId, randomId);
+                params = getDashParameters(packagingGroup.Id, `packaging-config-${randomId}-dash`);
                 break;
 
             case 'mss':
-                params = getMssParameters(groupId, randomId);
+                params = getMssParameters(packagingGroup.Id, `packaging-config-${randomId}-mss`);
                 break;
 
             case 'cmaf':
-                params = getCmafParameters(groupId, randomId);
+                params = getCmafParameters(packagingGroup.Id, `packaging-config-${randomId}-cmaf`);
                 break;
 
             default:
@@ -120,22 +119,35 @@ const create = async (properties) => {
         throw new Error('At least one valid packaging configuration must be informed.');
     }
 
+    await cloudfrontHelper.addCustomOrigin(properties.DistributionId, packagingGroup.DomainName);
+
     return {
-        GroupId: groupId
+        GroupId: packagingGroup.Id,
+        GroupDomainName: packagingGroup.DomainName
+    };
+};
+
+const update = async (properties) => {
+    const mediaPackageVod = new AWS.MediaPackageVod();
+    const packagingGroup = await mediaPackageVod.describePackagingGroup({ Id: properties.GroupId }).promise();
+
+    if (properties.EnableMediaPackage == 'true') {
+        await cloudfrontHelper.addCustomOrigin(properties.DistributionId, packagingGroup.DomainName);
+    }
+
+    return {
+        GroupId: packagingGroup.Id,
+        GroupDomainName: packagingGroup.DomainName
     };
 };
 
 const purge = async (properties) => {
     const mediaPackageVod = new AWS.MediaPackageVod();
     const groupId = properties.GroupId;
-
     let token;
 
     do {
-        const response = await mediaPackageVod.listAssets({
-            PackagingGroupId: groupId,
-            NextToken: token
-        }).promise();
+        const response = await mediaPackageVod.listAssets({ PackagingGroupId: groupId, NextToken: token }).promise();
 
         for (let asset of response.Assets) {
             await mediaPackageVod.deleteAsset({ Id: asset.Id }).promise();
@@ -146,10 +158,7 @@ const purge = async (properties) => {
     } while (token);
 
     do {
-        const response = await mediaPackageVod.listPackagingConfigurations({
-            PackagingGroupId: groupId,
-            NextToken: token
-        }).promise();
+        const response = await mediaPackageVod.listPackagingConfigurations({ PackagingGroupId: groupId, NextToken: token }).promise();
 
         for (let config of response.PackagingConfigurations) {
             await mediaPackageVod.deletePackagingConfiguration({ Id: config.Id }).promise();
@@ -175,5 +184,6 @@ const purge = async (properties) => {
 
 module.exports = {
     create,
+    update,
     purge
 };

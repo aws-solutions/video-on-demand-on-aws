@@ -1,5 +1,5 @@
 /*********************************************************************************************************************
- *  Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
+ *  Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
  *                                                                                                                    *
  *  Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file except in compliance    *
  *  with the License. A copy of the License is located at                                                             *
@@ -20,11 +20,10 @@ exports.handler = async (event) => {
 
     const s3 = new AWS.S3();
     let data;
-    let params;
 
     try {
         // Default configuration for the workflow is built using the enviroment variables.
-        // Any parameter in config can be overwriten using an metadata file or API call.
+        // Any parameter in config can be overwriten using a metadata file.
         data = {
             guid: event.guid,
             startTime: moment().utc().toISOString(),
@@ -35,53 +34,44 @@ exports.handler = async (event) => {
             destBucket: process.env.Destination,
             cloudFront: process.env.CloudFront,
             frameCapture: JSON.parse(process.env.FrameCapture),
-            archiveSource: JSON.parse(process.env.ArchiveSource),
+            archiveSource:  process.env.ArchiveSource,
             jobTemplate_2160p: process.env.MediaConvert_Template_2160p,
             jobTemplate_1080p: process.env.MediaConvert_Template_1080p,
             jobTemplate_720p: process.env.MediaConvert_Template_720p,
-
-            // https://github.com/awslabs/video-on-demand-on-aws/pull/27
-            // Rotation support
-            inputRotate: process.env.InputRotate
+            inputRotate: process.env.InputRotate,
+            acceleratedTranscoding: process.env.AcceleratedTranscoding,
+            enableSns:JSON.parse(process.env.EnableSns),
+            enableSqs:JSON.parse(process.env.EnableSqs)
         };
 
         switch (event.workflowTrigger) {
             case 'Metadata':
-                // Parse Metadata File
                 console.log('Validating Metadata file::');
-                let key = decodeURIComponent(event.Records[0].s3.object.key.replace(/\+/g, " "));
+
+                const key = decodeURIComponent(event.Records[0].s3.object.key.replace(/\+/g, " "));
                 data.srcMetadataFile = key;
 
                 // Download json metadata file from s3
-                params = {
-                    Bucket: data.srcBucket,
-                    Key: key
-                };
+                const metadata = await s3.getObject({ Bucket: data.srcBucket, Key: key }).promise();
 
-                let metadata = await s3.getObject(params).promise();
-                let metadataFile = JSON.parse(metadata.Body);
-
-                // Check metadata for srcVideo
-                if (!metadataFile.srcVideo) throw new Error('srcVideo is not defined in metadata::', metadataFile);
+                const metadataFile = JSON.parse(metadata.Body);
+                if (!metadataFile.srcVideo) {
+                    throw new Error('srcVideo is not defined in metadata::', metadataFile);
+                }
 
                 // https://github.com/awslabs/video-on-demand-on-aws/pull/23
                 // Normalize key in order to support different casing
                 Object.keys(metadataFile).forEach((key) => {
-                    let normalizedKey = key.charAt(0).toLowerCase() + key.substr(1);
+                    const normalizedKey = key.charAt(0).toLowerCase() + key.substr(1);
                     data[normalizedKey] = metadataFile[key];
                 });
 
                 // Check source file is accessible in s3
-                params = {
-                    Bucket: data.srcBucket,
-                    Key: data.srcVideo
-                };
+                await s3.headObject({ Bucket: data.srcBucket, Key: data.srcVideo }).promise();
 
-                await s3.headObject(params).promise();
                 break;
 
             case 'Video':
-                // Updating config with source video and data
                 data.srcVideo = decodeURIComponent(event.Records[0].s3.object.key.replace(/\+/g, " "));
                 break;
 

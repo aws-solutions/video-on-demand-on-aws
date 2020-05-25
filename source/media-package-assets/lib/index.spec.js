@@ -1,5 +1,5 @@
 /*********************************************************************************************************************
- *  Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
+ *  Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
  *                                                                                                                    *
  *  Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file except in compliance    *
  *  with the License. A copy of the License is located at                                                             *
@@ -18,16 +18,18 @@ AWS.setSDK(path.resolve('./node_modules/aws-sdk'));
 
 const lambda = require('../index.js');
 
-const _createAssetResponse = {
+const _domainName = 'https://random-id.egress.mediapackage-vod.us-east-1.amazonaws.com';
+
+const createAssetResponse = {
     Arn: 'asset-arn',
     EgressEndpoints: [
         {
             PackagingConfigurationId: 'packaging-config-hls',
-            Url: 'https://test.com/out/index.m3u8'
+            Url: `${_domainName}/out/index.m3u8`
         },
         {
             PackagingConfigurationId: 'packaging-config-dash',
-            Url: 'https://test.com/out/index.mpd'
+            Url: `${_domainName}/out/index.mpd`
         }
     ],
     Id: 'asset-id',
@@ -37,31 +39,21 @@ const _createAssetResponse = {
     SourceRoleArn: 'test-vod-role'
 };
 
-const _cloudfrontConfig = {
-    DistributionConfig: {
-        Origins: {
-            Items: [{ Id: 'vodMPOrigin' }],
-            Quantity: 1
-        }
-    }
-};
-
 describe('#INGEST::', () => {
     describe('Asset', () => {
         process.env.DistributionId = 'distribution-id';
         process.env.GroupId = 'test-packaging-group';
+        process.env.GroupDomainName = _domainName;
         process.env.MediaPackageVodRole = 'test-vod-role';
         process.env.ErrorHandler = 'error_handler';
 
         afterEach(() => {
             AWS.restore('MediaPackageVod');
             AWS.restore('Lambda');
-            AWS.restore('CloudFront');
         });
 
         it('should succeed with valid parameters', async () => {
-            AWS.mock('MediaPackageVod', 'createAsset', Promise.resolve(_createAssetResponse));
-            AWS.mock('CloudFront', 'getDistributionConfig', Promise.resolve(_cloudfrontConfig));
+            AWS.mock('MediaPackageVod', 'createAsset', Promise.resolve(createAssetResponse));
 
             const event = {
                 guid: 'ce791447-277c-4a8c-9a0d-c3ed28b495ea',

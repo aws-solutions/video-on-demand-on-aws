@@ -1,5 +1,5 @@
 /*********************************************************************************************************************
- *  Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
+ *  Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
  *                                                                                                                    *
  *  Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file except in compliance    *
  *  with the License. A copy of the License is located at                                                             *
@@ -20,8 +20,8 @@ const lambda = require('../index.js');
 
 describe('#DYNAMODB UPDATE::', () => {
     const _event = {
-        guid: "SUCCESS",
-        hello: "from AWS mock"
+        guid: 'SUCCESS',
+        hello: 'from AWS mock'
     };
 
     process.env.ErrorHandler = 'error_handler';
@@ -33,7 +33,7 @@ describe('#DYNAMODB UPDATE::', () => {
     it('should return "SUCCESS" when db put returns success', async () => {
         AWS.mock('DynamoDB.DocumentClient', 'update', Promise.resolve());
 
-        let response = await lambda.handler(_event);
+        const response = await lambda.handler(_event);
         expect(response.guid).to.equal('SUCCESS');
     });
 

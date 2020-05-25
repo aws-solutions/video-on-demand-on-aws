@@ -1,5 +1,5 @@
 /*********************************************************************************************************************
- *  Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
+ *  Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
  *                                                                                                                    *
  *  Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file except in compliance    *
  *  with the License. A copy of the License is located at                                                             *
@@ -11,7 +11,6 @@
  *  and limitations under the License.                                                                                *
  *********************************************************************************************************************/
 
-'use strict';
 const expect = require('chai').expect;
 const path = require('path');
 const AWS = require('aws-sdk-mock');
@@ -52,7 +51,7 @@ describe('#MEDIACONVERT::', () => {
             AWS.mock('MediaConvert', 'createPreset', Promise.resolve());
             AWS.mock('MediaConvert', 'createJobTemplate', Promise.resolve(data));
 
-            let response = await lambda.createTemplates(_config);
+            const response = await lambda.createTemplates(_config);
             expect(response).to.equal('success');
         });
 
@@ -65,7 +64,7 @@ describe('#MEDIACONVERT::', () => {
                 return Promise.resolve(data);
             });
 
-            let response = await lambda.createTemplates(_mediaPackageConfig);
+            const response = await lambda.createTemplates(_mediaPackageConfig);
             expect(response).to.equal('success');
             expect(name.endsWith('_mvod')).to.be.true;
         });
@@ -84,7 +83,7 @@ describe('#MEDIACONVERT::', () => {
         it('should return "SUCCESS" on describeEndpoints', async () => {
             AWS.mock('MediaConvert', 'describeEndpoints', Promise.resolve(data));
 
-            let response = await lambda.getEndpoint(_config);
+            const response = await lambda.getEndpoint(_config);
             expect(response.EndpointUrl).to.equal('https://test.com');
         });
 
@@ -101,7 +100,7 @@ describe('#MEDIACONVERT::', () => {
         it('should return "SUCCESS" on update templates', async () => {
             AWS.mock('MediaConvert', 'listJobTemplates', Promise.resolve(update_data));
 
-            let response = await lambda.updateTemplates(_config);
+            const response = await lambda.updateTemplates(_config);
             expect(response).to.equal('success');
         });
 
@@ -185,7 +184,7 @@ describe('#MEDIACONVERT::', () => {
             AWS.mock('MediaConvert', 'deletePreset', Promise.resolve());
             AWS.mock('MediaConvert', 'deleteJobTemplate', Promise.resolve());
 
-            let response = await lambda.deleteTemplates(_config);
+            const response = await lambda.deleteTemplates(_config);
             expect(response).to.equal('success');
         });
 
@@ -198,7 +197,7 @@ describe('#MEDIACONVERT::', () => {
                 return Promise.resolve();
             });
 
-            let response = await lambda.deleteTemplates(_mediaPackageConfig);
+            const response = await lambda.deleteTemplates(_mediaPackageConfig);
             expect(response).to.equal('success');
             expect(name.endsWith('_mvod')).to.be.true;
         });

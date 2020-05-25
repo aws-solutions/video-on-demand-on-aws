@@ -1,5 +1,5 @@
 /*********************************************************************************************************************
- *  Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
+ *  Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
  *                                                                                                                    *
  *  Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file except in compliance    *
  *  with the License. A copy of the License is located at                                                             *
@@ -88,7 +88,7 @@ const getFrameGroup = (event, outputPath) => ({
         }
     },
     Outputs: [{
-        NameModifier: '_tumb',
+        NameModifier: '_thumb',
         ContainerSettings: {
             Container: 'RAW'
         },
@@ -223,6 +223,14 @@ exports.handler = async (event) => {
 
         if (event.frameCapture) {
             job.Settings.OutputGroups.push(frameCapture);
+        }
+
+        //if enabled the TimeCodeConfig needs to be set to ZEROBASED not passthrough
+        //https://docs.aws.amazon.com/mediaconvert/latest/ug/job-requirements.html
+        if (event.acceleratedTranscoding === 'PREFERRED' || event.acceleratedTranscoding === 'ENABLED') {
+            job.AccelerationSettings = {"Mode" : event.acceleratedTranscoding}
+            job.Settings.TimecodeConfig = {"Source" : "ZEROBASED"}
+            job.Settings.Inputs[0].TimecodeSource = "ZEROBASED"
         }
 
         let data = await mediaconvert.createJob(job).promise();

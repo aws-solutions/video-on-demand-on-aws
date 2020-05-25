@@ -1,5 +1,5 @@
 /*********************************************************************************************************************
- *  Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
+ *  Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
  *                                                                                                                    *
  *  Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file except in compliance    *
  *  with the License. A copy of the License is located at                                                             *
@@ -28,7 +28,8 @@ describe('#ENCODE::', () => {
         jobTemplate: 'jobTemplate',
         srcVideo: 'video.mp4',
         srcBucket: 'src',
-        destBucket: 'dest'
+        destBucket: 'dest',
+        acceleratedTranscoding:'PREFERRED'
     };
 
     const _withframe = {
@@ -37,7 +38,8 @@ describe('#ENCODE::', () => {
         srcVideo: 'video.mp4',
         srcBucket: 'src',
         destBucket: 'dest',
-        frameCapture: true
+        frameCapture: true,
+        acceleratedTranscoding:'ENABLED'
     };
 
     const data = {
@@ -88,7 +90,8 @@ describe('#ENCODE::', () => {
             srcVideo: 'video.mp4',
             srcBucket: 'src',
             destBucket: 'dest',
-            isCustomTemplate: true
+            isCustomTemplate: true,
+            acceleratedTranscoding:'DISABLED'
         };
 
         const customTemplate = {
@@ -132,7 +135,8 @@ describe('#ENCODE::', () => {
             srcVideo: 'video.mp4',
             srcBucket: 'src',
             destBucket: 'dest',
-            isCustomTemplate: false
+            isCustomTemplate: false,
+            acceleratedTranscoding:'DISABLED'
         };
 
         AWS.mock('MediaConvert', 'getJobTemplate', Promise.resolve(tmpl));

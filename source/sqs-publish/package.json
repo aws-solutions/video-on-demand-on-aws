@@ -1,10 +1,10 @@
 {
-  "name": "vod-profiler",
+  "name": "vod-notification",
   "version": "1.0.0",
   "engines": {
     "node": ">=12"
   },
-  "description": "process workflow for video on demand",
+  "description": "sqs function for video on demand",
   "main": "index.js",
   "scripts": {
     "pretest": "npm i --quiet",
@@ -13,11 +13,11 @@
   "dependencies": {},
   "devDependencies": {
     "aws-sdk": "^2.609.0",
-    "aws-sdk-mock": "^5.0.0",
+    "aws-sdk-mock": "^4.5.0",
     "chai": "^4.2.0",
-    "mocha": "^7.0.0",
-    "sinon": "^8.1.1",
-    "sinon-chai": "^3.4.0"
+    "mocha": "^6.2.2",
+    "sinon": "^7.5.0",
+    "sinon-chai": "^3.3.0"
   },
   "private": true,
   "author": {

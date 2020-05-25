@@ -9,19 +9,19 @@ const CmafMss = {
         outputGroupDetails: [
             {
                 playlistFilePaths: [
-                    's3://voodoo-destination-1w8dqfz7w8cq3/12345/cmaf/big_bunny.mpd',
-                    's3://voodoo-destination-1w8dqfz7w8cq3/12345/cmaf/big_bunny.m3u8'
+                    's3://vod-destination/12345/cmaf/big_bunny.mpd',
+                    's3://vod-destination/12345/cmaf/big_bunny.m3u8'
                 ],
                 type: 'CMAF_GROUP'
             },
             {
                 outputDetails: [{
                     outputFilePaths: [
-                        's3://voodoo-destination-1w8dqfz7w8cq3/12345/mss/big_bunny.ismv'
+                        's3://vod-destination/12345/mss/big_bunny.ismv'
                     ]
                 }],
                 playlistFilePaths: [
-                    's3://voodoo-destination-1w8dqfz7w8cq3/12345/mss/big_bunny.ism'
+                    's3://vod-destination/12345/mss/big_bunny.ism'
                 ],
                 type: 'MS_SMOOTH_GROUP'
             }
@@ -41,13 +41,13 @@ const HlsDash = {
         outputGroupDetails: [
             {
                 playlistFilePaths: [
-                    's3://vod4-destination-fr0ao9hz7tbo/12345/hls/dude.m3u8'
+                    's3://vod-destination/12345/hls/dude.m3u8'
                 ],
                 type: 'HLS_GROUP'
             },
             {
                 playlistFilePaths: [
-                    's3://vod4-destination-fr0ao9hz7tbo/12345/dash/dude.mpd'
+                    's3://vod-destination/12345/dash/dude.mpd'
                 ],
                 type: 'DASH_ISO_GROUP'
             }
@@ -79,7 +79,7 @@ const Mp4 = {
                 outputDetails: [
                     {
                         outputFilePaths: [
-                            's3://vod4-destination-fr0ao9hz7tbo/12345/mp4/dude_3.0Mbps.mp4'
+                            's3://vod-destination/12345/mp4/dude_3.0Mbps.mp4'
                         ],
                         durationInMs: 13471,
                         videoDetails: {

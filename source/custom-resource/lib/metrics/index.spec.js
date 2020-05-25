@@ -1,5 +1,5 @@
 /*********************************************************************************************************************
- *  Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
+ *  Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
  *                                                                                                                    *
  *  Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file except in compliance    *
  *  with the License. A copy of the License is located at                                                             *
@@ -15,7 +15,7 @@ const axios = require('axios');
 const expect = require('chai').expect;
 const MockAdapter = require('axios-mock-adapter');
 
-let lambda = require('./index.js');
+const lambda = require('./index.js');
 
 const _config = {
     SolutionId: 'SO0021',
@@ -26,7 +26,7 @@ const _config = {
 
 describe('#SEND METRICS', () => {
     it('should return "200" on a send metrics sucess', async () => {
-        let mock = new MockAdapter(axios);
+        const mock = new MockAdapter(axios);
         mock.onPost().reply(200, {});
 
         lambda.send(_config, (_err, res) => {
@@ -35,11 +35,11 @@ describe('#SEND METRICS', () => {
     });
 
     it('should return "Network Error" on connection timedout', async () => {
-        let mock = new MockAdapter(axios);
+        const mock = new MockAdapter(axios);
         mock.onPut().networkError();
 
         await lambda.send(_config).catch(err => {
-            expect(err.toString()).to.equal("Error: Request failed with status code 404");
+            expect(err.toString()).to.equal('Error: Request failed with status code 404');
         });
     });
 

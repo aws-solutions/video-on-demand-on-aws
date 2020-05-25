@@ -1,5 +1,5 @@
 /*********************************************************************************************************************
- *  Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
+ *  Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
  *                                                                                                                    *
  *  Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file except in compliance    *
  *  with the License. A copy of the License is located at                                                             *
@@ -35,9 +35,29 @@ describe('#OUTPUT VALIDATE::', () => {
     const data = {
         Item: {
             guid: '1234',
-            cloudFront: 'cloudfront'
+            cloudFront: 'cloudfront',
+            destBucket: 'vod-destination',
+            frameCapture: false
         }
     };
+
+    const img_data = {
+        Item: {
+            guid: '1234',
+            cloudFront: 'cloudfront',
+            destBucket: 'vod-destination',
+            frameCapture: true
+        }
+    };
+
+    const imgList = {
+        Contents: [
+            {
+                Key: "12345/thumbnails/dude3.000.jpg",
+         
+                }
+        ]   
+    }
 
     process.env.ErrorHandler = 'error_handler';
 
@@ -46,28 +66,28 @@ describe('#OUTPUT VALIDATE::', () => {
     it('should return "SUCCESS" on parsing CMAF MSS output', async () => {
         AWS.mock('DynamoDB.DocumentClient', 'get', Promise.resolve(data));
 
-        let response = await lambda.handler(_events.cmafMss);
-        expect(response.mssPlaylist).to.equal('s3://voodoo-destination-1w8dqfz7w8cq3/12345/mss/big_bunny.ism');
+        const response = await lambda.handler(_events.cmafMss);
+        expect(response.mssPlaylist).to.equal('s3://vod-destination/12345/mss/big_bunny.ism');
         expect(response.mssUrl).to.equal('https://cloudfront/12345/mss/big_bunny.ism');
-        expect(response.cmafDashPlaylist).to.equal('s3://voodoo-destination-1w8dqfz7w8cq3/12345/cmaf/big_bunny.mpd');
+        expect(response.cmafDashPlaylist).to.equal('s3://vod-destination/12345/cmaf/big_bunny.mpd');
         expect(response.cmafDashUrl).to.equal('https://cloudfront/12345/cmaf/big_bunny.mpd');
     });
 
     it('should return "SUCCESS" on parsing HLS DASH output', async () => {
         AWS.mock('DynamoDB.DocumentClient', 'get', Promise.resolve(data));
 
-        let response = await lambda.handler(_events.hlsDash);
-        expect(response.hlsPlaylist).to.equal('s3://vod4-destination-fr0ao9hz7tbo/12345/hls/dude.m3u8');
+        const response = await lambda.handler(_events.hlsDash);
+        expect(response.hlsPlaylist).to.equal('s3://vod-destination/12345/hls/dude.m3u8');
         expect(response.hlsUrl).to.equal('https://cloudfront/12345/hls/dude.m3u8');
-        expect(response.dashPlaylist).to.equal('s3://vod4-destination-fr0ao9hz7tbo/12345/dash/dude.mpd');
+        expect(response.dashPlaylist).to.equal('s3://vod-destination/12345/dash/dude.mpd');
         expect(response.dashUrl).to.equal('https://cloudfront/12345/dash/dude.mpd');
     });
 
     it('should return "SUCCESS" on parsing MP4 output', async () => {
         AWS.mock('DynamoDB.DocumentClient', 'get', Promise.resolve(data));
 
-        let response = await lambda.handler(_events.mp4);
-        expect(response.mp4Outputs[0]).to.equal('s3://vod4-destination-fr0ao9hz7tbo/12345/mp4/dude_3.0Mbps.mp4');
+        const response = await lambda.handler(_events.mp4);
+        expect(response.mp4Outputs[0]).to.equal('s3://vod-destination/12345/mp4/dude_3.0Mbps.mp4');
         expect(response.mp4Urls[0]).to.equal('https://cloudfront/12345/mp4/dude_3.0Mbps.mp4');
     });
 
@@ -88,3 +108,4 @@ describe('#OUTPUT VALIDATE::', () => {
         });
     });
 });
+

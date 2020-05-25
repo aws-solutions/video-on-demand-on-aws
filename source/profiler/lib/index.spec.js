@@ -1,5 +1,5 @@
 /*********************************************************************************************************************
- *  Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
+ *  Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
  *                                                                                                                    *
  *  Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file except in compliance    *
  *  with the License. A copy of the License is located at                                                             *
@@ -46,7 +46,7 @@ describe('#PROFILER::', () => {
     it('should return "SUCCESS" on profile set', async () => {
         AWS.mock('DynamoDB.DocumentClient', 'get', Promise.resolve(data));
 
-        let response = await lambda.handler(_event);
+        const response = await lambda.handler(_event);
         expect(response.jobTemplate).to.equal('tmpl3');
         expect(response.frameCaptureHeight).to.equal(720);
         expect(response.frameCaptureWidth).to.equal(1280);
@@ -56,7 +56,7 @@ describe('#PROFILER::', () => {
     it('should return "SUCCESS" using a custom template', async () => {
         AWS.mock('DynamoDB.DocumentClient', 'get', Promise.resolve(data));
 
-        let response = await lambda.handler(_tmpl_event);
+        const response = await lambda.handler(_tmpl_event);
         expect(response.jobTemplate).to.equal('customTemplate');
         expect(response.frameCaptureHeight).to.equal(720);
         expect(response.frameCaptureWidth).to.equal(1280);

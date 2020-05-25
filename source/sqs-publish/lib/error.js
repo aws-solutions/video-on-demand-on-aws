@@ -1,5 +1,5 @@
 /*********************************************************************************************************************
- *  Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
+ *  Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
  *                                                                                                                    *
  *  Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file except in compliance    *
  *  with the License. A copy of the License is located at                                                             *
@@ -12,49 +12,34 @@
  *********************************************************************************************************************/
 
 const AWS = require('aws-sdk');
-const error = require('./lib/error.js');
 
-exports.handler = async (event) => {
-    console.log(`REQUEST:: ${JSON.stringify(event, null, 2)}`);
-
-    const dynamo = new AWS.DynamoDB.DocumentClient({
+let errHandler = async (event, _err) => {
+    const lambda = new AWS.Lambda({
         region: process.env.AWS_REGION
     });
 
     try {
-        // Remove guid from event data (primary db table key) and iterate over event objects
-        // to build the update parameters
-        let guid = event.guid;
-        delete event.guid;
-        let expression = '';
-        let values = {};
-        let i = 0;
-
-        Object.keys(event).forEach((key) => {
-            i++;
-            expression += ' ' + key + ' = :' + i + ',';
-            values[':' + i] = event[key];
-        });
-
-        let params = {
-            TableName: process.env.DynamoDBTable,
-            Key: {
-                guid: guid,
-            },
-            // remove the trailing ',' from the update expression added by the forEach loop
-            UpdateExpression: 'set ' + expression.slice(0, -1),
-            ExpressionAttributeValues: values
+        let payload = {
+            "guid": event.guid,
+            "event": event,
+            "function": process.env.AWS_LAMBDA_FUNCTION_NAME,
+            "error": _err.toString()
         };
 
-        console.log(`UPDATE:: ${JSON.stringify(params, null, 2)}`);
-        await dynamo.update(params).promise();
+        let params = {
+            FunctionName: process.env.ErrorHandler,
+            Payload: JSON.stringify(payload, null, 2)
+        };
 
-        // Get updated data and reconst event data to return
-        event.guid = guid;
+        await lambda.invoke(params).promise();
     } catch (err) {
-        await error.handler(event, err);
+        console.log(err);
         throw err;
     }
 
-    return event;
+    return 'success';
+};
+
+module.exports = {
+    handler: errHandler
 };

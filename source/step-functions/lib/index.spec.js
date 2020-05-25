@@ -1,5 +1,5 @@
 /*********************************************************************************************************************
- *  Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
+ *  Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
  *                                                                                                                    *
  *  Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file except in compliance    *
  *  with the License. A copy of the License is located at                                                             *
@@ -11,12 +11,12 @@
  *  and limitations under the License.                                                                                *
  *********************************************************************************************************************/
 
-let expect = require('chai').expect;
-var path = require('path');
-let AWS = require('aws-sdk-mock');
+const expect = require('chai').expect;
+const path = require('path');
+const AWS = require('aws-sdk-mock');
 AWS.setSDK(path.resolve('./node_modules/aws-sdk'));
 
-let lambda = require('../index.js');
+const lambda = require('../index.js');
 
 describe('#STEP FUNCTIONS::', () => {
     process.env.IngestWorkflow = 'INGEST';
@@ -24,23 +24,21 @@ describe('#STEP FUNCTIONS::', () => {
     process.env.PublishWorkflow = 'PUBLISH';
     process.env.ErrorHandler = 'error_handler';
 
-    let _ingest = {
-        Records: [
-            {
-                s3: {
-                    object: {
-                        key: "big_bunny.mp4",
-                    }
+    const _ingest = {
+        Records: [{
+            s3: {
+                object: {
+                    key: 'big_bunny.mp4',
                 }
             }
-        ]
+        }]
     };
 
-    let _process = {
+    const _process = {
         guid: '1234'
     };
 
-    let _publish = {
+    const _publish = {
         detail: {
             userMetadata: {
                 guid: '1234'
@@ -48,39 +46,37 @@ describe('#STEP FUNCTIONS::', () => {
         }
     };
 
-    let _error = {};
+    const _error = {};
 
-    let data = {
-        executionArn: "arn"
+    const data = {
+        executionArn: 'arn'
     };
 
-    afterEach(() => {
-        AWS.restore('StepFunctions');
-    });
+    afterEach(() => AWS.restore('StepFunctions'));
 
     it('should return "success" on Ingest Execute success', async () => {
         AWS.mock('StepFunctions', 'startExecution', Promise.resolve(data));
 
-        let response = await lambda.handler(_ingest);
+        const response = await lambda.handler(_ingest);
         expect(response).to.equal('success');
     });
 
     it('should return "success" on process Execute success', async () => {
         AWS.mock('StepFunctions', 'startExecution', Promise.resolve(data));
 
-        let response = await lambda.handler(_process);
+        const response = await lambda.handler(_process);
         expect(response).to.equal('success');
     });
 
     it('should return "success" on publish Execute success', async () => {
         AWS.mock('StepFunctions', 'startExecution', Promise.resolve(data));
 
-        let response = await lambda.handler(_publish);
+        const response = await lambda.handler(_publish);
         expect(response).to.equal('success');
     });
 
     it('should return "ERROR" with an invalid event object', async () => {
-        AWS.mock('StepFunctions', 'startExecution', Promise.resolve('data'));
+        AWS.mock('StepFunctions', 'startExecution', Promise.resolve(data));
         AWS.mock('Lambda', 'invoke', Promise.resolve());
 
         await lambda.handler(_error).catch(err => {

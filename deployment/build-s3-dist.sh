@@ -67,17 +67,22 @@ chmod +x ./mediainfo/bin/mediainfo
 
 for folder in */ ; do
     cd "$folder"
+
     function_name=${PWD##*/}
-    echo "Creating deployment package for $function_name"
+    zip_path="$build_dist_dir/$function_name.zip"
+
+    echo "Creating deployment package for $function_name at $zip_path"
 
     if [ -e "package.json" ]; then
         rm -rf node_modules/
-        npm install --production
-        rm package-lock.json
+        npm i --production
 
-        zip -q -r9 "$build_dist_dir/$function_name.zip" .
-    else
-        python3 setup.py build_pkg --zip-path="$build_dist_dir/$function_name.zip"
+        zip -q -r9 $zip_path .
+    elif [ -e "setup.py" ]; then
+        # If you're running this command on macOS and Python3 has been installed using Homebrew, you might see this issue:
+        #    DistutilsOptionError: must supply either home or prefix/exec-prefix
+        # Please follow the workaround suggested on this StackOverflow answer: https://stackoverflow.com/a/44728772
+        python3 setup.py build_pkg --zip-path=$zip_path
     fi
 
     cd ..

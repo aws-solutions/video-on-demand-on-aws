@@ -1,5 +1,5 @@
 /*********************************************************************************************************************
- *  Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
+ *  Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
  *                                                                                                                    *
  *  Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file except in compliance    *
  *  with the License. A copy of the License is located at                                                             *
@@ -14,7 +14,6 @@
 const AWS = require('aws-sdk');
 const crypto = require('crypto');
 const error = require('./lib/error');
-const cloudfrontHelper = require('./lib/cloudfront');
 
 const buildArnFromUri = (s3Uri) => {
     const S3_URI_ID = 's3://';
@@ -25,6 +24,26 @@ const buildArnFromUri = (s3Uri) => {
 
     const source = s3Uri.replace(S3_URI_ID, '');
     return `arn:aws:s3:::${source}`;
+};
+
+/**
+ * Converts the assets to be advertised behind CloudFront (instead of going directly to MediaPackage). For instance:
+ * https://endpoint-id.egress.mediapackage-vod.us-east-1.amazonaws.com/out/v1/asset-id/index.m3u8
+ * =>
+ * https://ditribution-id.cloudfront.net/out/v1/asset-id/index.m3u8
+ */
+const convertEndpoints = (egressEndpoints, cloudFrontEndpoint) => {
+    const url = new URL(process.env.GroupDomainName);
+    let updatedEndpoints = {};
+
+    egressEndpoints.forEach(endpoint => {
+        const parts = endpoint.PackagingConfigurationId.split('-');
+        const config = parts.pop().toUpperCase();
+
+        updatedEndpoints[config] = endpoint.Url.replace(url.hostname, cloudFrontEndpoint);
+    });
+
+    return updatedEndpoints;
 };
 
 const handler = async (event) => {
@@ -45,12 +64,7 @@ const handler = async (event) => {
         console.log(`Ingesting asset:: ${JSON.stringify(params, null, 2)}`);
         const response = await mediaPackageVod.createAsset(params).promise();
 
-        event.egressEndpoints = await cloudfrontHelper.convertEndpoints(
-            process.env.DistributionId,
-            event.cloudFront,
-            response.EgressEndpoints
-        );
-
+        event.egressEndpoints = convertEndpoints(response.EgressEndpoints, event.cloudFront);
         console.log(`ENDPOINTS:: ${JSON.stringify(event.egressEndpoints, null, 2)}`);
     } catch (err) {
         await error.handler(event, err);

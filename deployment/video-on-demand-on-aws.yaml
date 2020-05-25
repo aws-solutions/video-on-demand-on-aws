@@ -1,6 +1,7 @@
-Description: '(SO0021) - Video On Demand workflow with AWS Step Functions, MediaConvert, MediaPackage, S3, CloudFront and DynamoDB. Version %%VERSION%%'
+Description: "(SO0021) - Video On Demand workflow with AWS Step Functions, MediaConvert, MediaPackage, S3, CloudFront and DynamoDB. Version %%VERSION%%"
 
 Parameters:
+
   AdminEmail:
     Description: Email address for SNS notifications (subscribed users will receive ingest, publishing, and error notifications)
     Type: String
@@ -15,12 +16,13 @@ Parameters:
       - MetadataFile
 
   Glacier:
-    Description: If enabled, source assets will be tagged for archiving to Glacier once the workflow is complete
+    Description: If enabled, source assets will be tagged for archiving to Glacier or Glacier Deep Archive once the workflow is complete
     Type: String
-    Default: No
+    Default: DISABLED
     AllowedValues:
-      - Yes
-      - No
+      - DISABLED
+      - GLACIER
+      - DEEP_ARCHIVE
 
   FrameCapture:
     Description: If enabled, frame capture is added to the job submitted to MediaConvert
@@ -38,6 +40,31 @@ Parameters:
       - Yes
       - No
 
+  EnableSns:
+    Description: Enable Ingest and Publish email notifications, error messages are not afeected by this parameter.
+    Type: String
+    Default: Yes
+    AllowedValues:
+      - Yes
+      - No    
+  
+  EnableSqs:
+    Description: Publish the workflow results to an SQS queue to injest upstream
+    Type: String
+    Default: Yes
+    AllowedValues:
+      - Yes
+      - No  
+
+  AcceleratedTranscoding:
+    Description: Enable accelerated transcoding in AWS Elemental MediaConvert. PREFERRED will only use acceleration if the input files is supported. ENABLED accleration is applied to all files (this will fail for unsupported file types) see MediaConvert Documentation for more detail https://docs.aws.amazon.com/mediaconvert/latest/ug/accelerated-transcoding.html
+    Type: String
+    Default: PREFERRED
+    AllowedValues:
+      - ENABLED
+      - DISABLED
+      - PREFERRED
+
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
@@ -48,11 +75,14 @@ Metadata:
           - AdminEmail
           - WorkflowTrigger
           - Glacier
+          - EnableSns
+          - EnableSqs
       -
         Label:
           default: "AWS Elemental MediaConvert"
         Parameters:
           - FrameCapture
+          - AcceleratedTranscoding
       -
         Label:
           default: "AWS Elemental MediaPackage"
@@ -69,13 +99,18 @@ Metadata:
         default: Enable Frame Capture
       EnableMediaPackage:
         default: Enable MediaPackage
+      AcceleratedTranscoding:
+        default: Accelerated Transcoding
+      EnableSns:
+        default: Enable SNS Notifications
+      EnableSqs:
+        default: Enable SQS Messaging
 
 Mappings:
   SourceCode:
     General:
       S3Bucket: "%%BUCKET_NAME%%"
       KeyPrefix: "%%SOLUTION_NAME%%/%%VERSION%%"
-
   AnonymousData:
     SendAnonymousData:
       Data: Yes
@@ -91,8 +126,7 @@ Resources:
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
-          -
-            Effect: Allow
+          - Effect: Allow
             Principal:
               Service:
                 - lambda.amazonaws.com
@@ -100,34 +134,24 @@ Resources:
               - sts:AssumeRole
       Path: "/"
       Policies:
-        -
-          PolicyName: !Sub "${AWS::StackName}-custom-resource"
+        - PolicyName: !Sub "${AWS::StackName}-custom-resource"
           PolicyDocument:
             Statement:
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - logs:CreateLogGroup
                   - logs:CreateLogStream
                   - logs:PutLogEvents
                 Resource:
-                  - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
-              -
-                Effect: Allow
-                Action:
-                  - lambda:UpdateFunctionConfiguration
-                Resource:
-                  - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:*"
-              -
-                Effect: Allow
+                  - !Sub "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
+              - Effect: Allow
                 Action:
                   - s3:PutBucketNotification
                   - s3:PutObject
                   - s3:PutObjectAcl
                 Resource:
-                  - !Sub ${Source.Arn}
-              -
-                Effect: Allow
+                  - !GetAtt Source.Arn
+              - Effect: Allow
                 Action:
                   - mediaconvert:CreatePreset
                   - mediaconvert:CreateJobTemplate
@@ -136,19 +160,21 @@ Resources:
                   - mediaconvert:DescribeEndpoints
                   - mediaconvert:ListJobTemplates
                 Resource:
-                  - !Sub "arn:aws:mediaconvert:${AWS::Region}:${AWS::AccountId}:*"
-              -
-                Effect: Allow
+                  - !Sub "arn:${AWS::Partition}:mediaconvert:${AWS::Region}:${AWS::AccountId}:*"
+              - Effect: Allow
                 Action:
                   - mediapackage-vod:DeleteAsset
                   - mediapackage-vod:DeletePackagingConfiguration
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:mediapackage-vod:${AWS::Region}:${AWS::AccountId}:assets/*"
+                  - !Sub "arn:${AWS::Partition}:mediapackage-vod:${AWS::Region}:${AWS::AccountId}:packaging-configurations/packaging-config-*"
+              - Effect: Allow
+                Action:
+                  - mediapackage-vod:DescribePackagingGroup
                   - mediapackage-vod:DeletePackagingGroup
                 Resource:
-                  - !Sub "arn:aws:mediapackage-vod:${AWS::Region}:${AWS::AccountId}:assets/*"
-                  - !Sub "arn:aws:mediapackage-vod:${AWS::Region}:${AWS::AccountId}:packaging-configurations/packaging-config-*"
-                  - !Sub "arn:aws:mediapackage-vod:${AWS::Region}:${AWS::AccountId}:packaging-groups/*"
-              -
-                Effect: Allow
+                  - !Sub "arn:${AWS::Partition}:mediapackage-vod:${AWS::Region}:${AWS::AccountId}:packaging-groups/${AWS::StackName}-packaging-group"
+              - Effect: Allow
                 Action:
                   - mediapackage-vod:CreatePackagingConfiguration
                   - mediapackage-vod:CreatePackagingGroup
@@ -156,6 +182,12 @@ Resources:
                   - mediapackage-vod:ListPackagingConfigurations
                   - mediapackage-vod:ListPackagingGroups
                 Resource: "*"
+              - Effect: Allow
+                Action:
+                  - cloudfront:GetDistributionConfig
+                  - cloudfront:UpdateDistribution
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:cloudfront::${AWS::AccountId}:distribution/${CloudFront}"
     Metadata:
       cfn_nag:
         rules_to_suppress:
@@ -168,24 +200,21 @@ Resources:
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
-          -
-            Effect: Allow
+          - Effect: Allow
             Principal:
               Service:
                 - !Sub "states.${AWS::Region}.amazonaws.com"
             Action:
               - sts:AssumeRole
       Policies:
-        -
-          PolicyName: !Sub "${AWS::StackName}-stepfunctions-service-role"
+        - PolicyName: !Sub "${AWS::StackName}-stepfunctions-service-role"
           PolicyDocument:
             Statement:
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - lambda:InvokeFunction
                 Resource:
-                  - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:*"
+                  - !Sub "arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:*"
     Metadata:
       cfn_nag:
         rules_to_suppress:
@@ -198,32 +227,28 @@ Resources:
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
-          -
-            Effect: Allow
+          - Effect: Allow
             Principal:
               Service:
-                - "mediaconvert.amazonaws.com"
+                - mediaconvert.amazonaws.com
             Action:
               - sts:AssumeRole
       Policies:
-        -
-          PolicyName: !Sub "${AWS::StackName}-mediatranscode-policy"
+        - PolicyName: !Sub "${AWS::StackName}-mediatranscode-policy"
           PolicyDocument:
             Statement:
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - s3:GetObject
                   - s3:PutObject
                 Resource:
                   - !Sub "${Source.Arn}/*"
                   - !Sub "${Destination.Arn}/*"
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
-                  - "execute-api:Invoke"
+                  - execute-api:Invoke
                 Resource:
-                  - !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:*"
+                  - !Sub "arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:*"
     Metadata:
       cfn_nag:
         rules_to_suppress:
@@ -236,20 +261,17 @@ Resources:
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
-          -
-            Effect: Allow
+          - Effect: Allow
             Principal:
               Service:
-                - "mediapackage.amazonaws.com"
+                - mediapackage.amazonaws.com
             Action:
               - sts:AssumeRole
       Policies:
-        -
-          PolicyName: !Sub "${AWS::StackName}-mediapackagevod-policy"
+        - PolicyName: !Sub "${AWS::StackName}-mediapackagevod-policy"
           PolicyDocument:
             Statement:
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - s3:GetObject
                   - s3:GetBucketLocation
@@ -293,18 +315,17 @@ Resources:
       Bucket: !Ref Destination
       PolicyDocument:
         Statement:
-          -
+          - Effect: Allow
             Action:
-              - "s3:GetObject"
-            Effect: "Allow"
-            Resource: !Sub "arn:aws:s3:::${Destination}/*"
+              - s3:GetObject
+            Resource: !Sub "arn:${AWS::Partition}:s3:::${Destination}/*"
             Principal:
               CanonicalUser: !GetAtt DestinationOriginAccessIdentity.S3CanonicalUserId
 
   EncodeCompleteRule:
     Type: AWS::Events::Rule
     Properties:
-      Name: !Sub ${AWS::StackName}-EncodeComplete
+      Name: !Sub "${AWS::StackName}-EncodeComplete"
       Description: MediaConvert Completed event rule
       EventPattern:
         source:
@@ -314,16 +335,15 @@ Resources:
             - COMPLETE
           userMetadata:
             workflow:
-              - !Sub ${AWS::StackName}
+              - !Ref AWS::StackName
       Targets:
-        -
-          Arn: !GetAtt StepFunctions.Arn
-          Id: !Sub ${AWS::StackName}-StepFunctions
+        - Arn: !GetAtt StepFunctions.Arn
+          Id: !Sub "${AWS::StackName}-StepFunctions"
 
   EncodeErrorRule:
     Type: AWS::Events::Rule
     Properties:
-      Name: !Sub ${AWS::StackName}-EncodeError
+      Name: !Sub "${AWS::StackName}-EncodeError"
       Description: MediaConvert Error event rule
       EventPattern:
         source:
@@ -333,29 +353,27 @@ Resources:
             - ERROR
           userMetadata:
             workflow:
-              - !Sub ${AWS::StackName}
+              - !Ref AWS::StackName
       Targets:
-        -
-          Arn: !GetAtt ErrorHandler.Arn
-          Id: !Sub ${AWS::StackName}-EncodeError
+        - Arn: !GetAtt ErrorHandler.Arn
+          Id: !Sub "${AWS::StackName}-EncodeError"
 
   DynamoDBTable:
     Type: AWS::DynamoDB::Table
     Properties:
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
-      - AttributeName: guid
-        AttributeType: S
-      - AttributeName: srcBucket
-        AttributeType: S
-      - AttributeName: startTime
-        AttributeType: S
+        - AttributeName: guid
+          AttributeType: S
+        - AttributeName: srcBucket
+          AttributeType: S
+        - AttributeName: startTime
+          AttributeType: S
       KeySchema:
-      - AttributeName: guid
-        KeyType: HASH
+        - AttributeName: guid
+          KeyType: HASH
       GlobalSecondaryIndexes:
-        -
-          IndexName: srcBucket-startTime-index
+        - IndexName: srcBucket-startTime-index
           KeySchema:
           - AttributeName: srcBucket
             KeyType: HASH
@@ -369,9 +387,12 @@ Resources:
         rules_to_suppress:
           - id: W28
             reason: "Table name is set to the stack name"
+          - id: W74
+            reason: " The DynamoDB table is configured to use the default encryption"
 
   Source:
     DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
     Type: AWS::S3::Bucket
     Properties:
       LoggingConfiguration:
@@ -379,16 +400,22 @@ Resources:
         LogFilePrefix: s3-access/
       LifecycleConfiguration:
         Rules:
-          -
-            Id: !Sub ${AWS::StackName}-source-archive
+          - Id: !Sub "${AWS::StackName}-source-archive"
             TagFilters:
-              -
-                Key: !Sub ${AWS::StackName}
-                Value: archive
+              - Key: !Ref AWS::StackName
+                Value: GLACIER
             Status: Enabled
             Transitions:
             - TransitionInDays: 1
-              StorageClass: Glacier
+              StorageClass: GLACIER
+          - Id: !Sub "${AWS::StackName}-source-deep-archive"
+            TagFilters:
+              - Key: !Ref AWS::StackName
+                Value: DEEP_ARCHIVE
+            Status: Enabled
+            Transitions:
+            - TransitionInDays: 1
+              StorageClass: DEEP_ARCHIVE
       BucketEncryption:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
@@ -402,10 +429,11 @@ Resources:
       cfn_nag:
         rules_to_suppress:
           - id: W51
-            reason: "Bucket is private and does not need a bucket policy"
+            reason: "Bucket does not need a bucket policy"
 
   Destination:
     DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
     Type: AWS::S3::Bucket
     Properties:
       LoggingConfiguration:
@@ -429,6 +457,7 @@ Resources:
 
   Logs:
     DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
     Type: AWS::S3::Bucket
     Properties:
       AccessControl: LogDeliveryWrite
@@ -447,16 +476,35 @@ Resources:
           - id: W35
             reason: "Used to store access logs for other buckets"
           - id: W51
-            reason: "Bucket is private and does not need a bucket policy"
+            reason: "Bucket does not need a bucket policy"
 
   SnsTopic:
     Type: AWS::SNS::Topic
     Properties:
-      DisplayName: !Sub ${AWS::StackName}-Notifications
+      DisplayName: !Sub "${AWS::StackName}-Notifications"
+      KmsMasterKeyId: alias/aws/sns
       Subscription:
-        -
-          Endpoint: !Ref AdminEmail
+        - Endpoint: !Ref AdminEmail
           Protocol: email
+
+  SqsQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      VisibilityTimeout: 120
+      QueueName: !Sub ${AWS::StackName}
+      RedrivePolicy:
+        deadLetterTargetArn: !Sub ${SqsQueueDlq.Arn}
+        maxReceiveCount: 1
+      KmsDataKeyReusePeriodSeconds: 300
+      KmsMasterKeyId: alias/aws/sqs
+
+  SqsQueueDlq:
+    Type: AWS::SQS::Queue
+    Properties:
+      VisibilityTimeout: 120
+      QueueName: !Sub ${AWS::StackName}-dlq
+      KmsDataKeyReusePeriodSeconds: 300
+      KmsMasterKeyId: alias/aws/sqs
 
   DestinationOriginAccessIdentity:
     Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
@@ -496,6 +544,11 @@ Resources:
         PriceClass: PriceClass_100
         ViewerCertificate:
           CloudFrontDefaultCertificate: true
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W70
+            reason: "CloudFront automatically sets the security policy to TLSv1 when the distribution uses the CloudFront domain name (CloudFrontDefaultCertificate=true)"
 
   S3Config:
     DependsOn: CloudFront
@@ -511,14 +564,14 @@ Resources:
     Type: Custom::LoadLambda
     Properties:
       ServiceToken: !GetAtt CustomResource.Arn
-      Resource: "EndPoint"
+      Resource: EndPoint
 
   MediaConvertTemplates:
     Type: Custom::LoadLambda
     Properties:
       ServiceToken: !GetAtt CustomResource.Arn
-      Resource: "MediaConvertTemplates"
-      StackName: !Sub ${AWS::StackName}
+      Resource: MediaConvertTemplates
+      StackName: !Ref AWS::StackName
       EndPoint: !GetAtt MediaConvertEndPoint.EndpointUrl
       EnableMediaPackage: !Ref EnableMediaPackage
 
@@ -526,23 +579,28 @@ Resources:
     Type: Custom::LoadLambda
     Properties:
       ServiceToken: !GetAtt CustomResource.Arn
-      Resource: "MediaPackageVod"
-      StackName: !Sub ${AWS::StackName}
+      Resource: MediaPackageVod
+      StackName: !Ref AWS::StackName
       GroupId: !Sub "${AWS::StackName}-packaging-group"
       PackagingConfigurations: "HLS,DASH,MSS,CMAF"
+      DistributionId: !Ref CloudFront
+      EnableMediaPackage: !Ref EnableMediaPackage
 
   CustomResource:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: !Sub ${AWS::StackName}-custom-resource
+      FunctionName: !Sub "${AWS::StackName}-custom-resource"
       Description: Used to deploy resources not supported by CloudFormation
       Handler: index.handler
       Role: !GetAtt CustomResourceRole.Arn
       Code:
         S3Bucket: !Join ["-", [!FindInMap ["SourceCode", "General", "S3Bucket"], Ref: "AWS::Region"]]
         S3Key: !Join ["/", [!FindInMap ["SourceCode", "General", "KeyPrefix"], "custom-resource.zip"]]
-      Runtime: nodejs10.x
+      Runtime: nodejs12.x
       Timeout: 180
+      Environment:
+        Variables:
+          AWS_NODEJS_CONNECTION_REUSE_ENABLED: "1"
 
   StepFunctionsRole:
     Type: AWS::IAM::Role
@@ -550,40 +608,35 @@ Resources:
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
-          -
-            Effect: Allow
+          - Effect: Allow
             Principal:
               Service:
                 - lambda.amazonaws.com
             Action:
               - sts:AssumeRole
       Policies:
-        -
-          PolicyName: !Sub "${AWS::StackName}-step-functions-role"
+        - PolicyName: !Sub "${AWS::StackName}-step-functions-role"
           PolicyDocument:
             Statement:
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - states:StartExecution
                 Resource:
-                  - !Sub "arn:aws:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${AWS::StackName}-ingest"
-                  - !Sub "arn:aws:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${AWS::StackName}-process"
-                  - !Sub "arn:aws:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${AWS::StackName}-publish"
-              -
-                Effect: Allow
+                  - !Sub "arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${AWS::StackName}-ingest"
+                  - !Sub "arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${AWS::StackName}-process"
+                  - !Sub "arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${AWS::StackName}-publish"
+              - Effect: Allow
                 Action:
                   - lambda:InvokeFunction
                 Resource:
-                  - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${AWS::StackName}-error-handler"
-              -
-                Effect: Allow
+                  - !Sub "arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:${AWS::StackName}-error-handler"
+              - Effect: Allow
                 Action:
                   - logs:CreateLogGroup
                   - logs:CreateLogStream
                   - logs:PutLogEvents
                 Resource:
-                  - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
+                  - !Sub "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
     Metadata:
       cfn_nag:
         rules_to_suppress:
@@ -600,13 +653,14 @@ Resources:
       Code:
         S3Bucket: !Join ["-", [!FindInMap ["SourceCode", "General", "S3Bucket"], Ref: "AWS::Region"]]
         S3Key: !Join ["/", [!FindInMap ["SourceCode", "General", "KeyPrefix"], "step-functions.zip"]]
-      Runtime: nodejs10.x
+      Runtime: nodejs12.x
       Timeout: 120
       Environment:
         Variables:
-          IngestWorkflow: !Sub "arn:aws:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${AWS::StackName}-ingest"
-          ProcessWorkflow: !Sub "arn:aws:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${AWS::StackName}-process"
-          PublishWorkflow: !Sub "arn:aws:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${AWS::StackName}-publish"
+          AWS_NODEJS_CONNECTION_REUSE_ENABLED: "1"
+          IngestWorkflow: !Sub "arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${AWS::StackName}-ingest"
+          ProcessWorkflow: !Sub "arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${AWS::StackName}-process"
+          PublishWorkflow: !Sub "arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${AWS::StackName}-publish"
           ErrorHandler: !GetAtt ErrorHandler.Arn
 
   InputValidateRole:
@@ -615,38 +669,33 @@ Resources:
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
-          -
-            Effect: Allow
+          - Effect: Allow
             Principal:
               Service:
                 - lambda.amazonaws.com
             Action:
               - sts:AssumeRole
       Policies:
-        -
-          PolicyName: !Sub "${AWS::StackName}-input-validate-role"
+        - PolicyName: !Sub "${AWS::StackName}-input-validate-role"
           PolicyDocument:
             Statement:
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - s3:GetObject
                 Resource:
                   - !Sub "${Source.Arn}/*"
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - lambda:InvokeFunction
                 Resource:
-                  - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${AWS::StackName}-error-handler"
-              -
-                Effect: Allow
+                  - !Sub "arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:${AWS::StackName}-error-handler"
+              - Effect: Allow
                 Action:
                   - logs:CreateLogGroup
                   - logs:CreateLogStream
                   - logs:PutLogEvents
                 Resource:
-                  - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
+                  - !Sub "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
     Metadata:
       cfn_nag:
         rules_to_suppress:
@@ -656,19 +705,20 @@ Resources:
   InputValidate:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: !Sub ${AWS::StackName}-input-validate
+      FunctionName: !Sub "${AWS::StackName}-input-validate"
       Description: Validates the input given to the workflow
       Handler: index.handler
       Role: !GetAtt InputValidateRole.Arn
       Code:
         S3Bucket: !Join ["-", [!FindInMap ["SourceCode", "General", "S3Bucket"], Ref: "AWS::Region"]]
         S3Key: !Join ["/", [!FindInMap ["SourceCode", "General", "KeyPrefix"], "input-validate.zip"]]
-      Runtime: nodejs10.x
+      Runtime: nodejs12.x
       Timeout: 120
       Environment:
         Variables:
+          AWS_NODEJS_CONNECTION_REUSE_ENABLED: "1"
           ErrorHandler: !GetAtt ErrorHandler.Arn
-          WorkflowName: !Sub ${AWS::StackName}
+          WorkflowName: !Ref AWS::StackName
           Source: !Ref Source
           Destination: !Ref Destination
           FrameCapture: !Ref FrameCapture
@@ -691,6 +741,9 @@ Resources:
           CloudFront: !GetAtt CloudFront.DomainName
           EnableMediaPackage: !Ref EnableMediaPackage
           InputRotate: DEGREE_0
+          EnableSns: !Ref EnableSns
+          EnableSqs: !Ref EnableSqs
+          AcceleratedTranscoding: !Ref AcceleratedTranscoding
 
   MediainfoRole:
     Type: AWS::IAM::Role
@@ -698,48 +751,44 @@ Resources:
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
-          -
-            Effect: Allow
+          - Effect: Allow
             Principal:
               Service:
                 - lambda.amazonaws.com
             Action:
               - sts:AssumeRole
       Policies:
-        -
-          PolicyName: !Sub "${AWS::StackName}-mediainfo-role"
+        - PolicyName: !Sub "${AWS::StackName}-mediainfo-role"
           PolicyDocument:
             Statement:
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - s3:GetObject
                 Resource:
                   - !Sub "${Source.Arn}/*"
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - lambda:InvokeFunction
                 Resource:
-                  - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${AWS::StackName}-error-handler"
-              -
-                Effect: Allow
+                  - !Sub "arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:${AWS::StackName}-error-handler"
+              - Effect: Allow
                 Action:
                   - logs:CreateLogGroup
                   - logs:CreateLogStream
                   - logs:PutLogEvents
                 Resource:
-                  - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
+                  - !Sub "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
     Metadata:
       cfn_nag:
         rules_to_suppress:
           - id: W11
             reason: "* is limited to one S3 bucket"
 
+
   Mediainfo:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: !Sub ${AWS::StackName}-mediainfo
+      FunctionName: !Sub "${AWS::StackName}-mediainfo"
       Description: Runs mediainfo on a pre-signed S3 URL
       Handler: lambda_function.lambda_handler
       Role: !GetAtt MediainfoRole.Arn
@@ -758,38 +807,33 @@ Resources:
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
-          -
-            Effect: Allow
+          - Effect: Allow
             Principal:
               Service:
                 - lambda.amazonaws.com
             Action:
               - sts:AssumeRole
       Policies:
-        -
-          PolicyName: !Sub "${AWS::StackName}-dynamo-role"
+        - PolicyName: !Sub "${AWS::StackName}-dynamo-role"
           PolicyDocument:
             Statement:
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - lambda:InvokeFunction
                 Resource:
-                  - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${AWS::StackName}-error-handler"
-              -
-                Effect: Allow
+                  - !Sub "arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:${AWS::StackName}-error-handler"
+              - Effect: Allow
                 Action:
                   - dynamodb:UpdateItem
                 Resource:
-                  - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${DynamoDBTable}"
-              -
-                Effect: Allow
+                  - !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${DynamoDBTable}"
+              - Effect: Allow
                 Action:
                   - logs:CreateLogGroup
                   - logs:CreateLogStream
                   - logs:PutLogEvents
                 Resource:
-                  - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
+                  - !Sub "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
     Metadata:
       cfn_nag:
         rules_to_suppress:
@@ -799,17 +843,18 @@ Resources:
   DynamodbUpdate:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: !Sub ${AWS::StackName}-dynamo
+      FunctionName: !Sub "${AWS::StackName}-dynamo"
       Description: Updates DynamoDB with event data
       Handler: index.handler
       Role: !GetAtt DynamoUpdateRole.Arn
       Code:
         S3Bucket: !Join ["-", [!FindInMap ["SourceCode", "General", "S3Bucket"], Ref: "AWS::Region"]]
         S3Key: !Join ["/", [!FindInMap ["SourceCode", "General", "KeyPrefix"], "dynamo.zip"]]
-      Runtime: nodejs10.x
+      Runtime: nodejs12.x
       Timeout: 120
       Environment:
         Variables:
+          AWS_NODEJS_CONNECTION_REUSE_ENABLED: "1"
           DynamoDBTable: !Ref DynamoDBTable
           ErrorHandler: !GetAtt ErrorHandler.Arn
 
@@ -819,38 +864,33 @@ Resources:
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
-          -
-            Effect: Allow
+          - Effect: Allow
             Principal:
               Service:
                 - lambda.amazonaws.com
             Action:
               - sts:AssumeRole
       Policies:
-        -
-          PolicyName: !Sub "${AWS::StackName}-profiler-role"
+        - PolicyName: !Sub "${AWS::StackName}-profiler-role"
           PolicyDocument:
             Statement:
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - lambda:InvokeFunction
                 Resource:
-                  - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${AWS::StackName}-error-handler"
-              -
-                Effect: Allow
+                  - !Sub "arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:${AWS::StackName}-error-handler"
+              - Effect: Allow
                 Action:
                   - dynamodb:GetItem
                 Resource:
-                  - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${DynamoDBTable}"
-              -
-                Effect: Allow
+                  - !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${DynamoDBTable}"
+              - Effect: Allow
                 Action:
                   - logs:CreateLogGroup
                   - logs:CreateLogStream
                   - logs:PutLogEvents
                 Resource:
-                  - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
+                  - !Sub "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
     Metadata:
       cfn_nag:
         rules_to_suppress:
@@ -860,17 +900,18 @@ Resources:
   Profiler:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: !Sub ${AWS::StackName}-profiler
+      FunctionName: !Sub "${AWS::StackName}-profiler"
       Description: Sets an EncodeProfile based on mediainfo output
       Handler: index.handler
       Role: !GetAtt ProfilerRole.Arn
       Code:
         S3Bucket: !Join ["-", [!FindInMap ["SourceCode", "General", "S3Bucket"], Ref: "AWS::Region"]]
         S3Key: !Join ["/", [!FindInMap ["SourceCode", "General", "KeyPrefix"], "profiler.zip"]]
-      Runtime: nodejs10.x
+      Runtime: nodejs12.x
       Timeout: 120
       Environment:
         Variables:
+          AWS_NODEJS_CONNECTION_REUSE_ENABLED: "1"
           DynamoDBTable: !Ref DynamoDBTable
           ErrorHandler: !GetAtt ErrorHandler.Arn
 
@@ -880,45 +921,39 @@ Resources:
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
-          -
-            Effect: Allow
+          - Effect: Allow
             Principal:
               Service:
                 - lambda.amazonaws.com
             Action:
               - sts:AssumeRole
       Policies:
-        -
-          PolicyName: !Sub "${AWS::StackName}-encode-role"
+        - PolicyName: !Sub "${AWS::StackName}-encode-role"
           PolicyDocument:
             Statement:
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - lambda:InvokeFunction
                 Resource:
-                  - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${AWS::StackName}-error-handler"
-              -
-                Effect: Allow
+                  - !Sub "arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:${AWS::StackName}-error-handler"
+              - Effect: Allow
                 Action:
                   - mediaconvert:CreateJob
                   - mediaconvert:GetJobTemplate
                 Resource:
-                  - !Sub "arn:aws:mediaconvert:${AWS::Region}:${AWS::AccountId}:*"
-              -
-                Effect: Allow
+                  - !Sub "arn:${AWS::Partition}:mediaconvert:${AWS::Region}:${AWS::AccountId}:*"
+              - Effect: Allow
                 Action:
                   - iam:PassRole
                 Resource:
                   - !GetAtt MediaConvertRole.Arn
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - logs:CreateLogGroup
                   - logs:CreateLogStream
                   - logs:PutLogEvents
                 Resource:
-                  - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
+                  - !Sub "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
     Metadata:
       cfn_nag:
         rules_to_suppress:
@@ -928,17 +963,18 @@ Resources:
   Encode:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: !Sub ${AWS::StackName}-encode
+      FunctionName: !Sub "${AWS::StackName}-encode"
       Description: Creates a MediaConvert encode job
       Handler: index.handler
       Role: !GetAtt EncodeRole.Arn
       Code:
         S3Bucket: !Join ["-", [!FindInMap ["SourceCode", "General", "S3Bucket"], Ref: "AWS::Region"]]
         S3Key: !Join ["/", [!FindInMap ["SourceCode", "General", "KeyPrefix"], "encode.zip"]]
-      Runtime: nodejs10.x
+      Runtime: nodejs12.x
       Timeout: 120
       Environment:
         Variables:
+          AWS_NODEJS_CONNECTION_REUSE_ENABLED: "1"
           ErrorHandler: !GetAtt ErrorHandler.Arn
           MediaConvertRole: !GetAtt MediaConvertRole.Arn
           EndPoint: !GetAtt MediaConvertEndPoint.EndpointUrl
@@ -949,38 +985,38 @@ Resources:
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
-          -
-            Effect: Allow
+          - Effect: Allow
             Principal:
               Service:
                 - lambda.amazonaws.com
             Action:
               - sts:AssumeRole
       Policies:
-        -
-          PolicyName: !Sub "${AWS::StackName}-output-validate-role"
+        - PolicyName: !Sub "${AWS::StackName}-output-validate-role"
           PolicyDocument:
             Statement:
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - lambda:InvokeFunction
                 Resource:
-                  - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${AWS::StackName}-error-handler"
-              -
-                Effect: Allow
+                  - !Sub "arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:${AWS::StackName}-error-handler"
+              - Effect: Allow
                 Action:
                   - dynamodb:GetItem
                 Resource:
-                  - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${DynamoDBTable}"
-              -
-                Effect: Allow
+                  - !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${DynamoDBTable}"
+              - Effect: Allow
+                Action:
+                  - s3:ListBucket
+                Resource:
+                  - !GetAtt Destination.Arn
+              - Effect: Allow
                 Action:
                   - logs:CreateLogGroup
                   - logs:CreateLogStream
                   - logs:PutLogEvents
                 Resource:
-                  - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
+                  - !Sub "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
     Metadata:
       cfn_nag:
         rules_to_suppress:
@@ -990,22 +1026,79 @@ Resources:
   OutputValidate:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: !Sub ${AWS::StackName}-output-validate
+      FunctionName: !Sub "${AWS::StackName}-output-validate"
       Description: Parses MediaConvert job output
       Handler: index.handler
       Role: !GetAtt OutputValidateRole.Arn
       Code:
         S3Bucket: !Join ["-", [!FindInMap ["SourceCode", "General", "S3Bucket"], Ref: "AWS::Region"]]
         S3Key: !Join ["/", [!FindInMap ["SourceCode", "General", "KeyPrefix"], "output-validate.zip"]]
-      Runtime: nodejs10.x
+      Runtime: nodejs12.x
       Timeout: 120
       Environment:
         Variables:
+          AWS_NODEJS_CONNECTION_REUSE_ENABLED: "1"
           DynamoDBTable: !Ref DynamoDBTable
           ErrorHandler: !GetAtt ErrorHandler.Arn
           EndPoint: !GetAtt MediaConvertEndPoint.EndpointUrl
 
   ArchiveSourceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: !Sub "${AWS::StackName}-archive-source-role"
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:PutObjectTagging
+                Resource:
+                  - !Sub "${Source.Arn}/*"
+              - Effect: Allow
+                Action:
+                  - lambda:InvokeFunction
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:${AWS::StackName}-error-handler"
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W11
+            reason: "* is used so that the Lambda function can create log groups; S3 action is limited to one bucket"
+
+  ArchiveSource:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "${AWS::StackName}-archive-source"
+      Description: Updates tags on source files to enable Glacier
+      Handler: index.handler
+      Role: !GetAtt ArchiveSourceRole.Arn
+      Code:
+        S3Bucket: !Join ["-", [!FindInMap ["SourceCode", "General", "S3Bucket"], Ref: "AWS::Region"]]
+        S3Key: !Join ["/", [!FindInMap ["SourceCode", "General", "KeyPrefix"], "archive-source.zip"]]
+      Runtime: nodejs12.x
+      Timeout: 120
+      Environment:
+        Variables:
+          AWS_NODEJS_CONNECTION_REUSE_ENABLED: "1"
+          ErrorHandler: !GetAtt ErrorHandler.Arn
+
+  SqsSendMessageRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -1020,21 +1113,21 @@ Resources:
               - sts:AssumeRole
       Policies:
         -
-          PolicyName: !Sub "${AWS::StackName}-archive-source-role"
+          PolicyName: !Sub "${AWS::StackName}-sqs-publish-role"
           PolicyDocument:
             Statement:
-              -
-                Effect: Allow
-                Action:
-                  - s3:PutObjectTagging
-                Resource:
-                  - !Sub "${Source.Arn}/*"
               -
                 Effect: Allow
                 Action:
                   - lambda:InvokeFunction
                 Resource:
                   - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${AWS::StackName}-error-handler"
+              -
+                Effect: Allow
+                Action:
+                  - sqs:SendMessage
+                Resource:
+                  - !GetAtt SqsQueue.Arn
               -
                 Effect: Allow
                 Action:
@@ -1047,24 +1140,25 @@ Resources:
       cfn_nag:
         rules_to_suppress:
           - id: W11
-            reason: "* is used so that the Lambda function can create log groups; S3 action is limited to one bucket"
+            reason: "* is used so that the Lambda function can create log groups"
 
-  ArchiveSource:
+  SqsSendMessage:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: !Sub ${AWS::StackName}-archive-source
-      Description: Updates tags on source files to enable Glacier
+      FunctionName: !Sub ${AWS::StackName}-sqs-publish
+      Description: Publish the workflow results to an SQS queue
       Handler: index.handler
-      Role: !GetAtt ArchiveSourceRole.Arn
+      Role: !GetAtt SqsSendMessageRole.Arn
       Code:
         S3Bucket: !Join ["-", [!FindInMap ["SourceCode", "General", "S3Bucket"], Ref: "AWS::Region"]]
-        S3Key: !Join ["/", [!FindInMap ["SourceCode", "General", "KeyPrefix"], "archive-source.zip"]]
-      Runtime: nodejs10.x
+        S3Key: !Join ["/", [!FindInMap ["SourceCode", "General", "KeyPrefix"], "sqs-publish.zip"]]
+      Runtime: nodejs12.x
       Timeout: 120
       Environment:
         Variables:
+          AWS_NODEJS_CONNECTION_REUSE_ENABLED: "1"
           ErrorHandler: !GetAtt ErrorHandler.Arn
-
+          SqsQueue: !Ref SqsQueue
   SnsNotificationRole:
     Type: AWS::IAM::Role
     Properties:
@@ -1079,30 +1173,26 @@ Resources:
             Action:
               - sts:AssumeRole
       Policies:
-        -
-          PolicyName: !Sub "${AWS::StackName}-sns-notification-role"
+        - PolicyName: !Sub "${AWS::StackName}-sns-notification-role"
           PolicyDocument:
             Statement:
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - lambda:InvokeFunction
                 Resource:
-                  - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${AWS::StackName}-error-handler"
-              -
-                Effect: Allow
+                  - !Sub "arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:${AWS::StackName}-error-handler"
+              - Effect: Allow
                 Action:
                   - sns:Publish
                 Resource:
                   - !Ref SnsTopic
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - logs:CreateLogGroup
                   - logs:CreateLogStream
                   - logs:PutLogEvents
                 Resource:
-                  - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
+                  - !Sub "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
     Metadata:
       cfn_nag:
         rules_to_suppress:
@@ -1112,17 +1202,18 @@ Resources:
   SnsNotification:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: !Sub ${AWS::StackName}-sns-notification
+      FunctionName: !Sub "${AWS::StackName}-sns-notification"
       Description: Sends a notification when the encode job is completed
       Handler: index.handler
       Role: !GetAtt SnsNotificationRole.Arn
       Code:
         S3Bucket: !Join ["-", [!FindInMap ["SourceCode", "General", "S3Bucket"], Ref: "AWS::Region"]]
         S3Key: !Join ["/", [!FindInMap ["SourceCode", "General", "KeyPrefix"], "sns-notification.zip"]]
-      Runtime: nodejs10.x
+      Runtime: nodejs12.x
       Timeout: 120
       Environment:
         Variables:
+          AWS_NODEJS_CONNECTION_REUSE_ENABLED: "1"
           ErrorHandler: !GetAtt ErrorHandler.Arn
           SnsTopic: !Ref SnsTopic
 
@@ -1132,50 +1223,37 @@ Resources:
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
-          -
-            Effect: Allow
+          - Effect: Allow
             Principal:
               Service:
                 - lambda.amazonaws.com
             Action:
               - sts:AssumeRole
       Policies:
-        -
-          PolicyName: !Sub "${AWS::StackName}-media-package-assets-role"
+        - PolicyName: !Sub "${AWS::StackName}-media-package-assets-role"
           PolicyDocument:
             Statement:
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - lambda:InvokeFunction
                 Resource:
-                  - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${AWS::StackName}-error-handler"
-              -
-                Effect: Allow
+                  - !Sub "arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:${AWS::StackName}-error-handler"
+              - Effect: Allow
                 Action:
                   - iam:PassRole
                 Resource:
                   - !GetAtt MediaPackageVodRole.Arn
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - logs:CreateLogGroup
                   - logs:CreateLogStream
                   - logs:PutLogEvents
                 Resource:
-                  - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
-              -
-                Effect: Allow
+                  - !Sub "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
+              - Effect: Allow
                 Action:
                   - mediapackage-vod:CreateAsset
                 Resource: "*"
-              -
-                Effect: Allow
-                Action:
-                  - cloudfront:GetDistributionConfig
-                  - cloudfront:UpdateDistribution
-                Resource:
-                  - !Sub "arn:aws:cloudfront::${AWS::AccountId}:distribution/${CloudFront}"
     Metadata:
       cfn_nag:
         rules_to_suppress:
@@ -1185,20 +1263,21 @@ Resources:
   MediaPackageAssets:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: !Sub ${AWS::StackName}-media-package-assets
+      FunctionName: !Sub "${AWS::StackName}-media-package-assets"
       Description: Ingests an asset into MediaPackage-VOD
       Handler: index.handler
       Role: !GetAtt MediaPackageAssetsRole.Arn
       Code:
         S3Bucket: !Join ["-", [!FindInMap ["SourceCode", "General", "S3Bucket"], Ref: "AWS::Region"]]
         S3Key: !Join ["/", [!FindInMap ["SourceCode", "General", "KeyPrefix"], "media-package-assets.zip"]]
-      Runtime: nodejs10.x
+      Runtime: nodejs12.x
       Timeout: 300
       Environment:
         Variables:
-          DistributionId: !Ref CloudFront
+          AWS_NODEJS_CONNECTION_REUSE_ENABLED: "1"
           ErrorHandler: !GetAtt ErrorHandler.Arn
           GroupId: !GetAtt MediaPackageVod.GroupId
+          GroupDomainName: !GetAtt MediaPackageVod.GroupDomainName
           MediaPackageVodRole: !GetAtt MediaPackageVodRole.Arn
 
   ErrorHandlerRole:
@@ -1207,38 +1286,33 @@ Resources:
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
-          -
-            Effect: Allow
+          - Effect: Allow
             Principal:
               Service:
                 - lambda.amazonaws.com
             Action:
               - sts:AssumeRole
       Policies:
-        -
-          PolicyName: !Sub "${AWS::StackName}-error-handler-role"
+        - PolicyName: !Sub "${AWS::StackName}-error-handler-role"
           PolicyDocument:
             Statement:
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - sns:Publish
                 Resource:
                   - !Ref SnsTopic
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - dynamodb:UpdateItem
                 Resource:
-                  - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${DynamoDBTable}"
-              -
-                Effect: Allow
+                  - !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${DynamoDBTable}"
+              - Effect: Allow
                 Action:
                   - logs:CreateLogGroup
                   - logs:CreateLogStream
                   - logs:PutLogEvents
                 Resource:
-                  - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
+                  - !Sub "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
     Metadata:
       cfn_nag:
         rules_to_suppress:
@@ -1255,17 +1329,18 @@ Resources:
       Code:
         S3Bucket: !Join ["-", [!FindInMap ["SourceCode", "General", "S3Bucket"], Ref: "AWS::Region"]]
         S3Key: !Join ["/", [!FindInMap ["SourceCode", "General", "KeyPrefix"], "error-handler.zip"]]
-      Runtime: nodejs10.x
+      Runtime: nodejs12.x
       Timeout: 120
       Environment:
         Variables:
+          AWS_NODEJS_CONNECTION_REUSE_ENABLED: "1"
           DynamoDBTable: !Ref DynamoDBTable
           SnsTopic: !Ref SnsTopic
 
   IngestWorkflow:
     Type: AWS::StepFunctions::StateMachine
     Properties:
-      StateMachineName: !Sub ${AWS::StackName}-ingest
+      StateMachineName: !Sub "${AWS::StackName}-ingest"
       DefinitionString: !Sub |
         {
           "StartAt": "Input Validate",
@@ -1283,7 +1358,18 @@ Resources:
             "DynamoDB Update": {
               "Type": "Task",
               "Resource": "${DynamodbUpdate.Arn}",
-              "Next": "SNS Notification"
+              "Next": "SNS Choice"
+            },
+            "SNS Choice": {
+              "Type": "Choice",
+              "Choices": [
+                {
+                  "Variable": "$.enableSns",
+                  "BooleanEquals": true,
+                  "Next": "SNS Notification"
+                }
+              ],
+              "Default": "Process Execute"
             },
             "SNS Notification": {
               "Type": "Task",
@@ -1302,7 +1388,7 @@ Resources:
   ProcessWorkflow:
     Type: AWS::StepFunctions::StateMachine
     Properties:
-      StateMachineName: !Sub ${AWS::StackName}-process
+      StateMachineName: !Sub "${AWS::StackName}-process"
       DefinitionString: !Sub |
         {
           "Comment": "Process StateMachine to create MediaConvert Encoding Jobs",
@@ -1311,6 +1397,102 @@ Resources:
             "Profiler": {
               "Type": "Task",
               "Resource": "${Profiler.Arn}",
+              "Next": "Encoding Profile Check"
+            },
+            "Encoding Profile Check": {
+              "Type": "Choice",
+              "Choices": [
+                {
+                  "Variable": "$.isCustomTemplate",
+                  "BooleanEquals": true,
+                  "Next": "Custom jobTemplate"
+                },
+                        {
+                  "Variable": "$.encodingProfile ",
+                  "NumericEquals": 2160,
+                  "Next": "jobTemplate 2160p"
+                },
+                {
+                  "Variable": "$.encodingProfile ",
+                  "NumericEquals": 1080,
+                  "Next": "jobTemplate 1080p"
+                },
+                {
+                  "Variable": "$.encodingProfile ",
+                  "NumericEquals": 720,
+                  "Next": "jobTemplate 720p"
+                }
+              ]
+            },
+            "jobTemplate 2160p": {
+              "Type": "Pass",
+              "Next": "Accelerated Transcoding Check"
+            },
+            "jobTemplate 1080p": {
+              "Type": "Pass",
+              "Next": "Accelerated Transcoding Check"
+            },
+            "jobTemplate 720p": {
+              "Type": "Pass",
+              "Next": "Accelerated Transcoding Check"
+            },
+            "Custom jobTemplate": {
+              "Type": "Pass",
+              "Next": "Accelerated Transcoding Check"
+            },
+            "Accelerated Transcoding Check": {
+              "Type": "Choice",
+              "Choices": [
+                {
+                  "Variable": "$.acceleratedTranscoding",
+                  "StringEquals": "ENABLED",
+                  "Next": "Enabled"
+                },
+                {
+                  "Variable": "$.acceleratedTranscoding",
+                  "StringEquals": "PREFERRED",
+                  "Next": "Preferred"
+                },
+                {
+                  "Variable": "$.acceleratedTranscoding",
+                  "StringEquals": "DISABLED",
+                  "Next": "Disabled"
+                }
+              ]
+            },
+            "Enabled": {
+              "Type": "Pass",
+              "Next": "Frame Capture Check"
+            },
+            "Preferred": {
+              "Type": "Pass",
+              "Next": "Frame Capture Check"
+            },
+            "Disabled": {
+              "Type": "Pass",
+              "Next": "Frame Capture Check"
+            },
+            "Frame Capture Check": {
+              "Type": "Choice",
+              "Choices": [
+                {
+                  "Variable": "$.frameCapture",
+                  "BooleanEquals": true,
+                  "Next": "Frame Capture"
+                },
+                {
+                  "Variable": "$.frameCapture",
+                  "BooleanEquals": false,
+                  "Next": "No Frame Capture"
+                }
+              ]
+            },
+            "Frame Capture": {
+              "Type": "Pass",
+              "Next": "Encode Job Submit"
+            },
+            "No Frame Capture": {
+              "Type": "Pass",
               "Next": "Encode Job Submit"
             },
             "Encode Job Submit": {
@@ -1330,7 +1512,7 @@ Resources:
   PublishWorkflow:
     Type: AWS::StepFunctions::StateMachine
     Properties:
-      StateMachineName: !Sub ${AWS::StackName}-publish
+      StateMachineName: !Sub "${AWS::StackName}-publish"
       DefinitionString: !Sub |
         {
           "StartAt": "Validate Encoding Outputs",
@@ -1345,13 +1527,23 @@ Resources:
               "Choices": [
                 {
                   "Variable": "$.archiveSource",
-                  "BooleanEquals": true,
-                  "Next": "Archive Source"
+                  "StringEquals": "GLACIER",
+                  "Next": "Archive"
+                },
+                {
+                  "Variable": "$.archiveSource",
+                  "StringEquals": "DEEP_ARCHIVE",
+                  "Next": "Deep Archive"
                 }
               ],
               "Default": "MediaPackage Choice"
             },
-            "Archive Source": {
+            "Archive": {
+              "Type": "Task",
+              "Resource": "${ArchiveSource.Arn}",
+              "Next": "MediaPackage Choice"
+            },
+            "Deep Archive": {
               "Type": "Task",
               "Resource": "${ArchiveSource.Arn}",
               "Next": "MediaPackage Choice"
@@ -1375,11 +1567,42 @@ Resources:
             "DynamoDB Update": {
               "Type": "Task",
               "Resource": "${DynamodbUpdate.Arn}",
-              "Next": "SNS Notification"
+              "Next": "SQS Choice"
+            },
+            "SQS Choice": {
+              "Type": "Choice",
+              "Choices": [
+                {
+                  "Variable": "$.enableSqs",
+                  "BooleanEquals": true,
+                  "Next": "SQS Send Message"
+                }
+              ],
+              "Default": "SNS Choice"
+            },
+            "SQS Send Message": {
+              "Type": "Task",
+              "Resource": "${SqsSendMessage.Arn}",
+              "Next": "SNS Choice"
+            },
+            "SNS Choice": {
+              "Type": "Choice",
+              "Choices": [
+                {
+                  "Variable": "$.enableSns",
+                  "BooleanEquals": true,
+                  "Next": "SNS Notification"
+                }
+              ],
+              "Default": "Complete"
             },
             "SNS Notification": {
               "Type": "Task",
               "Resource": "${SnsNotification.Arn}",
+              "Next": "Complete"
+            },
+            "Complete": {
+              "Type": "Pass",
               "End": true
             }
           }
@@ -1391,24 +1614,25 @@ Resources:
     Type: Custom::UUID
     Properties:
       ServiceToken: !GetAtt CustomResource.Arn
-      Resource: "UUID"
+      Resource: UUID
 
   AnonymousMetric:
     Condition: Metrics
     Type: Custom::LoadLambda
     Properties:
       ServiceToken: !GetAtt CustomResource.Arn
-      SolutionId: "SO0021"
+      SolutionId: SO0021
       UUID: !GetAtt Uuid.UUID
       Version: "%%VERSION%%"
       Transcoder: MediaConvert
       WorkflowTrigger: !Ref WorkflowTrigger
       Glacier: !Ref Glacier
       FrameCapture: !Ref FrameCapture
-      Resource: "AnonymousMetric"
+      Resource: AnonymousMetric
       EnableMediaPackage: !Ref EnableMediaPackage
 
 Outputs:
+
   DynamoDBTable:
     Description: DynamoDB Table
     Value: !Ref DynamoDBTable
@@ -1439,3 +1663,20 @@ Outputs:
     Value: !GetAtt Uuid.UUID
     Export:
       Name: !Join [":", [!Ref "AWS::StackName", UUID]]
+
+  SnsTopic:
+    Description: SNS Notification Topic
+    Value: !Ref SnsTopic
+    Export:
+      Name: !Join [":", [!Ref "AWS::StackName", SnsTopic]]
+
+  SqsURL:
+    Description: AmazonSQS Queue URL
+    Value: !Ref SqsQueue
+    Export:
+      Name: !Join [":", [!Ref "AWS::StackName", SqsQueue]]
+
+  SqsARN: 
+    Description: AmazonSQS Queue ARN
+    Value: 
+      !Sub ${SqsQueue.Arn}

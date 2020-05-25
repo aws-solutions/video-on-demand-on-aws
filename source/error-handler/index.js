@@ -1,5 +1,5 @@
 /*********************************************************************************************************************
- *  Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
+ *  Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
  *                                                                                                                    *
  *  Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file except in compliance    *
  *  with the License. A copy of the License is located at                                                             *
@@ -29,73 +29,69 @@ exports.handler = async (event) => {
         url,
         msg;
 
-    try {
-        if (event.function) {
-            url = 'https://console.aws.amazon.com/cloudwatch/home?region=' + process.env.AWS_REGION + '#logStream:group=/aws/lambda/' + event.function;
-            guid = event.guid;
-            values = {
-                ':st': 'Error',
-                ':ea': event.function,
-                ':em': event.error,
-                ':ed': url
-            };
-
-            // Msg update to match DynamoDB entry
-            msg = {
-                guid: guid,
-                workflowStatus: 'Error',
-                workflowErrorAt: event.function,
-                errorMessage: event.error,
-                errorDetails: url
-            };
-        }
-
-        if (event.detail) {
-            url = 'https://console.aws.amazon.com/mediaconvert/home?region=' + process.env.AWS_REGION + '#/jobs/summary/' + event.detail.jobId;
-            guid = event.detail.userMetadata.guid;
-            values = {
-                ':st': 'Error',
-                ':ea': 'Encoding',
-                ':em': JSON.stringify(event, null, 2),
-                ':ed': url
-            };
-
-            // Msg update to match DynamoDB entry
-            msg = {
-                guid: guid,
-                workflowStatus: 'Error',
-                workflowErrorAt: 'Encoding',
-                errorMessage: event.detail.errorMessage,
-                errorDetails: url,
-            };
-        }
-
-        console.log(JSON.stringify(msg, null, 2));
-
-        // Update DynamoDB
-        let params = {
-            TableName: process.env.DynamoDBTable,
-            Key: {
-                guid: guid
-            },
-            UpdateExpression: 'SET workflowStatus = :st,' + 'workflowErrorAt = :ea,' + 'errorMessage = :em,' + 'errorDetails = :ed',
-            ExpressionAttributeValues: values
+    if (event.function) {
+        url = 'https://console.aws.amazon.com/cloudwatch/home?region=' + process.env.AWS_REGION + '#logStream:group=/aws/lambda/' + event.function;
+        guid = event.guid;
+        values = {
+            ':st': 'Error',
+            ':ea': event.function,
+            ':em': event.error,
+            ':ed': url
         };
 
-        await dynamo.update(params).promise();
-
-        // Feature/so-vod-173 match SNS data structure with the SNS Notification
-        // Function for consistency.
-        params = {
-            Message: JSON.stringify(msg, null, 2),
-            Subject: ' workflow Status:: Error: ' + guid,
-            TargetArn: process.env.SnsTopic
+        // Msg update to match DynamoDB entry
+        msg = {
+            guid: guid,
+            workflowStatus: 'Error',
+            workflowErrorAt: event.function,
+            errorMessage: event.error,
+            errorDetails: url
         };
-
-        await sns.publish(params).promise();
-    } catch (err) {
-        throw err;
     }
+
+    if (event.detail) {
+        url = 'https://console.aws.amazon.com/mediaconvert/home?region=' + process.env.AWS_REGION + '#/jobs/summary/' + event.detail.jobId;
+        guid = event.detail.userMetadata.guid;
+        values = {
+            ':st': 'Error',
+            ':ea': 'Encoding',
+            ':em': JSON.stringify(event, null, 2),
+            ':ed': url
+        };
+
+        // Msg update to match DynamoDB entry
+        msg = {
+            guid: guid,
+            workflowStatus: 'Error',
+            workflowErrorAt: 'Encoding',
+            errorMessage: event.detail.errorMessage,
+            errorDetails: url,
+        };
+    }
+
+    console.log(JSON.stringify(msg, null, 2));
+
+    // Update DynamoDB
+    let params = {
+        TableName: process.env.DynamoDBTable,
+        Key: {
+            guid: guid
+        },
+        UpdateExpression: 'SET workflowStatus = :st,' + 'workflowErrorAt = :ea,' + 'errorMessage = :em,' + 'errorDetails = :ed',
+        ExpressionAttributeValues: values
+    };
+
+    await dynamo.update(params).promise();
+
+    // Feature/so-vod-173 match SNS data structure with the SNS Notification
+    // Function for consistency.
+    params = {
+        Message: JSON.stringify(msg, null, 2),
+        Subject: ' workflow Status:: Error: ' + guid,
+        TargetArn: process.env.SnsTopic
+    };
+
+    await sns.publish(params).promise();
 
     return event;
 };

@@ -1,5 +1,5 @@
 /*********************************************************************************************************************
- *  Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
+ *  Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
  *                                                                                                                    *
  *  Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file except in compliance    *
  *  with the License. A copy of the License is located at                                                             *
@@ -17,7 +17,6 @@ const AWS = require('aws-sdk');
 const CATEGORY = 'VOD';
 const DESCRIPTION = 'video on demand on aws';
 
-// Feature/so-vod-173 QVBR versions of the default system presets.
 const qvbrPresets = [
     {
         name: '_Mp4_Avc_Aac_16x9_1280x720p_24Hz_4.5Mbps_qvbr',
@@ -130,16 +129,11 @@ const mediaPackageTemplates = [
 // Get the Account regional MediaConvert endpoint for making API calls
 const GetEndpoints = async () => {
     const mediaconvert = new AWS.MediaConvert();
+    const data = await mediaconvert.describeEndpoints().promise();
 
-    try {
-        let data = await mediaconvert.describeEndpoints().promise();
-
-        return {
-            EndpointUrl: data.Endpoints[0].Url
-        };
-    } catch (err) {
-        throw err;
-    }
+    return {
+        EndpointUrl: data.Endpoints[0].Url
+    };
 };
 
 const _createPresets = async (instance, presets, stackName) => {
@@ -187,66 +181,56 @@ const Create = async (config) => {
     let presets = [];
     let templates = [];
 
-    try {
-        if (config.EnableMediaPackage === 'true') {
-            // Use qvbr presets but Media Package templates
-            presets = qvbrPresets;
-            templates = mediaPackageTemplates;
-        } else {
-            // Use qvbr presets and templates
-            presets = qvbrPresets;
-            templates = qvbrTemplates;
-        }
-
-        await _createPresets(mediaconvert, presets, config.StackName);
-        await _createTemplates(mediaconvert, templates, config.StackName);
-    } catch (err) {
-        throw err;
+    if (config.EnableMediaPackage === 'true') {
+        // Use qvbr presets but Media Package templates
+        presets = qvbrPresets;
+        templates = mediaPackageTemplates;
+    } else {
+        // Use qvbr presets and templates
+        presets = qvbrPresets;
+        templates = qvbrTemplates;
     }
+
+    await _createPresets(mediaconvert, presets, config.StackName);
+    await _createTemplates(mediaconvert, templates, config.StackName);
 
     return 'success';
 };
 
-// Feature/so-vod-176 Support for stack update
 const Update = async (config) => {
     const mediaconvert = new AWS.MediaConvert({
         endpoint: config.EndPoint,
         region: process.env.AWS_REGION
     });
 
-    try {
-        let enableMediaPackage = 'false';
+    let enableMediaPackage = 'false';
 
-        // Check if the curent templates are MediaPackage or not.
-        let data = await mediaconvert.listJobTemplates({ Category: CATEGORY }).promise();
-        data.JobTemplates.forEach(template => {
-            if (template.Name === config.StackName + '_Ott_720p_Avc_Aac_16x9_mvod') {
-                enableMediaPackage = 'true';
-            }
-        });
-
-        if (config.EnableMediaPackage != enableMediaPackage) {
-            if (config.EnableMediaPackage == 'true') {
-                console.log('Deleting qvbr templates and creating MediaPackage templates');
-                await _deleteTemplates(mediaconvert, qvbrTemplates, config.StackName);
-                await _createTemplates(mediaconvert, mediaPackageTemplates, config.StackName);
-            } else {
-                console.log('Deleting MediaPackage templates and creating qvbr templates');
-                await _deleteTemplates(mediaconvert, mediaPackageTemplates, config.StackName);
-                await _createTemplates(mediaconvert, qvbrTemplates, config.StackName);
-            }
-        } else {
-            console.log('No changes to the MediaConvert templates');
+    // Check if the curent templates are MediaPackage or not.
+    let data = await mediaconvert.listJobTemplates({ Category: CATEGORY }).promise();
+    data.JobTemplates.forEach(template => {
+        if (template.Name === config.StackName + '_Ott_720p_Avc_Aac_16x9_mvod') {
+            enableMediaPackage = 'true';
         }
-    } catch (err) {
-        throw err;
+    });
+
+    if (config.EnableMediaPackage != enableMediaPackage) {
+        if (config.EnableMediaPackage == 'true') {
+            console.log('Deleting qvbr templates and creating MediaPackage templates');
+            await _deleteTemplates(mediaconvert, qvbrTemplates, config.StackName);
+            await _createTemplates(mediaconvert, mediaPackageTemplates, config.StackName);
+        } else {
+            console.log('Deleting MediaPackage templates and creating qvbr templates');
+            await _deleteTemplates(mediaconvert, mediaPackageTemplates, config.StackName);
+            await _createTemplates(mediaconvert, qvbrTemplates, config.StackName);
+        }
+    } else {
+        console.log('No changes to the MediaConvert templates');
     }
 
     return 'success';
 };
 
 const _deletePresets = async (instance, presets, stackName) => {
-    // Delete custom presets
     for (let preset of presets) {
         let name = stackName + preset.name;
 
@@ -256,7 +240,6 @@ const _deletePresets = async (instance, presets, stackName) => {
 };
 
 const _deleteTemplates = async (instance, templates, stackName) => {
-    // Delete custom templates
     for (let tmpl of templates) {
         let name = stackName + tmpl.name;
 
@@ -265,8 +248,6 @@ const _deleteTemplates = async (instance, templates, stackName) => {
     }
 };
 
-// Feature/so-vod-173 limit on the number of custom presets per region,
-// deleting on a stack delete
 const Delete = async (config) => {
     const mediaconvert = new AWS.MediaConvert({
         endpoint: config.EndPoint,
