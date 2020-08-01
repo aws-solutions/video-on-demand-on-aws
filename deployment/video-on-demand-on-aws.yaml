@@ -529,20 +529,14 @@ Resources:
           Bucket: !GetAtt Logs.DomainName
           Prefix: cloudfront-logs/
         DefaultCacheBehavior:
-          AllowedMethods:
-          - GET
-          - HEAD
-          - OPTIONS
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
+          OriginRequestPolicyId: 88a5eaf4-2fd4-4709-b370-b4c650ea3fcf
+          Compress: true
+          DefaultTTL: 0
           TargetOriginId: vodS3Origin
-          ForwardedValues:
-            QueryString: false
-            Cookies:
-              Forward: none
-            Headers:
-              - Origin
-              - Access-Control-Request-Method
-              - Access-Control-Request-Headers
-          ViewerProtocolPolicy: redirect-to-https
+          MaxTTL: 0
+          MinTTL: 0
+          ViewerProtocolPolicy: "redirect-to-https"
         PriceClass: PriceClass_100
         ViewerCertificate:
           CloudFrontDefaultCertificate: true
