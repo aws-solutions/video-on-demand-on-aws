@@ -516,6 +516,8 @@ Resources:
     Type: AWS::CloudFront::Distribution
     Properties:
       DistributionConfig:
+        IPV6Enabled: true
+        HttpVersion: http2
         Origins:
           - DomainName: !Sub "${Destination}.s3.${AWS::Region}.amazonaws.com"
             Id: vodS3Origin
@@ -540,10 +542,11 @@ Resources:
               - Origin
               - Access-Control-Request-Method
               - Access-Control-Request-Headers
-          ViewerProtocolPolicy: allow-all
+          ViewerProtocolPolicy: redirect-to-https
         PriceClass: PriceClass_100
         ViewerCertificate:
           CloudFrontDefaultCertificate: true
+          MinimumProtocolVersion: TLSv1.2_2019
     Metadata:
       cfn_nag:
         rules_to_suppress:
