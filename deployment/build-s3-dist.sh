@@ -89,5 +89,5 @@ for folder in */ ; do
 done
 
 echo "------------------------------------------------------------------------------"
-echo "S3 Packaging Complete"
+echo "VOD solution S3 Packaging Complete"
 echo "------------------------------------------------------------------------------"
