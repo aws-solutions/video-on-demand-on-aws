@@ -8,9 +8,9 @@ service:
   pathPatterns:
   - /*
   pipeline:
-        source:
-                provider: GitHub                        # GitHub or CodeCommit (default: GitHub)
-                repo: https://github.com/dorkforcesron/video-on-demand-on-aws.git  # The GitHub repo slug or CodeCommit repo name to build (default: none)
+      source:
+        provider: GitHub                        # GitHub or CodeCommit (default: GitHub)
+        repo: https://github.com/dorkforcesron/video-on-demand-on-aws.git  # The GitHub repo slug or CodeCommit repo name to build (default: none)
       build:
         disabled: true                         # Disable the build stage of the pipeline (default: false)
         image: aws/codebuild/amazonlinux2-x86_64-standard:3.0     # The image to use for CodeBuild job (default: aws/codebuild/ubuntu-base:latest)
