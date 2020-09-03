@@ -3,7 +3,11 @@ version: 0.2
 phases:
   build:
     commands:
-      - echo '...replace with real build commands...'
+      - echo '...start unit test...'
+      - cd deployment
+      - chmod +x ./run-unit-tests.sh
+      - ./run-unit-tests.sh
+      - echo '...unit test complete...'
 
 artifacts:
   files:
