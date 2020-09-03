@@ -8,3 +8,24 @@ service:
   pathPatterns:
   - /*
   pipeline:
+        source:
+                provider: GitHub                        # GitHub or CodeCommit (default: GitHub)
+                repo: https://github.com/dorkforcesron/video-on-demand-on-aws.git  # The GitHub repo slug or CodeCommit repo name to build (default: none)
+      build:
+        disabled: true                         # Disable the build stage of the pipeline (default: false)
+        image: aws/codebuild/amazonlinux2-x86_64-standard:3.0     # The image to use for CodeBuild job (default: aws/codebuild/ubuntu-base:latest)
+        type: Linux
+        computeType: BUILD_GENERAL1_SMALL       # The type of compute instance for builds (default: BUILD_GENERAL1_SMALL)
+      acceptance:
+        disabled: false                         # Disable the acceptance stage of the pipeline (default: false)
+        environment: acceptance                 # The environment name to deploy to for testing (default: acceptance)
+        image: aws/codebuild/amazonlinux2-x86_64-standard:3.0     # The image to use for CodeBuild job (default: aws/codebuild/ubuntu-base:latest)
+        type: Linux
+        computeType: BUILD_GENERAL1_SMALL       # The type of compute instance for testing builds (default: BUILD_GENERAL1_SMALL)
+      production:
+        disabled: false                         # Disable the production stage of the pipeline (default: false)
+        environment: production                 # The environment name to deploy to for production (default: production)
+
+      notify:                                   # List of email addresses to notify on pipeline results
+      - ron.ren@dorkforces.com
+

@@ -1,9 +1,23 @@
 version: 0.2
 
 phases:
+  pre_build:
+    commands:
+      - cd deployment
+      - chmod +x ./run-unit-tests.sh
+      - ./run-unit-tests.sh
   build:
     commands:
-      - echo '...replace with real build commands...'
+      - echo package lambda function
+      - echo create s3 bucket for lambda function package
+      - aws s3 mb s3://my-vod-bucket-us-east-1
+      - ./build-s3-dist.sh my-vod-bucket vod-solution-alpha v0.1
+      - aws s3 cp ./regional-s3-assets/ s3://my-vod-bucket-us-east-1/vod-solution-alpha/v0.1/ --recursive --acl bucket-owner-full-control
+  post_build:
+    commands:
+      - echo Package custom resources
+      - aws cloudformation package --template-file video-on-demand-on-aws.yaml --output-template-file video-on-demand-custom-on-aws.yaml --s3-bucket my-vod-bucket-us-east-1
+      - aws cloudformation deploy --template-file video-on-demand-on-aws.yaml --stack-name my-custom-vod --s3-bucket my-vod-bucket-us-east-1
 
 artifacts:
   files:
