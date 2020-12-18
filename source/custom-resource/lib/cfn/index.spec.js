@@ -39,7 +39,7 @@ const _responseData = {
     test: 'testing'
 };
 
-describe('#CFN RESONSE::', () => {
+describe('#CFN RESPONSE::', () => {
     it('should return "200" on a send cfn response sucess', async () => {
         const mock = new MockAdapter(axios);
         mock.onPut().reply(200, {});

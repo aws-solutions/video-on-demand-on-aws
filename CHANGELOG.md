@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.2.0] - 2020-12-10
+### Added 
+- Support for S3 Signature Version4 for pre-signed URLs (https://github.com/awslabs/video-on-demand-on-aws/pull/111)
+- New MediaConvert job templates with:
+    - Fewer HLS and DASH ABR renditions
+    - Updated encoder settings
+    - No presets
+- Enabled point-in-time recovery backup for DynamoDB table
+
+### Changed
+- MediaInfo executable version (from v19.09 to v20.09) (https://github.com/awslabs/video-on-demand-on-aws/pull/116)
+- CloudFront configuration improvements (https://github.com/awslabs/video-on-demand-on-aws/pull/96, https://github.com/awslabs/video-on-demand-on-aws/pull/99)
+- MediaConvert presets are no longer being created
+- All new MediaConvert job templates gets created regardless of whether MediaPackage is enabled or not
+
+### Fixed
+- Settings are no longer overwritten when using custom templates (https://github.com/awslabs/video-on-demand-on-aws/pull/107)
+- Solution now deploys even in regions with no MediaPackage support
+
 
 ## [5.1.0] - 2020-04-30
 ### Added

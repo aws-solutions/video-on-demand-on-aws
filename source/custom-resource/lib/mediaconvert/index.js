@@ -96,6 +96,7 @@ const qvbrPresets = [
     }
 ];
 
+// templates from v5.1.0 and older
 const qvbrTemplates = [
     {
         name: '_Ott_2160p_Avc_Aac_16x9_qvbr',
@@ -126,6 +127,37 @@ const mediaPackageTemplates = [
     }
 ];
 
+// updated templates for v5.2.0 that don't use presets
+const qvbrTemplatesNoPreset = [
+    {
+        name: '_Ott_2160p_Avc_Aac_16x9_qvbr_no_preset',
+        file: './lib/mediaconvert/templates/2160p_avc_aac_16x9_qvbr_no_preset.json'
+    },
+    {
+        name: '_Ott_1080p_Avc_Aac_16x9_qvbr_no_preset',
+        file: './lib/mediaconvert/templates/1080p_avc_aac_16x9_qvbr_no_preset.json'
+    },
+    {
+        name: '_Ott_720p_Avc_Aac_16x9_qvbr_no_preset',
+        file: './lib/mediaconvert/templates/720p_avc_aac_16x9_qvbr_no_preset.json'
+    }
+];
+
+const mediaPackageTemplatesNoPreset = [
+    {
+        name: '_Ott_2160p_Avc_Aac_16x9_mvod_no_preset',
+        file: './lib/mediaconvert/templates/2160p_avc_aac_16x9_mvod_no_preset.json'
+    },
+    {
+        name: '_Ott_1080p_Avc_Aac_16x9_mvod_no_preset',
+        file: './lib/mediaconvert/templates/1080p_avc_aac_16x9_mvod_no_preset.json'
+    },
+    {
+        name: '_Ott_720p_Avc_Aac_16x9_mvod_no_preset',
+        file: './lib/mediaconvert/templates/720p_avc_aac_16x9_mvod_no_preset.json'
+    }
+];
+
 // Get the Account regional MediaConvert endpoint for making API calls
 const GetEndpoints = async () => {
     const mediaconvert = new AWS.MediaConvert();
@@ -136,36 +168,11 @@ const GetEndpoints = async () => {
     };
 };
 
-const _createPresets = async (instance, presets, stackName) => {
-    for (let preset of presets) {
-        // Add stack name to the preset name to ensure it is unique
-        let name = stackName + preset.name;
-        let params = {
-            Name: name,
-            Category: CATEGORY,
-            Description: DESCRIPTION,
-            Settings: JSON.parse(fs.readFileSync(preset.file, 'utf8'))
-        };
-
-        await instance.createPreset(params).promise();
-        console.log(`preset created:: ${name}`);
-    }
-};
-
 const _createTemplates = async (instance, templates, stackName) => {
     for (let tmpl of templates) {
         // Load template and set unique template name
         let params = JSON.parse(fs.readFileSync(tmpl.file, 'utf8'));
         params.Name = stackName + params.Name;
-
-        // Update preset names unless system presets
-        params.Settings.OutputGroups.forEach(group => {
-            group.Outputs.forEach(output => {
-                if (!output.Preset.startsWith('System')) {
-                    output.Preset = stackName + output.Preset;
-                }
-            });
-        });
 
         await instance.createJobTemplate(params).promise();
         console.log(`template created:: ${params.Name}`);
@@ -178,21 +185,8 @@ const Create = async (config) => {
         region: process.env.AWS_REGION
     });
 
-    let presets = [];
-    let templates = [];
-
-    if (config.EnableMediaPackage === 'true') {
-        // Use qvbr presets but Media Package templates
-        presets = qvbrPresets;
-        templates = mediaPackageTemplates;
-    } else {
-        // Use qvbr presets and templates
-        presets = qvbrPresets;
-        templates = qvbrTemplates;
-    }
-
-    await _createPresets(mediaconvert, presets, config.StackName);
-    await _createTemplates(mediaconvert, templates, config.StackName);
+    await _createTemplates(mediaconvert, mediaPackageTemplatesNoPreset, config.StackName);
+    await _createTemplates(mediaconvert, qvbrTemplatesNoPreset, config.StackName);
 
     return 'success';
 };
@@ -203,28 +197,21 @@ const Update = async (config) => {
         region: process.env.AWS_REGION
     });
 
-    let enableMediaPackage = 'false';
-
-    // Check if the curent templates are MediaPackage or not.
+    let templatesNoPreset = 'false';
     let data = await mediaconvert.listJobTemplates({ Category: CATEGORY }).promise();
+
+    // Check if the current templates are MediaPackage are from 5.2.0 (no presets) or not.
     data.JobTemplates.forEach(template => {
-        if (template.Name === config.StackName + '_Ott_720p_Avc_Aac_16x9_mvod') {
-            enableMediaPackage = 'true';
+        if (template.Name.includes(config.StackName) && template.Name.includes("_no_preset")) {
+            templatesNoPreset = 'true';
         }
     });
-
-    if (config.EnableMediaPackage != enableMediaPackage) {
-        if (config.EnableMediaPackage == 'true') {
-            console.log('Deleting qvbr templates and creating MediaPackage templates');
-            await _deleteTemplates(mediaconvert, qvbrTemplates, config.StackName);
-            await _createTemplates(mediaconvert, mediaPackageTemplates, config.StackName);
-        } else {
-            console.log('Deleting MediaPackage templates and creating qvbr templates');
-            await _deleteTemplates(mediaconvert, mediaPackageTemplates, config.StackName);
-            await _createTemplates(mediaconvert, qvbrTemplates, config.StackName);
-        }
-    } else {
-        console.log('No changes to the MediaConvert templates');
+    // if there are no templates with '_no_preset', then this update is from an older version of solution
+    // we need to create the new templates without deleting the old presets and templates
+    if (templatesNoPreset == 'false') {
+        console.log("Creating templates with no presets")
+        await _createTemplates(mediaconvert, qvbrTemplatesNoPreset, config.StackName);
+        await _createTemplates(mediaconvert, mediaPackageTemplatesNoPreset, config.StackName);
     }
 
     return 'success';
@@ -255,21 +242,17 @@ const Delete = async (config) => {
     });
 
     try {
-        let presets = [];
         let templates = [];
 
-        if (config.EnableMediaPackage === 'true') {
-            // Use qvbr presets but Media Package templates
-            presets = qvbrPresets;
-            templates = mediaPackageTemplates;
-        } else {
-            // Use qvbr presets and templates
-            presets = qvbrPresets;
-            templates = qvbrTemplates;
-        }
+        await _deleteTemplates(mediaconvert, mediaPackageTemplatesNoPreset, config.StackName);
+        await _deleteTemplates(mediaconvert, qvbrTemplatesNoPreset, config.StackName);
 
-        await _deletePresets(mediaconvert, presets, config.StackName);
-        await _deleteTemplates(mediaconvert, templates, config.StackName);
+        // if this Delete is happening after an update to an older version
+        // then we also need to delete templates and presets from the older deployment 
+        await _deleteTemplates(mediaconvert, qvbrTemplates, config.StackName);
+        await _deleteTemplates(mediaconvert, mediaPackageTemplates, config.StackName)
+        await _deletePresets(mediaconvert, qvbrPresets, config.StackName);
+
     } catch (err) {
         console.log(err);
         throw err;

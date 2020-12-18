@@ -193,6 +193,8 @@ Resources:
         rules_to_suppress:
           - id: W11
             reason: "* is required to create CloudWatch logs and interact with MediaConvert / MediaPackage actions that do not support resource level permissions"
+          - id: W76
+            reason: "All policies are required by the custom resource."
 
   StepFunctionsServiceRole:
     Type: AWS::IAM::Role
@@ -359,9 +361,13 @@ Resources:
           Id: !Sub "${AWS::StackName}-EncodeError"
 
   DynamoDBTable:
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
     Type: AWS::DynamoDB::Table
     Properties:
       BillingMode: PAY_PER_REQUEST
+      PointInTimeRecoverySpecification: 
+        PointInTimeRecoveryEnabled: true
       AttributeDefinitions:
         - AttributeName: guid
           AttributeType: S
@@ -530,7 +536,11 @@ Resources:
           AllowedMethods:
           - GET
           - HEAD
-          - OPTIONS
+          Compress: true
+          MaxTTL: 0
+          MinTTL: 0
+          ViewerProtocolPolicy: "redirect-to-https"
+          DefaultTTL: 0
           TargetOriginId: vodS3Origin
           ForwardedValues:
             QueryString: false
@@ -540,7 +550,6 @@ Resources:
               - Origin
               - Access-Control-Request-Method
               - Access-Control-Request-Headers
-          ViewerProtocolPolicy: allow-all
         PriceClass: PriceClass_100
         ViewerCertificate:
           CloudFrontDefaultCertificate: true
@@ -574,6 +583,7 @@ Resources:
       StackName: !Ref AWS::StackName
       EndPoint: !GetAtt MediaConvertEndPoint.EndpointUrl
       EnableMediaPackage: !Ref EnableMediaPackage
+      EnableNewTemplates: true
 
   MediaPackageVod:
     Type: Custom::LoadLambda
@@ -726,18 +736,18 @@ Resources:
           MediaConvert_Template_2160p:
             !If
               - IsMediaPackageEnabled
-              - !Sub "${AWS::StackName}_Ott_2160p_Avc_Aac_16x9_mvod"
-              - !Sub "${AWS::StackName}_Ott_2160p_Avc_Aac_16x9_qvbr"
+              - !Sub "${AWS::StackName}_Ott_2160p_Avc_Aac_16x9_mvod_no_preset"
+              - !Sub "${AWS::StackName}_Ott_2160p_Avc_Aac_16x9_qvbr_no_preset"
           MediaConvert_Template_1080p:
             !If
               - IsMediaPackageEnabled
-              - !Sub "${AWS::StackName}_Ott_1080p_Avc_Aac_16x9_mvod"
-              - !Sub "${AWS::StackName}_Ott_1080p_Avc_Aac_16x9_qvbr"
+              - !Sub "${AWS::StackName}_Ott_1080p_Avc_Aac_16x9_mvod_no_preset"
+              - !Sub "${AWS::StackName}_Ott_1080p_Avc_Aac_16x9_qvbr_no_preset"
           MediaConvert_Template_720p:
             !If
               - IsMediaPackageEnabled
-              - !Sub "${AWS::StackName}_Ott_720p_Avc_Aac_16x9_mvod"
-              - !Sub "${AWS::StackName}_Ott_720p_Avc_Aac_16x9_qvbr"
+              - !Sub "${AWS::StackName}_Ott_720p_Avc_Aac_16x9_mvod_no_preset"
+              - !Sub "${AWS::StackName}_Ott_720p_Avc_Aac_16x9_qvbr_no_preset"
           CloudFront: !GetAtt CloudFront.DomainName
           EnableMediaPackage: !Ref EnableMediaPackage
           InputRotate: DEGREE_0
@@ -1128,6 +1138,9 @@ Resources:
                   - sqs:SendMessage
                 Resource:
                   - !GetAtt SqsQueue.Arn
+                Condition:
+                  Bool:
+                    'aws:SecureTransport': 'true'
               -
                 Effect: Allow
                 Action:
@@ -1186,6 +1199,9 @@ Resources:
                   - sns:Publish
                 Resource:
                   - !Ref SnsTopic
+                Condition:
+                  Bool:
+                    'aws:SecureTransport': 'true'                
               - Effect: Allow
                 Action:
                   - logs:CreateLogGroup
@@ -1301,6 +1317,9 @@ Resources:
                   - sns:Publish
                 Resource:
                   - !Ref SnsTopic
+                Condition:
+                  Bool:
+                    'aws:SecureTransport': 'true'
               - Effect: Allow
                 Action:
                   - dynamodb:UpdateItem

@@ -33,44 +33,26 @@ const _config = {
     EnableMediaPackage: 'false'
 };
 
-const _mediaPackageConfig = {
-    StackName: 'test',
-    EndPoint: 'https://test.com',
-    EnableMediaPackage: 'true'
-};
-
 const update_data = {
     JobTemplates: [{ Name: 'test_Ott_720p_Avc_Aac_16x9_qvbr' }]
 };
+
+const update_data_no_preset = {
+    JobTemplates: [{ Name: 'test_Ott_720p_Avc_Aac_16x9_qvbr_no_preset' }]
+}
 
 describe('#MEDIACONVERT::', () => {
     afterEach(() => AWS.restore('MediaConvert'));
 
     describe('Create', () => {
         it('should return "SUCCESS" on create templates', async () => {
-            AWS.mock('MediaConvert', 'createPreset', Promise.resolve());
             AWS.mock('MediaConvert', 'createJobTemplate', Promise.resolve(data));
 
             const response = await lambda.createTemplates(_config);
             expect(response).to.equal('success');
         });
 
-        it('should use correct templates when MediaPackage is enabled', async () => {
-            let name;
-
-            AWS.mock('MediaConvert', 'createPreset', Promise.resolve());
-            AWS.mock('MediaConvert', 'createJobTemplate', (params) => {
-                name = params.Name;
-                return Promise.resolve(data);
-            });
-
-            const response = await lambda.createTemplates(_mediaPackageConfig);
-            expect(response).to.equal('success');
-            expect(name.endsWith('_mvod')).to.be.true;
-        });
-
         it('should fail when createJobTemplate throws an exception', async () => {
-            AWS.mock('MediaConvert', 'createPreset', Promise.resolve());
             AWS.mock('MediaConvert', 'createJobTemplate', Promise.reject('ERROR'));
 
             await lambda.createTemplates(_config).catch(err => {
@@ -99,31 +81,18 @@ describe('#MEDIACONVERT::', () => {
     describe('Update', () => {
         it('should return "SUCCESS" on update templates', async () => {
             AWS.mock('MediaConvert', 'listJobTemplates', Promise.resolve(update_data));
+            AWS.mock('MediaConvert', 'createJobTemplate', Promise.resolve(update_data));
 
             const response = await lambda.updateTemplates(_config);
             expect(response).to.equal('success');
         });
 
-        it('should correctly handle when enable media package is set to false', async () => {
-            const templatesData = {
-                JobTemplates: [{ Name: 'test_Ott_720p_Avc_Aac_16x9_mvod' }]
-            };
+        it('should correctly handle updates when new templates do not exist', async () => {
 
-            let wasDeleteTemplateInvoked = false;
             let wasCreateTemplateInvoked = false;
-
-            let toBeDeleted = [];
             let toBeCreated = [];
 
-            AWS.mock('MediaConvert', 'listJobTemplates', Promise.resolve(templatesData));
-
-            AWS.mock('MediaConvert', 'deleteJobTemplate', (params) => {
-                wasDeleteTemplateInvoked = true;
-                toBeDeleted.push(params.Name);
-
-                return Promise.resolve();
-            });
-
+            AWS.mock('MediaConvert', 'listJobTemplates', Promise.resolve(update_data));
             AWS.mock('MediaConvert', 'createJobTemplate', (params) => {
                 wasCreateTemplateInvoked = true;
                 toBeCreated.push(params.Name);
@@ -132,42 +101,26 @@ describe('#MEDIACONVERT::', () => {
             });
 
             await lambda.updateTemplates(_config);
-            expect(wasDeleteTemplateInvoked).to.be.true;
             expect(wasCreateTemplateInvoked).to.be.true;
 
-            toBeDeleted.forEach(item => expect(item.endsWith('_mvod')).to.be.true);
-            toBeCreated.forEach(item => expect(item.endsWith('_qvbr')).to.be.true);
+            toBeCreated.forEach(item => expect(item.endsWith('_no_preset')).to.be.true);
         });
 
-        it('should correctly handle when enable media package is set to true', async () => {
-            let wasDeleteTemplateInvoked = false;
+        it('should correctly handle update when new templates exist', async () => {
             let wasCreateTemplateInvoked = false;
-
-            let toBeDeleted = [];
             let toBeCreated = [];
 
-            AWS.mock('MediaConvert', 'listJobTemplates', Promise.resolve(update_data));
-
-            AWS.mock('MediaConvert', 'deleteJobTemplate', (params) => {
-                wasDeleteTemplateInvoked = true;
-                toBeDeleted.push(params.Name);
-
-                return Promise.resolve();
-            });
-
+            AWS.mock('MediaConvert', 'listJobTemplates', Promise.resolve(update_data_no_preset));
             AWS.mock('MediaConvert', 'createJobTemplate', (params) => {
-                wasCreateTemplateInvoked = true;
+                wasCreateTemplateInvoked = false;
                 toBeCreated.push(params.Name);
 
                 return Promise.resolve(data);
             });
 
-            await lambda.updateTemplates(_mediaPackageConfig);
-            expect(wasDeleteTemplateInvoked).to.be.true;
-            expect(wasCreateTemplateInvoked).to.be.true;
-
-            toBeDeleted.forEach(item => expect(item.endsWith('_qvbr')).to.be.true);
-            toBeCreated.forEach(item => expect(item.endsWith('_mvod')).to.be.true);
+            await lambda.updateTemplates(_config);
+            expect(wasCreateTemplateInvoked).to.be.false;
+            toBeCreated.forEach(item => expect(item.endsWith('_no_preset')).to.be.false);
         });
 
         it('should fail when listJobTemplates throws an exception', async () => {
@@ -186,20 +139,6 @@ describe('#MEDIACONVERT::', () => {
 
             const response = await lambda.deleteTemplates(_config);
             expect(response).to.equal('success');
-        });
-
-        it('should use correct templates when MediaPackage is enabled', async () => {
-            let name;
-
-            AWS.mock('MediaConvert', 'deletePreset', Promise.resolve());
-            AWS.mock('MediaConvert', 'deleteJobTemplate', (params) => {
-                name = params.Name;
-                return Promise.resolve();
-            });
-
-            const response = await lambda.deleteTemplates(_mediaPackageConfig);
-            expect(response).to.equal('success');
-            expect(name.endsWith('_mvod')).to.be.true;
         });
     });
 });

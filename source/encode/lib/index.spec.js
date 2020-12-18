@@ -124,30 +124,6 @@ describe('#ENCODE::', () => {
         const settings = output.OutputGroupSettings.HlsGroupSettings;
 
         expect(settings).not.to.be.null;
-        expect(settings.SegmentLength).to.equal(10);
-        expect(settings.MinSegmentLength).to.equal(2);
-    });
-
-    it('should not apply custom settings when template is default', async () => {
-        const event = {
-            guid: '12345678',
-            jobTemplate: 'default-template',
-            srcVideo: 'video.mp4',
-            srcBucket: 'src',
-            destBucket: 'dest',
-            isCustomTemplate: false,
-            acceleratedTranscoding:'DISABLED'
-        };
-
-        AWS.mock('MediaConvert', 'getJobTemplate', Promise.resolve(tmpl));
-        AWS.mock('MediaConvert', 'createJob', Promise.resolve(data));
-
-        const response = await lambda.handler(event);
-
-        const output = response.encodingJob.Settings.OutputGroups[0];
-        const settings = output.OutputGroupSettings.HlsGroupSettings;
-
-        expect(settings).not.to.be.null;
         expect(settings.SegmentLength).to.equal(5);
         expect(settings.MinSegmentLength).to.equal(0);
     });

@@ -109,15 +109,12 @@ AWS MediaConvert Quality-defined Variable Bit-Rate (QVBR) control mode gets the 
 
 | Resolution   |      MaxBitrate      |  QvbrQualityLevel |
 |----------|:-------------:|------:|
-| 2160p |  20000kbps | 8 |
+| 2160p |  15000Kbps | 9 |
 | 1080p |  8500Kbps  | 8 |
-| 720p  |  6500Kbps  | 8 |
+| 720p  |  6000Kbps  | 8 |
 | 720p  |  5000Kbps  | 8 |
-| 720p  |  3500Kbps  | 7 |
-| 540p  |  6500Kbps  | 7 |
 | 540p  |  3500Kbps  | 7 |
-| 360p  |  1200Kbps  | 7 |
-| 360p  |  600Kbps   | 7 |
+| 360p  |  1500Kbps  | 7 |
 | 270p  |  400Kbps   | 7 |
 
 For more detail please see [QVBR and MediaConvert](https://docs.aws.amazon.com/mediaconvert/latest/ug/cbr-vbr-qvbr.html).
@@ -173,7 +170,31 @@ The CloudFormation template is configured to pull the Lambda deployment packages
 aws s3 mb s3://my-bucket-us-east-1
 ```
 
-### 3. Create the deployment packages
+### 3. Build MediaInfo
+Build MediaInfo using the following commands on an [EC2 instance](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EC2_GetStarted.html) running an Amazon Linux AMI. 
+
+```console
+sudo yum update -y
+sudo yum groupinstall 'Development Tools' -y
+sudo yum install libcurl-devel -y
+wget https://mediaarea.net/download/binary/mediainfo/20.09/MediaInfo_CLI_20.09_GNU_FromSource.tar.xz
+tar xvf MediaInfo_CLI_20.09_GNU_FromSource.tar.xz
+cd MediaInfo_CLI_GNU_FromSource/
+./CLI_Compile.sh --with-libcurl
+```
+
+Run these commands to confirm the compilation was successful:
+```console
+cd MediaInfo/Project/GNU/CLI/
+./mediainfo --version
+```
+Copy the mediainfo binary into the `source/mediainfo/bin` directory of your cloned respository.
+
+If you'd like to use a precompiled MediaInfo binary for Lambda built by the MediaArea team, you can download it [here](https://mediaarea.net/en/MediaInfo/Download/Lambda). 
+For more information, check out the [MediaInfo site](https://mediaarea.net/en/MediaInfo).
+
+
+### 4. Create the deployment packages
 Build the distributable:
 ```
 chmod +x ./build-s3-dist.sh
@@ -187,7 +208,7 @@ Deploy the distributable to the Amazon S3 bucket in your account:
 aws s3 cp ./regional-s3-assets/ s3://my-bucket-us-east-1/video-on-demand-on-aws/version/ --recursive --acl bucket-owner-full-control
 ```
 
-### 4. Launch the CloudFormation template.
+### 5. Launch the CloudFormation template.
 * Get the link of the video-on-demand-on-aws.template uploaded to your Amazon S3 bucket.
 * Deploy the Video on Demand to your account by launching a new AWS CloudFormation stack using the link of the video-on-demand-on-aws.template.
 

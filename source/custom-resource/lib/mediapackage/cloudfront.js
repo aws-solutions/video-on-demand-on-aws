@@ -57,10 +57,10 @@ module.exports.addCustomOrigin = async (distributionId, domainName) => {
         PathPattern: 'out/*',
         TargetOriginId: originId,
         ForwardedValues: {
-            QueryString: false,
+            QueryString: true,
             Cookies: { Forward: 'none' },
             Headers: { Quantity: 0 },
-            QueryStringCacheKeys: { Quantity: 0 }
+            QueryStringCacheKeys: { Quantity: 1, Items: ['aws.manifestfilter'] }
         },
         TrustedSigners: { Enabled: false, Quantity: 0 },
         ViewerProtocolPolicy: 'redirect-to-https',

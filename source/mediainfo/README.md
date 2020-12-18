@@ -1,11 +1,11 @@
-The version of MediaInfo included in this solution is v19.09. If you want to use a different version, you can compile the source code using these commands (taken from this [blog post](https://aws.amazon.com/blogs/compute/extracting-video-metadata-using-lambda-and-mediainfo/)) as a reference:
+The version of MediaInfo used by this solution is v20.09. If you want to use a different version, you can compile the source code using these commands (taken from this [blog post](https://aws.amazon.com/blogs/compute/extracting-video-metadata-using-lambda-and-mediainfo/)) as a reference:
 
 ```console
 sudo yum update -y
 sudo yum groupinstall 'Development Tools' -y
 sudo yum install libcurl-devel -y
-wget https://mediaarea.net/download/binary/mediainfo/19.09/MediaInfo_CLI_19.09_GNU_FromSource.tar.xz
-tar xvf MediaInfo_CLI_19.09_GNU_FromSource.tar.xz
+wget https://mediaarea.net/download/binary/mediainfo/19.09/MediaInfo_CLI_20.09_GNU_FromSource.tar.xz
+tar xvf MediaInfo_CLI_20.09_GNU_FromSource.tar.xz
 cd MediaInfo_CLI_GNU_FromSource/
 ./CLI_Compile.sh --with-libcurl
 ```
@@ -19,7 +19,7 @@ cd MediaInfo/Project/GNU/CLI/
 
 ***
 
-With the update of MediaInfo (from v0.7.92.1 to v19.09), you might run into some issues if you depend on the metadata report format. Here's an example for a mp4 file:
+With the update of MediaInfo (from v0.7.92.1 to v20.09), you might run into some issues if you depend on the metadata report format. Here's an example for a mp4 file:
 
 ```diff
 {

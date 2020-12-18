@@ -50,7 +50,16 @@ exports.handler = async (event, context) => {
                     break;
 
                 case 'MediaPackageVod':
-                    responseData = await MediaPackage.create(config);
+                    if (config.EnableMediaPackage === 'true') {
+                        responseData = await MediaPackage.create(config);
+                    }
+                    else {
+                        // response data with these attributes still needs to be returned even if we're not using MediaPackageVod
+                        responseData = {
+                            GroupId: null,
+                            GroupDomainName: null
+                        };
+                    }
                     break;
 
                 default:
@@ -72,9 +81,17 @@ exports.handler = async (event, context) => {
                     break;
 
                 case 'MediaPackageVod':
-                    responseData = await MediaPackage.update(config);
+                    if (config.EnableMediaPackage === 'true') {
+                        responseData = await MediaPackage.update(config);
+                    }
+                    else {
+                        // response data with these attributes still needs to be returned even if we're not using MediaPackageVod
+                        responseData = {
+                            GroupId: null,
+                            GroupDomainName: null
+                        };
+                    }
                     break;
-
                 default:
                     console.log(config.Resource, ': update not supported, sending success response');
             }
@@ -86,7 +103,15 @@ exports.handler = async (event, context) => {
                     break;
 
                 case 'MediaPackageVod':
-                    responseData = await MediaPackage.purge(config);
+                    if (config.EnableMediaPackage === 'true') {
+                        responseData = await MediaPackage.purge(config);
+                    }
+                    else {
+                        // response data with these attributes still needs to be returned even if we're not using MediaPackageVod
+                        responseData = {
+                            GroupId: null
+                        };
+                    }
                     break;
 
                 default:

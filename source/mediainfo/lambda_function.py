@@ -16,6 +16,7 @@ import json
 import os
 import re
 import subprocess
+from botocore.config import Config
 
 def parse_number(num):
     if num is None:
@@ -100,8 +101,15 @@ def parse_text_attributes(track):
 def get_signed_url(bucket, obj):
     SIGNED_URL_EXPIRATION = 60 * 60 * 2
     AWS_REGION = os.environ['AWS_REGION']
-    s3_client = boto3.client('s3', endpoint_url=f'https://s3.{AWS_REGION}.amazonaws.com', region_name=AWS_REGION)
-
+    ## PR: https://github.com/awslabs/video-on-demand-on-aws/pull/111
+    boto_config = Config(
+        region_name=AWS_REGION,
+        s3={
+            'addressing_style': 'virtual',
+            'signature_version': 's3v4'
+        }
+    )
+    s3_client = boto3.client('s3', config=boto_config)
     return s3_client.generate_presigned_url(
         'get_object',
         Params={ 'Bucket': bucket, 'Key': obj },

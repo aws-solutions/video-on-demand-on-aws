@@ -115,13 +115,9 @@ const getFrameGroup = (event, outputPath) => ({
         }
     }]
 });
-
-const applySettingsIfNeeded = (isCustomTemplate, originalGroup, customGroup) => {
-    if (isCustomTemplate) {
-        return _.merge({}, originalGroup, customGroup);
-    }
-
-    return originalGroup;
+//PR: https://github.com/awslabs/video-on-demand-on-aws/pull/107
+const mergeSettingsWithDefault = (originalGroup, customGroup) => {
+    return _.merge({}, originalGroup, customGroup);
 };
 
 exports.handler = async (event) => {
@@ -215,8 +211,8 @@ exports.handler = async (event) => {
 
             if (found) {
                 console.log(`${group.Name} found in Job Template`);
-
-                const outputGroup = applySettingsIfNeeded(event.isCustomTemplate, defaultGroup, group);
+                // PR: https://github.com/awslabs/video-on-demand-on-aws/pull/107
+                const outputGroup = mergeSettingsWithDefault(event.isCustomTemplate, defaultGroup, group);
                 job.Settings.OutputGroups.push(outputGroup);
             }
         });

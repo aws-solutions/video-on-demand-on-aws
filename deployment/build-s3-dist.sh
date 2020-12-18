@@ -60,10 +60,20 @@ sed -i -e $replace $template_dir/../README.md
 cp $template_dist_dir/video-on-demand-on-aws.template $build_dist_dir/
 
 echo "------------------------------------------------------------------------------"
+echo "Download mediainfo binary for AWS Lambda"
+echo "------------------------------------------------------------------------------"
+cd $source_dir/mediainfo/
+rm -rf bin/*
+curl -O https://mediaarea.net/download/binary/mediainfo/20.09/MediaInfo_CLI_20.09_Lambda.zip
+unzip MediaInfo_CLI_20.09_Lambda.zip 
+mv LICENSE bin/
+chmod +x ./bin/mediainfo
+rm -r MediaInfo_CLI_20.09_Lambda.zip
+
+cd $source_dir/
+echo "------------------------------------------------------------------------------"
 echo "Lambda Functions"
 echo "------------------------------------------------------------------------------"
-cd $source_dir
-chmod +x ./mediainfo/bin/mediainfo
 
 for folder in */ ; do
     cd "$folder"
@@ -81,7 +91,7 @@ for folder in */ ; do
     elif [ -e "setup.py" ]; then
         # If you're running this command on macOS and Python3 has been installed using Homebrew, you might see this issue:
         #    DistutilsOptionError: must supply either home or prefix/exec-prefix
-        # Please follow the workaround suggested on this StackOverflow answer: https://stackoverflow.com/a/44728772
+        # Please follow the workaround suggested on this StackOverflow answer: https://stackoverflow.com/a/4472877
         python3 setup.py build_pkg --zip-path=$zip_path
     fi
 
