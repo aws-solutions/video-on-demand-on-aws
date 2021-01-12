@@ -37,7 +37,7 @@ The workflow configuration is set at deployment and is defined as environment va
 * **MediaConvert_Template_720p:**	The name of the SD template in MediaConvert
 * **Source:**	The name of the source S3 bucket
 * **WorkflowName:**	Used to tag all of the MediaConvert encoding jobs
-* **acceleratedTranscoding** Enabled Accelerated Transocding in MediaConvert. options include ENABLE, DISABLE, PREFERRED. for more detials please see: 
+* **acceleratedTranscoding** Enabled Accelerated Transocding in MediaConvert. options include ENABLE, DISABLED, PREFERRED. for more details please see: [Accelerated Transcoding](https://docs.aws.amazon.com/mediaconvert/latest/ug/accelerated-transcoding.html).
 * **enableSns** Send SNS notifications for the workflow results.
 * **enableSqs** Send the workflow results to an SQS queue
 
