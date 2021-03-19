@@ -24,8 +24,10 @@
 # misc
 **/npm-debug.log
 **/testem.log
-**/package-lock.json
+# **/package-lock.json
 **/.vscode/settings.json
+*~
+~*
 
 # System Files
 **/.DS_Store
