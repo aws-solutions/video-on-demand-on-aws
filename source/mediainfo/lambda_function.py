@@ -145,7 +145,9 @@ def lambda_handler(event, context):
                 print(f'Unsupported: {track_type}')
 
         event['srcMediainfo'] = json.dumps(metadata, indent=2)
+        event['durationInSeconds'] = metadata['container']['duration']
         print(f'RESPONSE:: {json.dumps(metadata)}')
+        print(f'EVENT:: {event}')
 
         return event
     except Exception as err:

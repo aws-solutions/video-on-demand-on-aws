@@ -10,7 +10,6 @@
     "pretest": "npm i --quiet",
     "test": "mocha lib/*.spec.js"
   },
-  "dependencies": {},
   "devDependencies": {
     "aws-sdk": "^2.609.0",
     "aws-sdk-mock": "^5.0.0",

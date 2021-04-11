@@ -1,7 +1,6 @@
 Description: "(SO0021) - Video On Demand workflow with AWS Step Functions, MediaConvert, MediaPackage, S3, CloudFront and DynamoDB. Version %%VERSION%%"
 
 Parameters:
-
   AdminEmail:
     Description: Email address for SNS notifications (subscribed users will receive ingest, publishing, and error notifications)
     Type: String
@@ -46,15 +45,15 @@ Parameters:
     Default: Yes
     AllowedValues:
       - Yes
-      - No    
-  
+      - No
+
   EnableSqs:
     Description: Publish the workflow results to an SQS queue to injest upstream
     Type: String
     Default: Yes
     AllowedValues:
       - Yes
-      - No  
+      - No
 
   AcceleratedTranscoding:
     Description: Enable accelerated transcoding in AWS Elemental MediaConvert. PREFERRED will only use acceleration if the input files is supported. ENABLED accleration is applied to all files (this will fail for unsupported file types) see MediaConvert Documentation for more detail https://docs.aws.amazon.com/mediaconvert/latest/ug/accelerated-transcoding.html
@@ -68,8 +67,7 @@ Parameters:
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
-      -
-        Label:
+      - Label:
           default: "Workflow"
         Parameters:
           - AdminEmail
@@ -77,14 +75,12 @@ Metadata:
           - Glacier
           - EnableSns
           - EnableSqs
-      -
-        Label:
+      - Label:
           default: "AWS Elemental MediaConvert"
         Parameters:
           - FrameCapture
           - AcceleratedTranscoding
-      -
-        Label:
+      - Label:
           default: "AWS Elemental MediaPackage"
         Parameters:
           - EnableMediaPackage
@@ -366,7 +362,7 @@ Resources:
     Type: AWS::DynamoDB::Table
     Properties:
       BillingMode: PAY_PER_REQUEST
-      PointInTimeRecoverySpecification: 
+      PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: true
       AttributeDefinitions:
         - AttributeName: guid
@@ -381,10 +377,10 @@ Resources:
       GlobalSecondaryIndexes:
         - IndexName: srcBucket-startTime-index
           KeySchema:
-          - AttributeName: srcBucket
-            KeyType: HASH
-          - AttributeName: startTime
-            KeyType: RANGE
+            - AttributeName: srcBucket
+              KeyType: HASH
+            - AttributeName: startTime
+              KeyType: RANGE
           Projection:
             ProjectionType: ALL
       TableName: !Ref AWS::StackName
@@ -412,16 +408,16 @@ Resources:
                 Value: GLACIER
             Status: Enabled
             Transitions:
-            - TransitionInDays: 1
-              StorageClass: GLACIER
+              - TransitionInDays: 1
+                StorageClass: GLACIER
           - Id: !Sub "${AWS::StackName}-source-deep-archive"
             TagFilters:
               - Key: !Ref AWS::StackName
                 Value: DEEP_ARCHIVE
             Status: Enabled
             Transitions:
-            - TransitionInDays: 1
-              StorageClass: DEEP_ARCHIVE
+              - TransitionInDays: 1
+                StorageClass: DEEP_ARCHIVE
       BucketEncryption:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
@@ -448,8 +444,8 @@ Resources:
       CorsConfiguration:
         CorsRules:
           - AllowedMethods: [GET]
-            AllowedOrigins: ['*']
-            AllowedHeaders: ['*']
+            AllowedOrigins: ["*"]
+            AllowedHeaders: ["*"]
             MaxAge: 3000
       PublicAccessBlockConfiguration:
         BlockPublicAcls: true
@@ -534,8 +530,8 @@ Resources:
           Prefix: cloudfront-logs/
         DefaultCacheBehavior:
           AllowedMethods:
-          - GET
-          - HEAD
+            - GET
+            - HEAD
           Compress: true
           MaxTTL: 0
           MinTTL: 0
@@ -604,8 +600,22 @@ Resources:
       Handler: index.handler
       Role: !GetAtt CustomResourceRole.Arn
       Code:
-        S3Bucket: !Join ["-", [!FindInMap ["SourceCode", "General", "S3Bucket"], Ref: "AWS::Region"]]
-        S3Key: !Join ["/", [!FindInMap ["SourceCode", "General", "KeyPrefix"], "custom-resource.zip"]]
+        S3Bucket:
+          !Join [
+            "-",
+            [
+              !FindInMap ["SourceCode", "General", "S3Bucket"],
+              Ref: "AWS::Region",
+            ],
+          ]
+        S3Key:
+          !Join [
+            "/",
+            [
+              !FindInMap ["SourceCode", "General", "KeyPrefix"],
+              "custom-resource.zip",
+            ],
+          ]
       Runtime: nodejs12.x
       Timeout: 180
       Environment:
@@ -661,8 +671,22 @@ Resources:
       Handler: index.handler
       Role: !GetAtt StepFunctionsRole.Arn
       Code:
-        S3Bucket: !Join ["-", [!FindInMap ["SourceCode", "General", "S3Bucket"], Ref: "AWS::Region"]]
-        S3Key: !Join ["/", [!FindInMap ["SourceCode", "General", "KeyPrefix"], "step-functions.zip"]]
+        S3Bucket:
+          !Join [
+            "-",
+            [
+              !FindInMap ["SourceCode", "General", "S3Bucket"],
+              Ref: "AWS::Region",
+            ],
+          ]
+        S3Key:
+          !Join [
+            "/",
+            [
+              !FindInMap ["SourceCode", "General", "KeyPrefix"],
+              "step-functions.zip",
+            ],
+          ]
       Runtime: nodejs12.x
       Timeout: 120
       Environment:
@@ -720,8 +744,22 @@ Resources:
       Handler: index.handler
       Role: !GetAtt InputValidateRole.Arn
       Code:
-        S3Bucket: !Join ["-", [!FindInMap ["SourceCode", "General", "S3Bucket"], Ref: "AWS::Region"]]
-        S3Key: !Join ["/", [!FindInMap ["SourceCode", "General", "KeyPrefix"], "input-validate.zip"]]
+        S3Bucket:
+          !Join [
+            "-",
+            [
+              !FindInMap ["SourceCode", "General", "S3Bucket"],
+              Ref: "AWS::Region",
+            ],
+          ]
+        S3Key:
+          !Join [
+            "/",
+            [
+              !FindInMap ["SourceCode", "General", "KeyPrefix"],
+              "input-validate.zip",
+            ],
+          ]
       Runtime: nodejs12.x
       Timeout: 120
       Environment:
@@ -733,21 +771,18 @@ Resources:
           Destination: !Ref Destination
           FrameCapture: !Ref FrameCapture
           ArchiveSource: !Ref Glacier
-          MediaConvert_Template_2160p:
-            !If
-              - IsMediaPackageEnabled
-              - !Sub "${AWS::StackName}_Ott_2160p_Avc_Aac_16x9_mvod_no_preset"
-              - !Sub "${AWS::StackName}_Ott_2160p_Avc_Aac_16x9_qvbr_no_preset"
-          MediaConvert_Template_1080p:
-            !If
-              - IsMediaPackageEnabled
-              - !Sub "${AWS::StackName}_Ott_1080p_Avc_Aac_16x9_mvod_no_preset"
-              - !Sub "${AWS::StackName}_Ott_1080p_Avc_Aac_16x9_qvbr_no_preset"
-          MediaConvert_Template_720p:
-            !If
-              - IsMediaPackageEnabled
-              - !Sub "${AWS::StackName}_Ott_720p_Avc_Aac_16x9_mvod_no_preset"
-              - !Sub "${AWS::StackName}_Ott_720p_Avc_Aac_16x9_qvbr_no_preset"
+          MediaConvert_Template_2160p: !If
+            - IsMediaPackageEnabled
+            - !Sub "${AWS::StackName}_Ott_2160p_Avc_Aac_16x9_mvod_no_preset"
+            - !Sub "${AWS::StackName}_Ott_2160p_Avc_Aac_16x9_qvbr_no_preset"
+          MediaConvert_Template_1080p: !If
+            - IsMediaPackageEnabled
+            - !Sub "${AWS::StackName}_Ott_1080p_Avc_Aac_16x9_mvod_no_preset"
+            - !Sub "${AWS::StackName}_Ott_1080p_Avc_Aac_16x9_qvbr_no_preset"
+          MediaConvert_Template_720p: !If
+            - IsMediaPackageEnabled
+            - !Sub "${AWS::StackName}_Ott_720p_Avc_Aac_16x9_mvod_no_preset"
+            - !Sub "${AWS::StackName}_Ott_720p_Avc_Aac_16x9_qvbr_no_preset"
           CloudFront: !GetAtt CloudFront.DomainName
           EnableMediaPackage: !Ref EnableMediaPackage
           InputRotate: DEGREE_0
@@ -794,7 +829,6 @@ Resources:
           - id: W11
             reason: "* is limited to one S3 bucket"
 
-
   Mediainfo:
     Type: AWS::Lambda::Function
     Properties:
@@ -803,8 +837,22 @@ Resources:
       Handler: lambda_function.lambda_handler
       Role: !GetAtt MediainfoRole.Arn
       Code:
-        S3Bucket: !Join ["-", [!FindInMap ["SourceCode", "General", "S3Bucket"], Ref: "AWS::Region"]]
-        S3Key: !Join ["/", [!FindInMap ["SourceCode", "General", "KeyPrefix"], "mediainfo.zip"]]
+        S3Bucket:
+          !Join [
+            "-",
+            [
+              !FindInMap ["SourceCode", "General", "S3Bucket"],
+              Ref: "AWS::Region",
+            ],
+          ]
+        S3Key:
+          !Join [
+            "/",
+            [
+              !FindInMap ["SourceCode", "General", "KeyPrefix"],
+              "mediainfo.zip",
+            ],
+          ]
       Runtime: python3.7
       Timeout: 120
       Environment:
@@ -858,8 +906,19 @@ Resources:
       Handler: index.handler
       Role: !GetAtt DynamoUpdateRole.Arn
       Code:
-        S3Bucket: !Join ["-", [!FindInMap ["SourceCode", "General", "S3Bucket"], Ref: "AWS::Region"]]
-        S3Key: !Join ["/", [!FindInMap ["SourceCode", "General", "KeyPrefix"], "dynamo.zip"]]
+        S3Bucket:
+          !Join [
+            "-",
+            [
+              !FindInMap ["SourceCode", "General", "S3Bucket"],
+              Ref: "AWS::Region",
+            ],
+          ]
+        S3Key:
+          !Join [
+            "/",
+            [!FindInMap ["SourceCode", "General", "KeyPrefix"], "dynamo.zip"],
+          ]
       Runtime: nodejs12.x
       Timeout: 120
       Environment:
@@ -915,8 +974,19 @@ Resources:
       Handler: index.handler
       Role: !GetAtt ProfilerRole.Arn
       Code:
-        S3Bucket: !Join ["-", [!FindInMap ["SourceCode", "General", "S3Bucket"], Ref: "AWS::Region"]]
-        S3Key: !Join ["/", [!FindInMap ["SourceCode", "General", "KeyPrefix"], "profiler.zip"]]
+        S3Bucket:
+          !Join [
+            "-",
+            [
+              !FindInMap ["SourceCode", "General", "S3Bucket"],
+              Ref: "AWS::Region",
+            ],
+          ]
+        S3Key:
+          !Join [
+            "/",
+            [!FindInMap ["SourceCode", "General", "KeyPrefix"], "profiler.zip"],
+          ]
       Runtime: nodejs12.x
       Timeout: 120
       Environment:
@@ -964,6 +1034,16 @@ Resources:
                   - logs:PutLogEvents
                 Resource:
                   - !Sub "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                Resource:
+                  - !Sub "${Source.Arn}/*"
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                Resource:
+                  - !Sub "${Destination.Arn}/*"
     Metadata:
       cfn_nag:
         rules_to_suppress:
@@ -978,8 +1058,19 @@ Resources:
       Handler: index.handler
       Role: !GetAtt EncodeRole.Arn
       Code:
-        S3Bucket: !Join ["-", [!FindInMap ["SourceCode", "General", "S3Bucket"], Ref: "AWS::Region"]]
-        S3Key: !Join ["/", [!FindInMap ["SourceCode", "General", "KeyPrefix"], "encode.zip"]]
+        S3Bucket:
+          !Join [
+            "-",
+            [
+              !FindInMap ["SourceCode", "General", "S3Bucket"],
+              Ref: "AWS::Region",
+            ],
+          ]
+        S3Key:
+          !Join [
+            "/",
+            [!FindInMap ["SourceCode", "General", "KeyPrefix"], "encode.zip"],
+          ]
       Runtime: nodejs12.x
       Timeout: 120
       Environment:
@@ -1041,8 +1132,22 @@ Resources:
       Handler: index.handler
       Role: !GetAtt OutputValidateRole.Arn
       Code:
-        S3Bucket: !Join ["-", [!FindInMap ["SourceCode", "General", "S3Bucket"], Ref: "AWS::Region"]]
-        S3Key: !Join ["/", [!FindInMap ["SourceCode", "General", "KeyPrefix"], "output-validate.zip"]]
+        S3Bucket:
+          !Join [
+            "-",
+            [
+              !FindInMap ["SourceCode", "General", "S3Bucket"],
+              Ref: "AWS::Region",
+            ],
+          ]
+        S3Key:
+          !Join [
+            "/",
+            [
+              !FindInMap ["SourceCode", "General", "KeyPrefix"],
+              "output-validate.zip",
+            ],
+          ]
       Runtime: nodejs12.x
       Timeout: 120
       Environment:
@@ -1099,8 +1204,22 @@ Resources:
       Handler: index.handler
       Role: !GetAtt ArchiveSourceRole.Arn
       Code:
-        S3Bucket: !Join ["-", [!FindInMap ["SourceCode", "General", "S3Bucket"], Ref: "AWS::Region"]]
-        S3Key: !Join ["/", [!FindInMap ["SourceCode", "General", "KeyPrefix"], "archive-source.zip"]]
+        S3Bucket:
+          !Join [
+            "-",
+            [
+              !FindInMap ["SourceCode", "General", "S3Bucket"],
+              Ref: "AWS::Region",
+            ],
+          ]
+        S3Key:
+          !Join [
+            "/",
+            [
+              !FindInMap ["SourceCode", "General", "KeyPrefix"],
+              "archive-source.zip",
+            ],
+          ]
       Runtime: nodejs12.x
       Timeout: 120
       Environment:
@@ -1114,35 +1233,30 @@ Resources:
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
-          -
-            Effect: Allow
+          - Effect: Allow
             Principal:
               Service:
                 - lambda.amazonaws.com
             Action:
               - sts:AssumeRole
       Policies:
-        -
-          PolicyName: !Sub "${AWS::StackName}-sqs-publish-role"
+        - PolicyName: !Sub "${AWS::StackName}-sqs-publish-role"
           PolicyDocument:
             Statement:
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - lambda:InvokeFunction
                 Resource:
                   - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${AWS::StackName}-error-handler"
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - sqs:SendMessage
                 Resource:
                   - !GetAtt SqsQueue.Arn
                 Condition:
                   Bool:
-                    'aws:SecureTransport': 'true'
-              -
-                Effect: Allow
+                    "aws:SecureTransport": "true"
+              - Effect: Allow
                 Action:
                   - logs:CreateLogGroup
                   - logs:CreateLogStream
@@ -1163,8 +1277,22 @@ Resources:
       Handler: index.handler
       Role: !GetAtt SqsSendMessageRole.Arn
       Code:
-        S3Bucket: !Join ["-", [!FindInMap ["SourceCode", "General", "S3Bucket"], Ref: "AWS::Region"]]
-        S3Key: !Join ["/", [!FindInMap ["SourceCode", "General", "KeyPrefix"], "sqs-publish.zip"]]
+        S3Bucket:
+          !Join [
+            "-",
+            [
+              !FindInMap ["SourceCode", "General", "S3Bucket"],
+              Ref: "AWS::Region",
+            ],
+          ]
+        S3Key:
+          !Join [
+            "/",
+            [
+              !FindInMap ["SourceCode", "General", "KeyPrefix"],
+              "sqs-publish.zip",
+            ],
+          ]
       Runtime: nodejs12.x
       Timeout: 120
       Environment:
@@ -1178,8 +1306,7 @@ Resources:
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
-          -
-            Effect: Allow
+          - Effect: Allow
             Principal:
               Service:
                 - lambda.amazonaws.com
@@ -1201,7 +1328,7 @@ Resources:
                   - !Ref SnsTopic
                 Condition:
                   Bool:
-                    'aws:SecureTransport': 'true'                
+                    "aws:SecureTransport": "true"
               - Effect: Allow
                 Action:
                   - logs:CreateLogGroup
@@ -1223,8 +1350,22 @@ Resources:
       Handler: index.handler
       Role: !GetAtt SnsNotificationRole.Arn
       Code:
-        S3Bucket: !Join ["-", [!FindInMap ["SourceCode", "General", "S3Bucket"], Ref: "AWS::Region"]]
-        S3Key: !Join ["/", [!FindInMap ["SourceCode", "General", "KeyPrefix"], "sns-notification.zip"]]
+        S3Bucket:
+          !Join [
+            "-",
+            [
+              !FindInMap ["SourceCode", "General", "S3Bucket"],
+              Ref: "AWS::Region",
+            ],
+          ]
+        S3Key:
+          !Join [
+            "/",
+            [
+              !FindInMap ["SourceCode", "General", "KeyPrefix"],
+              "sns-notification.zip",
+            ],
+          ]
       Runtime: nodejs12.x
       Timeout: 120
       Environment:
@@ -1284,8 +1425,22 @@ Resources:
       Handler: index.handler
       Role: !GetAtt MediaPackageAssetsRole.Arn
       Code:
-        S3Bucket: !Join ["-", [!FindInMap ["SourceCode", "General", "S3Bucket"], Ref: "AWS::Region"]]
-        S3Key: !Join ["/", [!FindInMap ["SourceCode", "General", "KeyPrefix"], "media-package-assets.zip"]]
+        S3Bucket:
+          !Join [
+            "-",
+            [
+              !FindInMap ["SourceCode", "General", "S3Bucket"],
+              Ref: "AWS::Region",
+            ],
+          ]
+        S3Key:
+          !Join [
+            "/",
+            [
+              !FindInMap ["SourceCode", "General", "KeyPrefix"],
+              "media-package-assets.zip",
+            ],
+          ]
       Runtime: nodejs12.x
       Timeout: 300
       Environment:
@@ -1319,7 +1474,7 @@ Resources:
                   - !Ref SnsTopic
                 Condition:
                   Bool:
-                    'aws:SecureTransport': 'true'
+                    "aws:SecureTransport": "true"
               - Effect: Allow
                 Action:
                   - dynamodb:UpdateItem
@@ -1346,8 +1501,22 @@ Resources:
       Handler: index.handler
       Role: !GetAtt ErrorHandlerRole.Arn
       Code:
-        S3Bucket: !Join ["-", [!FindInMap ["SourceCode", "General", "S3Bucket"], Ref: "AWS::Region"]]
-        S3Key: !Join ["/", [!FindInMap ["SourceCode", "General", "KeyPrefix"], "error-handler.zip"]]
+        S3Bucket:
+          !Join [
+            "-",
+            [
+              !FindInMap ["SourceCode", "General", "S3Bucket"],
+              Ref: "AWS::Region",
+            ],
+          ]
+        S3Key:
+          !Join [
+            "/",
+            [
+              !FindInMap ["SourceCode", "General", "KeyPrefix"],
+              "error-handler.zip",
+            ],
+          ]
       Runtime: nodejs12.x
       Timeout: 120
       Environment:
@@ -1651,7 +1820,6 @@ Resources:
       EnableMediaPackage: !Ref EnableMediaPackage
 
 Outputs:
-
   DynamoDBTable:
     Description: DynamoDB Table
     Value: !Ref DynamoDBTable
@@ -1695,7 +1863,6 @@ Outputs:
     Export:
       Name: !Join [":", [!Ref "AWS::StackName", SqsQueue]]
 
-  SqsARN: 
+  SqsARN:
     Description: AmazonSQS Queue ARN
-    Value: 
-      !Sub ${SqsQueue.Arn}
+    Value: !Sub ${SqsQueue.Arn}
