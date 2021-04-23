@@ -34,14 +34,17 @@ exports.handler = async (event) => {
             destBucket: process.env.Destination,
             cloudFront: process.env.CloudFront,
             frameCapture: JSON.parse(process.env.FrameCapture),
-            archiveSource:  process.env.ArchiveSource,
+            archiveSource: process.env.ArchiveSource,
             jobTemplate_2160p: process.env.MediaConvert_Template_2160p,
             jobTemplate_1080p: process.env.MediaConvert_Template_1080p,
             jobTemplate_720p: process.env.MediaConvert_Template_720p,
+            jobTemplate_320_audio: process.env.MediaConvert_Template_320_audio,
+            jobTemplate_192_audio: process.env.MediaConvert_Template_192_audio,
+            jobTemplate_128_audio: process.env.MediaConvert_Template_128_audio,
             inputRotate: process.env.InputRotate,
             acceleratedTranscoding: process.env.AcceleratedTranscoding,
-            enableSns:JSON.parse(process.env.EnableSns),
-            enableSqs:JSON.parse(process.env.EnableSqs)
+            enableSns: JSON.parse(process.env.EnableSns),
+            enableSqs: JSON.parse(process.env.EnableSqs)
         };
 
         switch (event.workflowTrigger) {

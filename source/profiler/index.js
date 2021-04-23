@@ -37,37 +37,58 @@ exports.handler = async (event) => {
         });
 
         let mediaInfo = JSON.parse(event.srcMediainfo);
-        event.srcHeight = mediaInfo.video[0].height;
-        event.srcWidth = mediaInfo.video[0].width;
 
-        // Determine encoding by matching the srcHeight to the nearest profile.
-        const profiles = [2160, 1080, 720];
+        const isVideo = mediaInfo.hasOwnProperty('video');
+
         let lastProfile;
         let encodeProfile;
 
-        profiles.some(p => {
-            let profile = Math.abs(event.srcHeight - p);
-            if (profile > lastProfile) {
-                return true;
-            }
+        if (isVideo) {
+            event.srcHeight = mediaInfo.video[0].height;
+            event.srcWidth = mediaInfo.video[0].width;
 
-            encodeProfile = p;
-            lastProfile = profile;
-        });
+            // Determine encoding by matching the srcHeight to the nearest profile.
+            const profiles = [2160, 1080, 720];
+
+            profiles.some(p => {
+                let profile = Math.abs(event.srcHeight - p);
+                if (profile > lastProfile) {
+                    return true;
+                }
+
+                encodeProfile = p;
+                lastProfile = profile;
+            });
+
+            if (event.frameCapture) {
+                // Match Height x Width with the encoding profile.
+                const ratios = {
+                    '2160': 3840,
+                    '1080': 1920,
+                    '720': 1280
+                };
+
+                event.frameCaptureHeight = encodeProfile;
+                event.frameCaptureWidth = ratios[encodeProfile];
+            }
+        } else if (mediaInfo.hasOwnProperty('audio')) {
+            event.srcBitrate = mediaInfo.audio[0].bitrate;
+            event.frameCapture = false;
+            // Determine encoding by matching the srcBitrate to the nearest profile.
+            const profiles = [320, 192, 128];
+
+            profiles.some(p => {
+                let profile = Math.abs(event.srcBitrate - (p * 1000));
+                if (profile >= lastProfile) {
+                    return true;
+                }
+
+                encodeProfile = p;
+                lastProfile = profile;
+            });
+        }
 
         event.encodingProfile = encodeProfile;
-
-        if (event.frameCapture) {
-            // Match Height x Width with the encoding profile.
-            const ratios = {
-                '2160': 3840,
-                '1080': 1920,
-                '720': 1280
-            };
-
-            event.frameCaptureHeight = encodeProfile;
-            event.frameCaptureWidth = ratios[encodeProfile];
-        }
 
         // Update:: added support to pass in a custom encoding Template instead of using the
         // solution defaults
@@ -76,7 +97,10 @@ exports.handler = async (event) => {
             const jobTemplates = {
                 '2160': event.jobTemplate_2160p,
                 '1080': event.jobTemplate_1080p,
-                '720': event.jobTemplate_720p
+                '720': event.jobTemplate_720p,
+                '320': event.jobTemplate_320_audio,
+                '192': event.jobTemplate_192_audio,
+                '128': event.jobTemplate_128_audio
             };
 
             event.jobTemplate = jobTemplates[encodeProfile];

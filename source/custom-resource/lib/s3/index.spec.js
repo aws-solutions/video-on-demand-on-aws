@@ -18,6 +18,19 @@ AWS.setSDK(path.resolve('./node_modules/aws-sdk'));
 
 const lambda = require('./index.js');
 
+
+const _videoAudio = {
+    WorkflowTrigger: 'VideoAudioFile',
+    IngestArn: 'arn',
+    Source: 'srcBucket'
+};
+
+const _audio = {
+    WorkflowTrigger: 'AudioFile',
+    IngestArn: 'arn',
+    Source: 'srcBucket'
+};
+
 const _video = {
     WorkflowTrigger: 'VideoFile',
     IngestArn: 'arn',
@@ -33,6 +46,20 @@ const _metadata = {
 describe('#S3 PUT NOTIFICATION::', () => {
     afterEach(() => AWS.restore('S3'));
 
+    it('should succeed on VideoAudioFile trigger', async () => {
+        AWS.mock('S3', 'putBucketNotificationConfiguration', Promise.resolve());
+
+        const response = await lambda.putNotification(_videoAudio);
+        expect(response).to.equal('success');
+    });
+
+    it('should succeed on AudioFile trigger', async () => {
+        AWS.mock('S3', 'putBucketNotificationConfiguration', Promise.resolve());
+
+        const response = await lambda.putNotification(_audio);
+        expect(response).to.equal('success');
+    });
+
     it('should succeed on VideoFile trigger', async () => {
         AWS.mock('S3', 'putBucketNotificationConfiguration', Promise.resolve());
 
@@ -45,6 +72,24 @@ describe('#S3 PUT NOTIFICATION::', () => {
 
         const response = await lambda.putNotification(_metadata);
         expect(response).to.equal('success');
+    });
+
+
+    it('should throw an exception when putBucketNotificationConfiguration fails', async () => {
+        AWS.mock('S3', 'putBucketNotificationConfiguration', Promise.reject('ERROR'));
+
+        await lambda.putNotification(_videoAudio).catch(err => {
+            expect(err).to.equal('ERROR');
+        });
+    });
+
+
+    it('should throw an exception when putBucketNotificationConfiguration fails', async () => {
+        AWS.mock('S3', 'putBucketNotificationConfiguration', Promise.reject('ERROR'));
+
+        await lambda.putNotification(_audio).catch(err => {
+            expect(err).to.equal('ERROR');
+        });
     });
 
     it('should throw an exception when putBucketNotificationConfiguration fails', async () => {

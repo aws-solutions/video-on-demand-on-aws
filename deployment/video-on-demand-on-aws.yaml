@@ -12,6 +12,8 @@ Parameters:
     Type: String
     Default: VideoFile
     AllowedValues:
+      - VideoAudioFile
+      - AudioFile
       - VideoFile
       - MetadataFile
 
@@ -748,6 +750,21 @@ Resources:
               - IsMediaPackageEnabled
               - !Sub "${AWS::StackName}_Ott_720p_Avc_Aac_16x9_mvod_no_preset"
               - !Sub "${AWS::StackName}_Ott_720p_Avc_Aac_16x9_qvbr_no_preset"
+          MediaConvert_Template_320_audio:
+            !If
+              - IsMediaPackageEnabled
+              - !Sub "${AWS::StackName}_Ott_Hls_Ts_Aac_320kbit_mvod_no_preset"
+              - !Sub "${AWS::StackName}_Ott_Hls_Ts_Aac_320kbit_qvbr_no_preset"
+          MediaConvert_Template_192_audio:
+            !If
+              - IsMediaPackageEnabled
+              - !Sub "${AWS::StackName}_Ott_Hls_Ts_Aac_192kbit_mvod_no_preset"
+              - !Sub "${AWS::StackName}_Ott_Hls_Ts_Aac_192kbit_qvbr_no_preset"
+          MediaConvert_Template_128_audio:
+            !If
+              - IsMediaPackageEnabled
+              - !Sub "${AWS::StackName}_Ott_Hls_Ts_Aac_128kbit_mvod_no_preset"
+              - !Sub "${AWS::StackName}_Ott_Hls_Ts_Aac_128kbit_qvbr_no_preset"
           CloudFront: !GetAtt CloudFront.DomainName
           EnableMediaPackage: !Ref EnableMediaPackage
           InputRotate: DEGREE_0
@@ -1426,7 +1443,7 @@ Resources:
                   "BooleanEquals": true,
                   "Next": "Custom jobTemplate"
                 },
-                        {
+                {
                   "Variable": "$.encodingProfile ",
                   "NumericEquals": 2160,
                   "Next": "jobTemplate 2160p"
@@ -1440,6 +1457,21 @@ Resources:
                   "Variable": "$.encodingProfile ",
                   "NumericEquals": 720,
                   "Next": "jobTemplate 720p"
+                },
+                {
+                  "Variable": "$.encodingProfile ",
+                  "NumericEquals": 320,
+                  "Next": "jobTemplate 320 audio"
+                },
+                {
+                  "Variable": "$.encodingProfile ",
+                  "NumericEquals": 192,
+                  "Next": "jobTemplate 192 audio"
+                },
+                {
+                  "Variable": "$.encodingProfile ",
+                  "NumericEquals": 128,
+                  "Next": "jobTemplate 128 audio"
                 }
               ]
             },
@@ -1452,6 +1484,18 @@ Resources:
               "Next": "Accelerated Transcoding Check"
             },
             "jobTemplate 720p": {
+              "Type": "Pass",
+              "Next": "Accelerated Transcoding Check"
+            },
+            "jobTemplate 320 audio": {
+              "Type": "Pass",
+              "Next": "Accelerated Transcoding Check"
+            },
+            "jobTemplate 192 audio": {
+              "Type": "Pass",
+              "Next": "Accelerated Transcoding Check"
+            },
+            "jobTemplate 128 audio": {
               "Type": "Pass",
               "Next": "Accelerated Transcoding Check"
             },

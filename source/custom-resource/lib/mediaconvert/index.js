@@ -93,6 +93,18 @@ const qvbrPresets = [
     {
         name: '_Ott_Hls_Ts_Avc_Aac_16x9_960x540p_30Hz_3.5Mbps_qvbr',
         file: './lib/mediaconvert/presets/_Ott_Hls_Ts_Avc_Aac_16x9_960x540p_30Hz_3.5Mbps_qvbr.json'
+    },
+    {
+        name: '_Ott_Hls_Ts_Aac_320kbit',
+        file: './lib/mediaconvert/presets/_Ott_Hls_Ts_Aac_320kbit.json'
+    },
+    {
+        name: '_Ott_Hls_Ts_Aac_192kbit',
+        file: './lib/mediaconvert/presets/_Ott_Hls_Ts_Aac_192kbit.json'
+    },
+    {
+        name: '_Ott_Hls_Ts_Aac_128kbit',
+        file: './lib/mediaconvert/presets/_Ott_Hls_Ts_Aac_128kbit.json'
     }
 ];
 
@@ -109,6 +121,18 @@ const qvbrTemplates = [
     {
         name: '_Ott_720p_Avc_Aac_16x9_qvbr',
         file: './lib/mediaconvert/templates/720p_avc_aac_16x9_qvbr.json'
+    },
+    {
+        name: '_Ott_Hls_Ts_Aac_320kbit_qvbr',
+        file: './lib/mediaconvert/templates/320kbit_aac_audio_qvbr.json'
+    },
+    {
+        name: '_Ott_Hls_Ts_Aac_192kbit_qvbr',
+        file: './lib/mediaconvert/templates/192kbit_aac_audio_qvbr.json'
+    },
+    {
+        name: '_Ott_Hls_Ts_Aac_128kbit_qvbr',
+        file: './lib/mediaconvert/templates/128kbit_aac_audio_qvbr.json'
     }
 ];
 
@@ -124,6 +148,18 @@ const mediaPackageTemplates = [
     {
         name: '_Ott_720p_Avc_Aac_16x9_mvod',
         file: './lib/mediaconvert/templates/720p_avc_aac_16x9_mvod.json'
+    },
+    {
+        name: '_Ott_Hls_Ts_Aac_320kbit_mvod',
+        file: './lib/mediaconvert/templates/320kbit_aac_audio_mvod.json'
+    },
+    {
+        name: '_Ott_Hls_Ts_Aac_192kbit_mvod',
+        file: './lib/mediaconvert/templates/192kbit_aac_audio_mvod.json'
+    },
+    {
+        name: '_Ott_Hls_Ts_Aac_128kbit_mvod',
+        file: './lib/mediaconvert/templates/128kbit_aac_audio_mvod.json'
     }
 ];
 
@@ -140,6 +176,18 @@ const qvbrTemplatesNoPreset = [
     {
         name: '_Ott_720p_Avc_Aac_16x9_qvbr_no_preset',
         file: './lib/mediaconvert/templates/720p_avc_aac_16x9_qvbr_no_preset.json'
+    },
+    {
+        name: '_Ott_Hls_Ts_Aac_320kbit_qvbr_no_preset',
+        file: './lib/mediaconvert/templates/320kbit_aac_audio_qvbr_no_preset.json'
+    },
+    {
+        name: '_Ott_Hls_Ts_Aac_192kbit_qvbr_no_preset',
+        file: './lib/mediaconvert/templates/192kbit_aac_audio_qvbr_no_preset.json'
+    },
+    {
+        name: '_Ott_Hls_Ts_Aac_128kbit_qvbr_no_preset',
+        file: './lib/mediaconvert/templates/128kbit_aac_audio_qvbr_no_preset.json'
     }
 ];
 
@@ -155,6 +203,18 @@ const mediaPackageTemplatesNoPreset = [
     {
         name: '_Ott_720p_Avc_Aac_16x9_mvod_no_preset',
         file: './lib/mediaconvert/templates/720p_avc_aac_16x9_mvod_no_preset.json'
+    },
+    {
+        name: '_Ott_Hls_Ts_Aac_320kbit_mvod_no_preset',
+        file: './lib/mediaconvert/templates/320kbit_aac_audio_mvod_no_preset.json'
+    },
+    {
+        name: '_Ott_Hls_Ts_Aac_192kbit_mvod_no_preset',
+        file: './lib/mediaconvert/templates/192kbit_aac_audio_mvod_no_preset.json'
+    },
+    {
+        name: '_Ott_Hls_Ts_Aac_128kbit_mvod_no_preset',
+        file: './lib/mediaconvert/templates/128kbit_aac_audio_mvod_no_preset.json'
     }
 ];
 

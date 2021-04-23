@@ -19,6 +19,149 @@ let PutNotification = async (config) => {
     let params;
 
     switch (config.WorkflowTrigger) {
+        case 'VideoAudioFile':
+            params = {
+                Bucket: config.Source,
+                NotificationConfiguration: {
+                    LambdaFunctionConfigurations: [
+                        {
+                            Events: ['s3:ObjectCreated:*'],
+                            LambdaFunctionArn: config.IngestArn,
+                            Filter: {
+                                Key: {
+                                    FilterRules: [{
+                                        Name: 'suffix',
+                                        Value: '.mpg'
+                                    }]
+                                }
+                            }
+                        },
+                        {
+                            Events: ['s3:ObjectCreated:*'],
+                            LambdaFunctionArn: config.IngestArn,
+                            Filter: {
+                                Key: {
+                                    FilterRules: [{
+                                        Name: 'suffix',
+                                        Value: '.mp4'
+                                    }]
+                                }
+                            }
+                        },
+                        {
+                            Events: ['s3:ObjectCreated:*'],
+                            LambdaFunctionArn: config.IngestArn,
+                            Filter: {
+                                Key: {
+                                    FilterRules: [{
+                                        Name: 'suffix',
+                                        Value: '.m4v'
+                                    }]
+                                }
+                            }
+                        },
+                        {
+                            Events: ['s3:ObjectCreated:*'],
+                            LambdaFunctionArn: config.IngestArn,
+                            Filter: {
+                                Key: {
+                                    FilterRules: [{
+                                        Name: 'suffix',
+                                        Value: '.mov'
+                                    }]
+                                }
+                            }
+                        },
+                        {
+                            Events: ['s3:ObjectCreated:*'],
+                            LambdaFunctionArn: config.IngestArn,
+                            Filter: {
+                                Key: {
+                                    FilterRules: [{
+                                        Name: 'suffix',
+                                        Value: '.m2ts'
+                                    }]
+                                }
+                            }
+                        },
+                        {
+                            Events: ['s3:ObjectCreated:*'],
+                            LambdaFunctionArn: config.IngestArn,
+                            Filter: {
+                                Key: {
+                                    FilterRules: [
+                                        {
+                                            Name: 'suffix',
+                                            Value: '.mp3'
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            Events: ['s3:ObjectCreated:*'],
+                            LambdaFunctionArn: config.IngestArn,
+                            Filter: {
+                                Key: {
+                                    FilterRules: [
+                                        {
+                                            Name: 'suffix',
+                                            Value: '.wav'
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                }
+            };
+
+            console.log(`Configuring S3 event for ${config.WorkflowTrigger}`);
+            await s3.putBucketNotificationConfiguration(params).promise();
+            break;
+
+            case 'AudioFile':
+                params = {
+                    Bucket: config.Source,
+                    NotificationConfiguration: {
+                        LambdaFunctionConfigurations: [
+                            {
+                                Events: ['s3:ObjectCreated:*'],
+                                LambdaFunctionArn: config.IngestArn,
+                                Filter: {
+                                    Key: {
+                                        FilterRules: [
+                                            {
+                                                Name: 'suffix',
+                                                Value: '.mp3'
+                                            }
+                                        ]
+                                    }
+                                }
+                            },
+                            {
+                                Events: ['s3:ObjectCreated:*'],
+                                LambdaFunctionArn: config.IngestArn,
+                                Filter: {
+                                    Key: {
+                                        FilterRules: [
+                                            {
+                                                Name: 'suffix',
+                                                Value: '.wav'
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                };
+    
+                console.log(`Configuring S3 event for ${config.WorkflowTrigger}`);
+                await s3.putBucketNotificationConfiguration(params).promise();
+                break;
+    
+    
         case 'VideoFile':
             params = {
                 Bucket: config.Source,
