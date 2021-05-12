@@ -2,8 +2,8 @@ import { Construct } from 'constructs';
 import { aws_lambda as lambda, aws_iam as iam } from 'aws-cdk-lib';
 
 export interface PermissionsProps {
-  stackStage: string;
   stackName: string;
+  stackStage: string;
 }
 
 export class Permissions extends Construct {
