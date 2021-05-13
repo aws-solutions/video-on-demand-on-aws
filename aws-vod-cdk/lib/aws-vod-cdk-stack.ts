@@ -84,6 +84,18 @@ export class AwsVodCdkStack extends Stack {
     );
 
     // Associate Policy Statements with IAM Roles
+    iamRoles.archiveSourceRole.addToPolicy(
+      policyStatements.archiveSourceRoleLambdaPolicyStatement
+    );
+
+    iamRoles.archiveSourceRole.addToPolicy(
+      policyStatements.archiveSourceRoleLogsPolicyStatement
+    );
+
+    iamRoles.archiveSourceRole.addToPolicy(
+      policyStatements.archiveSourceRoleS3PolicyStatement
+    );
+
     iamRoles.customResourceRole.addToPolicy(
       policyStatements.customResourceRoleCloudFrontPolicyStatement
     );
@@ -124,6 +136,42 @@ export class AwsVodCdkStack extends Stack {
       policyStatements.dynamoDbUpdateRoleS3PolicyStatement
     );
 
+    iamRoles.encodeRole.addToPolicy(
+      policyStatements.encodeRoleIamPolicyStatement
+    );
+
+    iamRoles.encodeRole.addToPolicy(
+      policyStatements.encodeRoleLambdaPolicyStatement
+    );
+
+    iamRoles.encodeRole.addToPolicy(
+      policyStatements.encodeRoleLogsPolicyStatement
+    );
+
+    iamRoles.encodeRole.addToPolicy(
+      policyStatements.encodeRoleMediaConvertPolicyStatement
+    );
+
+    iamRoles.encodeRole.addToPolicy(
+      policyStatements.encodeRoleS3GetObjectPolicyStatement
+    );
+
+    iamRoles.encodeRole.addToPolicy(
+      policyStatements.encodeRoleS3PutObjectPolicyStatement
+    );
+
+    iamRoles.errorHandlerRole.addToPolicy(
+      policyStatements.errorHandlerRoleDynamoDbPolicyStatement
+    );
+
+    iamRoles.errorHandlerRole.addToPolicy(
+      policyStatements.errorHandlerRoleLogsPolicyStatement
+    );
+
+    iamRoles.errorHandlerRole.addToPolicy(
+      policyStatements.errorHandlerRoleSnsPolicyStatement
+    );
+
     iamRoles.inputValidateRole.addToPolicy(
       policyStatements.inputValidateRoleLambdaPolicyStatement
     );
@@ -152,8 +200,40 @@ export class AwsVodCdkStack extends Stack {
       policyStatements.mediaInfoRoleS3PolicyStatement
     );
 
+    iamRoles.mediaPackageAssetRole.addToPolicy(
+      policyStatements.mediaPackageAssetRoleIamPolicyStatement
+    );
+
+    iamRoles.mediaPackageAssetRole.addToPolicy(
+      policyStatements.mediaPackageAssetRoleLambdaPolicyStatement
+    );
+
+    iamRoles.mediaPackageAssetRole.addToPolicy(
+      policyStatements.mediaPackageAssetRoleLogsPolicyStatement
+    );
+
+    iamRoles.mediaPackageAssetRole.addToPolicy(
+      policyStatements.mediaPackageAssetRoleMediaPackagePolicyStatement
+    );
+
     iamRoles.mediaPackageVodRole.addToPolicy(
       policyStatements.mediaPackageVodRoleS3PolicyStatement
+    );
+
+    iamRoles.outputValidateRole.addToPolicy(
+      policyStatements.outputValidateRoleDynamoDbPolicyStatement
+    );
+
+    iamRoles.outputValidateRole.addToPolicy(
+      policyStatements.outputValidateRoleLambdaPolicyStatement
+    );
+
+    iamRoles.outputValidateRole.addToPolicy(
+      policyStatements.outputValidateRoleLogsPolicyStatement
+    );
+
+    iamRoles.outputValidateRole.addToPolicy(
+      policyStatements.outputValidateRoleS3PolicyStatement
     );
 
     iamRoles.profilerRole.addToPolicy(
@@ -166,6 +246,30 @@ export class AwsVodCdkStack extends Stack {
 
     iamRoles.profilerRole.addToPolicy(
       policyStatements.profilerRoleLogsPolicyStatement
+    );
+
+    iamRoles.snsNotificationRole.addToPolicy(
+      policyStatements.snsNotificationRoleLambdaPolicyStatement
+    );
+
+    iamRoles.snsNotificationRole.addToPolicy(
+      policyStatements.snsNotificationRoleLogsPolicyStatement
+    );
+
+    iamRoles.snsNotificationRole.addToPolicy(
+      policyStatements.snsNotificationRoleSnsPolicyStatement
+    );
+
+    iamRoles.sqsSendMessageRole.addToPolicy(
+      policyStatements.sqsSendMessageRoleLambdaPolicyStatement
+    );
+
+    iamRoles.sqsSendMessageRole.addToPolicy(
+      policyStatements.sqsSendMessageRoleLogsPolicyStatement
+    );
+
+    iamRoles.sqsSendMessageRole.addToPolicy(
+      policyStatements.sqsSendMessageRoleSqsPolicyStatement
     );
 
     iamRoles.stepFunctionsRole.addToPolicy(
