@@ -7,11 +7,11 @@ export interface PolicyDocumentsProps {
 }
 
 export class PolicyDocuments extends Construct {
-  public readonly destinationBucketPolicyDocument: iam.PolicyDocument;
+  public readonly destinationBucket: iam.PolicyDocument;
 
   constructor(scope: Construct, id: string, props: PolicyDocumentsProps) {
     super(scope, id);
 
-    this.destinationBucketPolicyDocument = new iam.PolicyDocument();
+    this.destinationBucket = new iam.PolicyDocument();
   }
 }

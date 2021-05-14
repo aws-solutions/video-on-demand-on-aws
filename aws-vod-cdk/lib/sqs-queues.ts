@@ -7,22 +7,22 @@ export interface SqsQueuesProps {
 }
 
 export class SqsQueues extends Construct {
-  public readonly sqsQueue: sqs.Queue;
-  public readonly sqsDeadLetterQueue: sqs.Queue;
+  public readonly main: sqs.Queue;
+  public readonly deadLetter: sqs.Queue;
 
   constructor(scope: Construct, id: string, props: SqsQueuesProps) {
     super(scope, id);
 
-    this.sqsDeadLetterQueue = new sqs.Queue(this, 'SqsDeadLetterQueue', {
+    this.deadLetter = new sqs.Queue(this, 'SqsDeadLetterQueue', {
       queueName: `${props.stackStage}${props.stackName}SqsDeadLetterQueue`,
       visibilityTimeout: Duration.seconds(120),
     });
 
-    this.sqsQueue = new sqs.Queue(this, 'SqsQueue', {
-      queueName: `${props.stackStage}${props.stackName}SqsQueue`,
+    this.main = new sqs.Queue(this, 'MainSqsQueue', {
+      queueName: `${props.stackStage}${props.stackName}MainSqsQueue`,
       visibilityTimeout: Duration.seconds(120),
       deadLetterQueue: {
-        queue: this.sqsDeadLetterQueue,
+        queue: this.deadLetter,
         maxReceiveCount: 1,
       },
     });

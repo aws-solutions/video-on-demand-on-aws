@@ -7,14 +7,14 @@ export interface DynamoDbTablesProps {
 }
 
 export class DynamoDbTables extends Construct {
-  public readonly dynamoDbTable: dynamoDb.CfnTable;
+  public readonly videoInfo: dynamoDb.CfnTable;
 
   constructor(scope: Construct, id: string, props: DynamoDbTablesProps) {
     super(scope, id);
 
     // Utilize CfnTable Construct to allow access to
     // required items such as KeySchema, etc.
-    this.dynamoDbTable = new dynamoDb.CfnTable(this, 'DynamoDbTable', {
+    this.videoInfo = new dynamoDb.CfnTable(this, 'VideoInfoDynamoDbTable', {
       attributeDefinitions: [
         {
           attributeName: 'guid',
@@ -59,8 +59,7 @@ export class DynamoDbTables extends Construct {
       billingMode: 'PAY_PER_REQUEST',
     });
 
-    this.dynamoDbTable.cfnOptions.deletionPolicy = CfnDeletionPolicy.RETAIN;
-    this.dynamoDbTable.cfnOptions.updateReplacePolicy =
-      CfnDeletionPolicy.RETAIN;
+    this.videoInfo.cfnOptions.deletionPolicy = CfnDeletionPolicy.RETAIN;
+    this.videoInfo.cfnOptions.updateReplacePolicy = CfnDeletionPolicy.RETAIN;
   }
 }

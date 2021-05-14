@@ -7,72 +7,60 @@ export interface LambdaFunctionsProps {
 }
 
 export class LambdaFunctions extends Construct {
-  public readonly archiveSourceFunction: lambda.Function;
-  public readonly customResourceFunction: lambda.Function;
-  public readonly dynamoDbUpdateFunction: lambda.Function;
-  public readonly errorHandlerFunction: lambda.Function;
-  public readonly encodeFunction: lambda.Function;
-  public readonly inputValidateFunction: lambda.Function;
-  public readonly mediaInfoFunction: lambda.Function;
-  public readonly mediaPackageAssetsFunction: lambda.Function;
-  public readonly outputValidateFunction: lambda.Function;
-  public readonly profilerFunction: lambda.Function;
-  public readonly snsNotificationFunction: lambda.Function;
-  public readonly sqsSendMessageFunction: lambda.Function;
-  public readonly stepFunctionsFunction: lambda.Function;
+  public readonly archiveSource: lambda.Function;
+  public readonly customResource: lambda.Function;
+  public readonly dynamoDbUpdate: lambda.Function;
+  public readonly errorHandler: lambda.Function;
+  public readonly encode: lambda.Function;
+  public readonly inputValidate: lambda.Function;
+  public readonly mediaInfo: lambda.Function;
+  public readonly mediaPackageAssets: lambda.Function;
+  public readonly outputValidate: lambda.Function;
+  public readonly profiler: lambda.Function;
+  public readonly snsNotification: lambda.Function;
+  public readonly sqsSendMessage: lambda.Function;
+  public readonly stepFunctions: lambda.Function;
 
   constructor(scope: Construct, id: string, props: LambdaFunctionsProps) {
     super(scope, id);
 
-    this.archiveSourceFunction = new lambda.Function(
-      this,
-      'ArchiveSourceFunction',
-      {
-        functionName: `${props.stackStage}${props.stackName}ArchiveSourceLambdaFunction`,
-        description: 'Updates tags on source files to enable Glacier',
-        handler: 'index.handler',
-        code: new lambda.AssetCode('../../source/archive-source'),
-        runtime: lambda.Runtime.NODEJS_12_X,
-        timeout: Duration.seconds(120),
-        environment: {
-          AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
-        },
-      }
-    );
+    this.archiveSource = new lambda.Function(this, 'ArchiveSourceFunction', {
+      functionName: `${props.stackStage}${props.stackName}ArchiveSourceLambdaFunction`,
+      description: 'Updates tags on source files to enable Glacier',
+      handler: 'index.handler',
+      code: new lambda.AssetCode('../../source/archive-source'),
+      runtime: lambda.Runtime.NODEJS_12_X,
+      timeout: Duration.seconds(120),
+      environment: {
+        AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
+      },
+    });
 
-    this.customResourceFunction = new lambda.Function(
-      this,
-      'CustomResourceFunction',
-      {
-        functionName: `${props.stackStage}${props.stackName}CustomResourceLambdaFunction`,
-        description: 'Used to deploy resources not supported by CloudFormation',
-        handler: 'index.handler',
-        code: new lambda.AssetCode('../../source/custom-resource'),
-        runtime: lambda.Runtime.NODEJS_12_X,
-        timeout: Duration.seconds(180),
-        environment: {
-          AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
-        },
-      }
-    );
+    this.customResource = new lambda.Function(this, 'CustomResourceFunction', {
+      functionName: `${props.stackStage}${props.stackName}CustomResourceLambdaFunction`,
+      description: 'Used to deploy resources not supported by CloudFormation',
+      handler: 'index.handler',
+      code: new lambda.AssetCode('../../source/custom-resource'),
+      runtime: lambda.Runtime.NODEJS_12_X,
+      timeout: Duration.seconds(180),
+      environment: {
+        AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
+      },
+    });
 
-    this.dynamoDbUpdateFunction = new lambda.Function(
-      this,
-      'DynamoDbUpdateFunction',
-      {
-        functionName: `${props.stackStage}${props.stackName}DynamoDbUpdateLambdaFunction`,
-        description: 'Updates DynamoDB with event data',
-        handler: 'index.handler',
-        code: new lambda.AssetCode('../../source/dynamo'),
-        runtime: lambda.Runtime.NODEJS_12_X,
-        timeout: Duration.seconds(120),
-        environment: {
-          AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
-        },
-      }
-    );
+    this.dynamoDbUpdate = new lambda.Function(this, 'DynamoDbUpdateFunction', {
+      functionName: `${props.stackStage}${props.stackName}DynamoDbUpdateLambdaFunction`,
+      description: 'Updates DynamoDB with event data',
+      handler: 'index.handler',
+      code: new lambda.AssetCode('../../source/dynamo'),
+      runtime: lambda.Runtime.NODEJS_12_X,
+      timeout: Duration.seconds(120),
+      environment: {
+        AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
+      },
+    });
 
-    this.encodeFunction = new lambda.Function(this, 'EncodeFunction', {
+    this.encode = new lambda.Function(this, 'EncodeFunction', {
       functionName: `${props.stackStage}${props.stackName}EncodeLambdaFunction`,
       description: 'Creates a MediaConvert encode job',
       handler: 'index.handler',
@@ -84,39 +72,31 @@ export class LambdaFunctions extends Construct {
       },
     });
 
-    this.errorHandlerFunction = new lambda.Function(
-      this,
-      'ErrorHandlerFunction',
-      {
-        functionName: `${props.stackStage}${props.stackName}ErrorHandlerLambdaFunction`,
-        description: 'Captures and processes workflow errors',
-        handler: 'index.handler',
-        code: new lambda.AssetCode('../../source/error-handler'),
-        runtime: lambda.Runtime.NODEJS_12_X,
-        timeout: Duration.seconds(120),
-        environment: {
-          AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
-        },
-      }
-    );
+    this.errorHandler = new lambda.Function(this, 'ErrorHandlerFunction', {
+      functionName: `${props.stackStage}${props.stackName}ErrorHandlerLambdaFunction`,
+      description: 'Captures and processes workflow errors',
+      handler: 'index.handler',
+      code: new lambda.AssetCode('../../source/error-handler'),
+      runtime: lambda.Runtime.NODEJS_12_X,
+      timeout: Duration.seconds(120),
+      environment: {
+        AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
+      },
+    });
 
-    this.inputValidateFunction = new lambda.Function(
-      this,
-      'InputValidateFunction',
-      {
-        functionName: `${props.stackStage}${props.stackName}InputValidateLambdaFunction`,
-        description: 'Validates the input given to the workflow',
-        handler: 'index.handler',
-        code: new lambda.AssetCode('../../source/input-validate'),
-        runtime: lambda.Runtime.NODEJS_12_X,
-        timeout: Duration.seconds(120),
-        environment: {
-          AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
-        },
-      }
-    );
+    this.inputValidate = new lambda.Function(this, 'InputValidateFunction', {
+      functionName: `${props.stackStage}${props.stackName}InputValidateLambdaFunction`,
+      description: 'Validates the input given to the workflow',
+      handler: 'index.handler',
+      code: new lambda.AssetCode('../../source/input-validate'),
+      runtime: lambda.Runtime.NODEJS_12_X,
+      timeout: Duration.seconds(120),
+      environment: {
+        AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
+      },
+    });
 
-    this.mediaInfoFunction = new lambda.Function(this, 'MediaInfoFunction', {
+    this.mediaInfo = new lambda.Function(this, 'MediaInfoFunction', {
       functionName: `${props.stackStage}${props.stackName}MediaInfoLambdaFunction`,
       description: 'Runs MediaInfo on a pre-signed S3 URL',
       handler: 'lambda_function.lambda_handler',
@@ -125,7 +105,7 @@ export class LambdaFunctions extends Construct {
       timeout: Duration.seconds(120),
     });
 
-    this.mediaPackageAssetsFunction = new lambda.Function(
+    this.mediaPackageAssets = new lambda.Function(
       this,
       'MediaPackageAssetsFunction',
       {
@@ -141,23 +121,19 @@ export class LambdaFunctions extends Construct {
       }
     );
 
-    this.outputValidateFunction = new lambda.Function(
-      this,
-      'OutputValidateFunction',
-      {
-        functionName: `${props.stackStage}${props.stackName}OutputValidateLambdaFunction`,
-        description: 'Parses MediaConvert job output',
-        handler: 'index.handler',
-        code: new lambda.AssetCode('../../source/output-validate'),
-        runtime: lambda.Runtime.NODEJS_12_X,
-        timeout: Duration.seconds(120),
-        environment: {
-          AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
-        },
-      }
-    );
+    this.outputValidate = new lambda.Function(this, 'OutputValidateFunction', {
+      functionName: `${props.stackStage}${props.stackName}OutputValidateLambdaFunction`,
+      description: 'Parses MediaConvert job output',
+      handler: 'index.handler',
+      code: new lambda.AssetCode('../../source/output-validate'),
+      runtime: lambda.Runtime.NODEJS_12_X,
+      timeout: Duration.seconds(120),
+      environment: {
+        AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
+      },
+    });
 
-    this.profilerFunction = new lambda.Function(this, 'ProfilerFunction', {
+    this.profiler = new lambda.Function(this, 'ProfilerFunction', {
       functionName: `${props.stackStage}${props.stackName}ProfilerLambdaFunction`,
       description: 'Sets an EncodeProfile based on mediainfo output',
       handler: 'index.handler',
@@ -169,7 +145,7 @@ export class LambdaFunctions extends Construct {
       },
     });
 
-    this.snsNotificationFunction = new lambda.Function(
+    this.snsNotification = new lambda.Function(
       this,
       'SnsNotificationFunction',
       {
@@ -185,36 +161,28 @@ export class LambdaFunctions extends Construct {
       }
     );
 
-    this.sqsSendMessageFunction = new lambda.Function(
-      this,
-      'SqsSendMessageFunction',
-      {
-        functionName: `${props.stackStage}${props.stackName}SqsSendMessageLambdaFunction`,
-        description: 'Publish the workflow results to an SQS queue',
-        handler: 'index.handler',
-        code: new lambda.AssetCode('../../source/sqs-publish'),
-        runtime: lambda.Runtime.NODEJS_12_X,
-        timeout: Duration.seconds(120),
-        environment: {
-          AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
-        },
-      }
-    );
+    this.sqsSendMessage = new lambda.Function(this, 'SqsSendMessageFunction', {
+      functionName: `${props.stackStage}${props.stackName}SqsSendMessageLambdaFunction`,
+      description: 'Publish the workflow results to an SQS queue',
+      handler: 'index.handler',
+      code: new lambda.AssetCode('../../source/sqs-publish'),
+      runtime: lambda.Runtime.NODEJS_12_X,
+      timeout: Duration.seconds(120),
+      environment: {
+        AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
+      },
+    });
 
-    this.stepFunctionsFunction = new lambda.Function(
-      this,
-      'StepFunctionsFunction',
-      {
-        functionName: `${props.stackStage}${props.stackName}StepFunctionsLambdaFunction`,
-        description:
-          'Creates a unique identifier (GUID) and executes the Ingest StateMachine',
-        code: new lambda.AssetCode('../../source/step-functions'),
-        handler: 'index.handler',
-        runtime: lambda.Runtime.NODEJS_12_X,
-        environment: {
-          AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
-        },
-      }
-    );
+    this.stepFunctions = new lambda.Function(this, 'StepFunctionsFunction', {
+      functionName: `${props.stackStage}${props.stackName}StepFunctionsLambdaFunction`,
+      description:
+        'Creates a unique identifier (GUID) and executes the Ingest StateMachine',
+      code: new lambda.AssetCode('../../source/step-functions'),
+      handler: 'index.handler',
+      runtime: lambda.Runtime.NODEJS_12_X,
+      environment: {
+        AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
+      },
+    });
   }
 }

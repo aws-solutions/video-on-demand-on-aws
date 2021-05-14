@@ -7,38 +7,20 @@ export interface RulesProps {
 }
 
 export class Rules extends Construct {
-  public readonly encodeCompleteRule: events.Rule;
-  public readonly encodeCompleteRuleEventPattern: events.EventPattern;
-  public readonly encodeErrorRule: events.Rule;
-  public readonly encodeErrorRuleEventPattern: events.EventPattern;
+  public readonly encodeComplete: events.Rule;
+  public readonly encodeError: events.Rule;
 
   constructor(scope: Construct, id: string, props: RulesProps) {
     super(scope, id);
 
-    this.encodeCompleteRuleEventPattern = {
-      source: ['aws.mediaconvert'],
-      detail: {
-        status: 'COMPLETE',
-      },
-    };
-
-    this.encodeCompleteRule = new events.Rule(this, 'EncodeCompleteRule', {
+    this.encodeComplete = new events.Rule(this, 'EncodeCompleteRule', {
       ruleName: `${props.stackStage}${props.stackName}EncodeCompleteRule`,
       description: 'MediaConvert Completed event rule',
-      eventPattern: this.encodeCompleteRuleEventPattern,
     });
 
-    this.encodeCompleteRuleEventPattern = {
-      source: ['aws.mediaconvert'],
-      detail: {
-        status: 'ERROR',
-      },
-    };
-
-    this.encodeErrorRule = new events.Rule(this, 'EncodeErrorRule', {
+    this.encodeError = new events.Rule(this, 'EncodeErrorRule', {
       ruleName: `${props.stackStage}${props.stackName}EncodeErrorRule`,
       description: 'MediaConvert Error event rule',
-      eventPattern: this.encodeErrorRuleEventPattern,
     });
   }
 }

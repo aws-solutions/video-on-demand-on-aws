@@ -1,15 +1,22 @@
 import { Stack, StackProps } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { Cloudfront } from './cloudfront';
+import { CloudfrontOriginAccessIdentities } from './cloudfront-origin-access-identities';
 import { DynamoDbTables } from './dynamodb-tables';
+import { EventPatterns } from './event-patterns';
 import { IamRoles } from './iam-roles';
-import { Permissions } from './permissions';
+import { LambdaFunctions } from './lambda-functions';
+import { LambdaPermissions } from './lambda-permissions';
 import { PolicyDocuments } from './policy-documents';
 import { PolicyStatements } from './policy-statements';
 import { Rules } from './rules';
 import { S3Buckets } from './s3-buckets';
 import { SnsTopics } from './sns-topics';
 import { SqsQueues } from './sqs-queues';
+import { StepFunctions } from './step-functions';
+import { StepFunctionsChoices } from './step-functions-choices';
+import { StepFunctionsPasses } from './step-functions-passes';
+import { StepFunctionsTasks } from './step-functions-tasks';
 
 export class AwsVodCdkStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
@@ -33,7 +40,21 @@ export class AwsVodCdkStack extends Stack {
       stackStage: stackStage,
     });
 
+    const cloudfrontOriginAccessIdentities = new CloudfrontOriginAccessIdentities(
+      this,
+      'CloudFrontOriginAccessIdentities',
+      {
+        stackName: stackName,
+        stackStage: stackStage,
+      }
+    );
+
     const dynamoDbTables = new DynamoDbTables(this, 'DynamoDbTables', {
+      stackName: stackName,
+      stackStage: stackStage,
+    });
+
+    const eventPatterns = new EventPatterns(this, 'EventPatterns', {
       stackName: stackName,
       stackStage: stackStage,
     });
@@ -43,7 +64,12 @@ export class AwsVodCdkStack extends Stack {
       stackStage: stackStage,
     });
 
-    const permissions = new Permissions(this, 'Permissions', {
+    const lambdaFunctions = new LambdaFunctions(this, 'LambdaFunctions', {
+      stackName: stackName,
+      stackStage: stackStage,
+    });
+
+    const lambdaPermissions = new LambdaPermissions(this, 'Permissions', {
       stackName: stackName,
       stackStage: stackStage,
     });
@@ -78,214 +104,198 @@ export class AwsVodCdkStack extends Stack {
       stackStage: stackStage,
     });
 
+    const stepFunctions = new StepFunctions(this, 'StepFunctions', {
+      stackName: stackName,
+      stackStage: stackStage,
+    });
+
+    const stepFunctionsChoices = new StepFunctionsChoices(
+      this,
+      'StepFunctionsChoices',
+      {
+        stackName: stackName,
+        stackStage: stackStage,
+      }
+    );
+
+    const stepFunctionsPasses = new StepFunctionsPasses(
+      this,
+      'StepFunctionsPasses',
+      {
+        stackName: stackName,
+        stackStage: stackStage,
+      }
+    );
+
+    const stepFunctionsTasks = new StepFunctionsTasks(
+      this,
+      'StepFunctionsTasks',
+      {
+        stackName: stackName,
+        stackStage: stackStage,
+      }
+    );
+
     // Associate Policy Statements with Policy Documents
-    policyDocuments.destinationBucketPolicyDocument.addStatements(
-      policyStatements.destinationBucketPolicyStatement
+    policyDocuments.destinationBucket.addStatements(
+      policyStatements.destinationBucket
     );
 
     // Associate Policy Statements with IAM Roles
-    iamRoles.archiveSourceRole.addToPolicy(
-      policyStatements.archiveSourceRoleLambdaPolicyStatement
+    iamRoles.archiveSource.addToPolicy(
+      policyStatements.archiveSourceRoleLambda
     );
 
-    iamRoles.archiveSourceRole.addToPolicy(
-      policyStatements.archiveSourceRoleLogsPolicyStatement
+    iamRoles.archiveSource.addToPolicy(policyStatements.archiveSourceRoleLogs);
+
+    iamRoles.archiveSource.addToPolicy(policyStatements.archiveSourceRoleS3);
+
+    iamRoles.customResource.addToPolicy(
+      policyStatements.customResourceRoleCloudFront
     );
 
-    iamRoles.archiveSourceRole.addToPolicy(
-      policyStatements.archiveSourceRoleS3PolicyStatement
+    iamRoles.customResource.addToPolicy(
+      policyStatements.customResourceRoleLogs
     );
 
-    iamRoles.customResourceRole.addToPolicy(
-      policyStatements.customResourceRoleCloudFrontPolicyStatement
+    iamRoles.customResource.addToPolicy(
+      policyStatements.customResourceRoleMediaConvert
     );
 
-    iamRoles.customResourceRole.addToPolicy(
-      policyStatements.customResourceRoleLoggingPolicyStatement
+    iamRoles.customResource.addToPolicy(
+      policyStatements.customResourceRoleMediaPackageCreateList
     );
 
-    iamRoles.customResourceRole.addToPolicy(
-      policyStatements.customResourceRoleMediaConvertPolicyStatement
+    iamRoles.customResource.addToPolicy(
+      policyStatements.customResourceRoleMediaPackageDelete
     );
 
-    iamRoles.customResourceRole.addToPolicy(
-      policyStatements.customResourceRoleMediaPackageCreateListPolicyStatement
+    iamRoles.customResource.addToPolicy(
+      policyStatements.customResourceRoleMediaPackageDescribeDelete
     );
 
-    iamRoles.customResourceRole.addToPolicy(
-      policyStatements.customResourceRoleMediaPackageDeletePolicyStatement
+    iamRoles.customResource.addToPolicy(policyStatements.customResourceRoleS3);
+
+    iamRoles.dynamoDbUpdate.addToPolicy(
+      policyStatements.dynamoDbUpdateRoleLambda
     );
 
-    iamRoles.customResourceRole.addToPolicy(
-      policyStatements.customResourceRoleMediaPackageDescribeDeletePolicyStatement
+    iamRoles.dynamoDbUpdate.addToPolicy(
+      policyStatements.dynamoDbUpdateRoleLogs
     );
 
-    iamRoles.customResourceRole.addToPolicy(
-      policyStatements.customResourceRoleS3PolicyStatement
+    iamRoles.dynamoDbUpdate.addToPolicy(policyStatements.dynamoDbUpdateRoleS3);
+
+    iamRoles.encode.addToPolicy(policyStatements.encodeRoleIam);
+
+    iamRoles.encode.addToPolicy(policyStatements.encodeRoleLambda);
+
+    iamRoles.encode.addToPolicy(policyStatements.encodeRoleLogs);
+
+    iamRoles.encode.addToPolicy(policyStatements.encodeRoleMediaConvert);
+
+    iamRoles.encode.addToPolicy(policyStatements.encodeRoleS3GetObject);
+
+    iamRoles.encode.addToPolicy(policyStatements.encodeRoleS3PutObject);
+
+    iamRoles.errorHandler.addToPolicy(
+      policyStatements.errorHandlerRoleDynamoDb
     );
 
-    iamRoles.dynamoDbUpdateRole.addToPolicy(
-      policyStatements.dynamoDbUpdateRoleLambdaPolicyStatement
+    iamRoles.errorHandler.addToPolicy(policyStatements.errorHandlerRoleLogs);
+
+    iamRoles.errorHandler.addToPolicy(policyStatements.errorHandlerRoleSns);
+
+    iamRoles.inputValidate.addToPolicy(
+      policyStatements.inputValidateRoleLambda
     );
 
-    iamRoles.dynamoDbUpdateRole.addToPolicy(
-      policyStatements.dynamoDbUpdateRoleLogsPolicyStatement
+    iamRoles.inputValidate.addToPolicy(policyStatements.inputValidateRoleLogs);
+
+    iamRoles.inputValidate.addToPolicy(policyStatements.inputValidateRoleS3);
+
+    iamRoles.mediaConvert.addToPolicy(policyStatements.mediaConvertRoleS3);
+
+    iamRoles.mediaInfo.addToPolicy(policyStatements.mediaInfoRoleLambda);
+
+    iamRoles.mediaInfo.addToPolicy(policyStatements.mediaInfoRoleLogs);
+
+    iamRoles.mediaInfo.addToPolicy(policyStatements.mediaInfoRoleS3);
+
+    iamRoles.mediaPackageAsset.addToPolicy(
+      policyStatements.mediaPackageAssetRoleIam
     );
 
-    iamRoles.dynamoDbUpdateRole.addToPolicy(
-      policyStatements.dynamoDbUpdateRoleS3PolicyStatement
+    iamRoles.mediaPackageAsset.addToPolicy(
+      policyStatements.mediaPackageAssetRoleLambda
     );
 
-    iamRoles.encodeRole.addToPolicy(
-      policyStatements.encodeRoleIamPolicyStatement
+    iamRoles.mediaPackageAsset.addToPolicy(
+      policyStatements.mediaPackageAssetRoleLogs
     );
 
-    iamRoles.encodeRole.addToPolicy(
-      policyStatements.encodeRoleLambdaPolicyStatement
+    iamRoles.mediaPackageAsset.addToPolicy(
+      policyStatements.mediaPackageAssetRoleMediaPackage
     );
 
-    iamRoles.encodeRole.addToPolicy(
-      policyStatements.encodeRoleLogsPolicyStatement
-    );
-
-    iamRoles.encodeRole.addToPolicy(
-      policyStatements.encodeRoleMediaConvertPolicyStatement
-    );
-
-    iamRoles.encodeRole.addToPolicy(
-      policyStatements.encodeRoleS3GetObjectPolicyStatement
-    );
-
-    iamRoles.encodeRole.addToPolicy(
-      policyStatements.encodeRoleS3PutObjectPolicyStatement
-    );
-
-    iamRoles.errorHandlerRole.addToPolicy(
-      policyStatements.errorHandlerRoleDynamoDbPolicyStatement
-    );
-
-    iamRoles.errorHandlerRole.addToPolicy(
-      policyStatements.errorHandlerRoleLogsPolicyStatement
-    );
-
-    iamRoles.errorHandlerRole.addToPolicy(
-      policyStatements.errorHandlerRoleSnsPolicyStatement
-    );
-
-    iamRoles.inputValidateRole.addToPolicy(
-      policyStatements.inputValidateRoleLambdaPolicyStatement
-    );
-
-    iamRoles.inputValidateRole.addToPolicy(
-      policyStatements.inputValidateRoleLogsPolicyStatement
-    );
-
-    iamRoles.inputValidateRole.addToPolicy(
-      policyStatements.inputValidateRoleS3PolicyStatement
-    );
-
-    iamRoles.mediaConvertRole.addToPolicy(
-      policyStatements.mediaConvertRoleS3PolicyStatement
-    );
-
-    iamRoles.mediaInfoRole.addToPolicy(
-      policyStatements.mediaInfoRoleLambdaPolicyStatement
-    );
-
-    iamRoles.mediaInfoRole.addToPolicy(
-      policyStatements.mediaInfoRoleLogsPolicyStatement
-    );
-
-    iamRoles.mediaInfoRole.addToPolicy(
-      policyStatements.mediaInfoRoleS3PolicyStatement
-    );
-
-    iamRoles.mediaPackageAssetRole.addToPolicy(
-      policyStatements.mediaPackageAssetRoleIamPolicyStatement
-    );
-
-    iamRoles.mediaPackageAssetRole.addToPolicy(
-      policyStatements.mediaPackageAssetRoleLambdaPolicyStatement
-    );
-
-    iamRoles.mediaPackageAssetRole.addToPolicy(
-      policyStatements.mediaPackageAssetRoleLogsPolicyStatement
-    );
-
-    iamRoles.mediaPackageAssetRole.addToPolicy(
-      policyStatements.mediaPackageAssetRoleMediaPackagePolicyStatement
-    );
-
-    iamRoles.mediaPackageVodRole.addToPolicy(
+    iamRoles.mediaPackageVod.addToPolicy(
       policyStatements.mediaPackageVodRoleS3PolicyStatement
     );
 
-    iamRoles.outputValidateRole.addToPolicy(
-      policyStatements.outputValidateRoleDynamoDbPolicyStatement
+    iamRoles.outputValidate.addToPolicy(
+      policyStatements.outputValidateRoleDynamoDb
     );
 
-    iamRoles.outputValidateRole.addToPolicy(
-      policyStatements.outputValidateRoleLambdaPolicyStatement
+    iamRoles.outputValidate.addToPolicy(
+      policyStatements.outputValidateRoleLambda
     );
 
-    iamRoles.outputValidateRole.addToPolicy(
-      policyStatements.outputValidateRoleLogsPolicyStatement
+    iamRoles.outputValidate.addToPolicy(
+      policyStatements.outputValidateRoleLogs
     );
 
-    iamRoles.outputValidateRole.addToPolicy(
-      policyStatements.outputValidateRoleS3PolicyStatement
+    iamRoles.outputValidate.addToPolicy(policyStatements.outputValidateRoleS3);
+
+    iamRoles.profiler.addToPolicy(policyStatements.profilerRoleDynamoDb);
+
+    iamRoles.profiler.addToPolicy(policyStatements.profilerRoleLambda);
+
+    iamRoles.profiler.addToPolicy(policyStatements.profilerRoleLogs);
+
+    iamRoles.snsNotification.addToPolicy(
+      policyStatements.snsNotificationRoleLambda
     );
 
-    iamRoles.profilerRole.addToPolicy(
-      policyStatements.profilerRoleDynamoDbPolicyStatement
+    iamRoles.snsNotification.addToPolicy(
+      policyStatements.snsNotificationRoleLogs
     );
 
-    iamRoles.profilerRole.addToPolicy(
-      policyStatements.profilerRoleLambdaPolicyStatement
+    iamRoles.snsNotification.addToPolicy(
+      policyStatements.snsNotificationRoleSns
     );
 
-    iamRoles.profilerRole.addToPolicy(
-      policyStatements.profilerRoleLogsPolicyStatement
+    iamRoles.sqsSendMessage.addToPolicy(
+      policyStatements.sqsSendMessageRoleLambda
     );
 
-    iamRoles.snsNotificationRole.addToPolicy(
-      policyStatements.snsNotificationRoleLambdaPolicyStatement
+    iamRoles.sqsSendMessage.addToPolicy(
+      policyStatements.sqsSendMessageRoleLogs
     );
 
-    iamRoles.snsNotificationRole.addToPolicy(
-      policyStatements.snsNotificationRoleLogsPolicyStatement
+    iamRoles.sqsSendMessage.addToPolicy(policyStatements.sqsSendMessageRoleSqs);
+
+    iamRoles.stepFunctions.addToPolicy(
+      policyStatements.stepFunctionsRoleLambda
     );
 
-    iamRoles.snsNotificationRole.addToPolicy(
-      policyStatements.snsNotificationRoleSnsPolicyStatement
+    iamRoles.stepFunctions.addToPolicy(policyStatements.stepFunctionsRoleLogs);
+
+    iamRoles.stepFunctions.addToPolicy(
+      policyStatements.stepFunctionsRoleStates
     );
 
-    iamRoles.sqsSendMessageRole.addToPolicy(
-      policyStatements.sqsSendMessageRoleLambdaPolicyStatement
-    );
-
-    iamRoles.sqsSendMessageRole.addToPolicy(
-      policyStatements.sqsSendMessageRoleLogsPolicyStatement
-    );
-
-    iamRoles.sqsSendMessageRole.addToPolicy(
-      policyStatements.sqsSendMessageRoleSqsPolicyStatement
-    );
-
-    iamRoles.stepFunctionsRole.addToPolicy(
-      policyStatements.stepFunctionsRoleLambdaPolicyStatement
-    );
-
-    iamRoles.stepFunctionsRole.addToPolicy(
-      policyStatements.stepFunctionsRoleLogsPolicyStatement
-    );
-
-    iamRoles.stepFunctionsRole.addToPolicy(
-      policyStatements.stepFunctionsRoleStatesPolicyStatement
-    );
-
-    iamRoles.stepFunctionsServiceRole.addToPolicy(
-      policyStatements.stepFunctionServiceRoleLambdaPolicyStatement
+    iamRoles.stepFunctionsService.addToPolicy(
+      policyStatements.stepFunctionServiceRoleLambda
     );
   }
 }

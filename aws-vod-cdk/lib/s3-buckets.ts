@@ -8,14 +8,14 @@ export interface S3BucketsProps {
 }
 
 export class S3Buckets extends Construct {
-  public readonly destinationBucket: s3.CfnBucket;
-  public readonly logsBucket: s3.CfnBucket;
-  public readonly sourceBucket: s3.CfnBucket;
+  public readonly destination: s3.CfnBucket;
+  public readonly logs: s3.CfnBucket;
+  public readonly source: s3.CfnBucket;
 
   constructor(scope: Construct, id: string, props: S3BucketsProps) {
     super(scope, id);
 
-    this.destinationBucket = new s3.CfnBucket(this, 'DestinationBucket', {
+    this.destination = new s3.CfnBucket(this, 'DestinationBucket', {
       bucketName: `${props.stackStage}${props.stackName}Destination`,
       corsConfiguration: {
         corsRules: [
@@ -40,11 +40,10 @@ export class S3Buckets extends Construct {
       },
     });
 
-    this.destinationBucket.cfnOptions.deletionPolicy = CfnDeletionPolicy.RETAIN;
-    this.destinationBucket.cfnOptions.updateReplacePolicy =
-      CfnDeletionPolicy.RETAIN;
+    this.destination.cfnOptions.deletionPolicy = CfnDeletionPolicy.RETAIN;
+    this.destination.cfnOptions.updateReplacePolicy = CfnDeletionPolicy.RETAIN;
 
-    this.logsBucket = new s3.CfnBucket(this, 'LogsBucket', {
+    this.logs = new s3.CfnBucket(this, 'LogsBucket', {
       bucketName: `${props.stackStage}${props.stackName}Logs`,
       accessControl: BucketAccessControl.LOG_DELIVERY_WRITE,
       bucketEncryption: {
@@ -60,10 +59,10 @@ export class S3Buckets extends Construct {
       },
     });
 
-    this.logsBucket.cfnOptions.deletionPolicy = CfnDeletionPolicy.RETAIN;
-    this.logsBucket.cfnOptions.updateReplacePolicy = CfnDeletionPolicy.RETAIN;
+    this.logs.cfnOptions.deletionPolicy = CfnDeletionPolicy.RETAIN;
+    this.logs.cfnOptions.updateReplacePolicy = CfnDeletionPolicy.RETAIN;
 
-    this.sourceBucket = new s3.CfnBucket(this, 'SourceBucket', {
+    this.source = new s3.CfnBucket(this, 'SourceBucket', {
       bucketName: `${props.stackStage}${props.stackName}Source`,
       lifecycleConfiguration: {
         rules: [
@@ -114,7 +113,7 @@ export class S3Buckets extends Construct {
       },
     });
 
-    this.sourceBucket.cfnOptions.deletionPolicy = CfnDeletionPolicy.RETAIN;
-    this.sourceBucket.cfnOptions.updateReplacePolicy = CfnDeletionPolicy.RETAIN;
+    this.source.cfnOptions.deletionPolicy = CfnDeletionPolicy.RETAIN;
+    this.source.cfnOptions.updateReplacePolicy = CfnDeletionPolicy.RETAIN;
   }
 }
