@@ -3,7 +3,6 @@ import { aws_iam as iam } from 'aws-cdk-lib';
 
 export interface PolicyDocumentsProps {
   stackName: string;
-  stackStage: string;
 }
 
 export class PolicyDocuments extends Construct {

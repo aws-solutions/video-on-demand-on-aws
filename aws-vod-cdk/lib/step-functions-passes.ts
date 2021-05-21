@@ -3,7 +3,6 @@ import { aws_stepfunctions as stepfunctions } from 'aws-cdk-lib';
 
 export interface StepFunctionsPassesProps {
   stackName: string;
-  stackStage: string;
 }
 
 export class StepFunctionsPasses extends Construct {
@@ -34,10 +33,11 @@ export class StepFunctionsPasses extends Construct {
       'processWorkflowAcceleratedTranscodingEnabledPass'
     );
 
-    this.processWorkflowAcceleratedTranscodingPreferred = new stepfunctions.Pass(
-      this,
-      'processWorkflowAcceleratedTranscodingPreferredPass'
-    );
+    this.processWorkflowAcceleratedTranscodingPreferred =
+      new stepfunctions.Pass(
+        this,
+        'processWorkflowAcceleratedTranscodingPreferredPass'
+      );
 
     this.processWorkflowCustomJobTemplate = new stepfunctions.Pass(
       this,

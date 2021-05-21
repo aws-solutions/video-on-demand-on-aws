@@ -3,7 +3,6 @@ import { aws_events as events } from 'aws-cdk-lib';
 
 export interface RulesProps {
   stackName: string;
-  stackStage: string;
 }
 
 export class Rules extends Construct {
@@ -14,12 +13,12 @@ export class Rules extends Construct {
     super(scope, id);
 
     this.encodeComplete = new events.Rule(this, 'EncodeCompleteRule', {
-      ruleName: `${props.stackStage}${props.stackName}EncodeCompleteRule`,
+      ruleName: `${props.stackName}-EncodeCompleteRule`,
       description: 'MediaConvert Completed event rule',
     });
 
     this.encodeError = new events.Rule(this, 'EncodeErrorRule', {
-      ruleName: `${props.stackStage}${props.stackName}EncodeErrorRule`,
+      ruleName: `${props.stackName}-EncodeErrorRule`,
       description: 'MediaConvert Error event rule',
     });
   }

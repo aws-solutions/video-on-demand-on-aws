@@ -1,9 +1,14 @@
 import { Construct } from 'constructs';
-import { aws_lambda as lambda, Duration } from 'aws-cdk-lib';
+import { aws_lambda as lambda, Duration, Stack } from 'aws-cdk-lib';
 
 export interface LambdaFunctionsProps {
+  acceleratedTranscoding: string;
+  enableMediaPackage: boolean;
+  enableSns: boolean;
+  enableSqs: boolean;
+  frameCapture: boolean;
+  glacier: string;
   stackName: string;
-  stackStage: string;
 }
 
 export class LambdaFunctions extends Construct {
@@ -24,8 +29,14 @@ export class LambdaFunctions extends Construct {
   constructor(scope: Construct, id: string, props: LambdaFunctionsProps) {
     super(scope, id);
 
+    const partition = Stack.of(this).partition;
+
+    const region = Stack.of(this).region;
+
+    const account = Stack.of(this).account;
+
     this.archiveSource = new lambda.Function(this, 'ArchiveSourceFunction', {
-      functionName: `${props.stackStage}${props.stackName}ArchiveSourceLambdaFunction`,
+      functionName: `${props.stackName}-ArchiveSourceLambdaFunction`,
       description: 'Updates tags on source files to enable Glacier',
       handler: 'index.handler',
       code: new lambda.AssetCode('../../source/archive-source'),
@@ -37,7 +48,7 @@ export class LambdaFunctions extends Construct {
     });
 
     this.customResource = new lambda.Function(this, 'CustomResourceFunction', {
-      functionName: `${props.stackStage}${props.stackName}CustomResourceLambdaFunction`,
+      functionName: `${props.stackName}-CustomResourceLambdaFunction`,
       description: 'Used to deploy resources not supported by CloudFormation',
       handler: 'index.handler',
       code: new lambda.AssetCode('../../source/custom-resource'),
@@ -49,7 +60,7 @@ export class LambdaFunctions extends Construct {
     });
 
     this.dynamoDbUpdate = new lambda.Function(this, 'DynamoDbUpdateFunction', {
-      functionName: `${props.stackStage}${props.stackName}DynamoDbUpdateLambdaFunction`,
+      functionName: `${props.stackName}-DynamoDbUpdateLambdaFunction`,
       description: 'Updates DynamoDB with event data',
       handler: 'index.handler',
       code: new lambda.AssetCode('../../source/dynamo'),
@@ -61,7 +72,7 @@ export class LambdaFunctions extends Construct {
     });
 
     this.encode = new lambda.Function(this, 'EncodeFunction', {
-      functionName: `${props.stackStage}${props.stackName}EncodeLambdaFunction`,
+      functionName: `${props.stackName}-EncodeLambdaFunction`,
       description: 'Creates a MediaConvert encode job',
       handler: 'index.handler',
       code: new lambda.AssetCode('../../source/encode'),
@@ -73,7 +84,7 @@ export class LambdaFunctions extends Construct {
     });
 
     this.errorHandler = new lambda.Function(this, 'ErrorHandlerFunction', {
-      functionName: `${props.stackStage}${props.stackName}ErrorHandlerLambdaFunction`,
+      functionName: `${props.stackName}-ErrorHandlerLambdaFunction`,
       description: 'Captures and processes workflow errors',
       handler: 'index.handler',
       code: new lambda.AssetCode('../../source/error-handler'),
@@ -85,7 +96,7 @@ export class LambdaFunctions extends Construct {
     });
 
     this.inputValidate = new lambda.Function(this, 'InputValidateFunction', {
-      functionName: `${props.stackStage}${props.stackName}InputValidateLambdaFunction`,
+      functionName: `${props.stackName}-InputValidateLambdaFunction`,
       description: 'Validates the input given to the workflow',
       handler: 'index.handler',
       code: new lambda.AssetCode('../../source/input-validate'),
@@ -93,11 +104,52 @@ export class LambdaFunctions extends Construct {
       timeout: Duration.seconds(120),
       environment: {
         AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
+        ErrorHandler: this.errorHandler.functionArn,
+        WorkflowName: props.stackName,
+        FrameCapture: props.frameCapture.toString(),
+        ArchiveSource: props.glacier,
+        EnableMediaPackage: props.enableMediaPackage.toString(),
+        InputRotate: 'DEGREE_0',
+        EnableSns: props.enableSns.toString(),
+        EnableSqs: props.enableSqs.toString(),
+        AcceleratedTranscoding: props.acceleratedTranscoding,
       },
     });
 
+    if (props.enableMediaPackage) {
+      this.inputValidate.addEnvironment(
+        'MediaConvert_Template_2160p',
+        `${props.stackName}_Ott_2160p_Avc_Aac_16x9_mvod_no_preset`
+      );
+
+      this.inputValidate.addEnvironment(
+        'MediaConvert_Template_2160p',
+        `${props.stackName}_Ott_2160p_Avc_Aac_16x9_qvbr_no_preset`
+      );
+
+      this.inputValidate.addEnvironment(
+        'MediaConvert_Template_1080p',
+        `${props.stackName}_Ott_1080p_Avc_Aac_16x9_mvod_no_preset`
+      );
+
+      this.inputValidate.addEnvironment(
+        'MediaConvert_Template_1080p',
+        `${props.stackName}_Ott_1080p_Avc_Aac_16x9_qvbr_no_preset`
+      );
+
+      this.inputValidate.addEnvironment(
+        'MediaConvert_Template_720p',
+        `${props.stackName}_Ott_720p_Avc_Aac_16x9_mvod_no_preset`
+      );
+
+      this.inputValidate.addEnvironment(
+        'MediaConvert_Template_720p',
+        `${props.stackName}_Ott_720p_Avc_Aac_16x9_qvbr_no_preset`
+      );
+    }
+
     this.mediaInfo = new lambda.Function(this, 'MediaInfoFunction', {
-      functionName: `${props.stackStage}${props.stackName}MediaInfoLambdaFunction`,
+      functionName: `${props.stackName}-MediaInfoLambdaFunction`,
       description: 'Runs MediaInfo on a pre-signed S3 URL',
       handler: 'lambda_function.lambda_handler',
       code: new lambda.AssetCode('../../source/mediainfo'),
@@ -109,7 +161,7 @@ export class LambdaFunctions extends Construct {
       this,
       'MediaPackageAssetsFunction',
       {
-        functionName: `${props.stackStage}${props.stackName}MediaPackageAssetsLambdaFunction`,
+        functionName: `${props.stackName}-MediaPackageAssetsLambdaFunction`,
         description: 'Ingests an asset into MediaPackage-VOD',
         handler: 'index.handler',
         code: new lambda.AssetCode('../../source/media-package-assets'),
@@ -122,7 +174,7 @@ export class LambdaFunctions extends Construct {
     );
 
     this.outputValidate = new lambda.Function(this, 'OutputValidateFunction', {
-      functionName: `${props.stackStage}${props.stackName}OutputValidateLambdaFunction`,
+      functionName: `${props.stackName}-OutputValidateLambdaFunction`,
       description: 'Parses MediaConvert job output',
       handler: 'index.handler',
       code: new lambda.AssetCode('../../source/output-validate'),
@@ -134,7 +186,7 @@ export class LambdaFunctions extends Construct {
     });
 
     this.profiler = new lambda.Function(this, 'ProfilerFunction', {
-      functionName: `${props.stackStage}${props.stackName}ProfilerLambdaFunction`,
+      functionName: `${props.stackName}-ProfilerLambdaFunction`,
       description: 'Sets an EncodeProfile based on mediainfo output',
       handler: 'index.handler',
       code: new lambda.AssetCode('../../source/profiler'),
@@ -149,7 +201,7 @@ export class LambdaFunctions extends Construct {
       this,
       'SnsNotificationFunction',
       {
-        functionName: `${props.stackStage}${props.stackName}SnsNotificationLambdaFunction`,
+        functionName: `${props.stackName}-SnsNotificationLambdaFunction`,
         description: 'Sends a notification when the encode job is completed',
         handler: 'index.handler',
         code: new lambda.AssetCode('../../source/sns-notification'),
@@ -162,7 +214,7 @@ export class LambdaFunctions extends Construct {
     );
 
     this.sqsSendMessage = new lambda.Function(this, 'SqsSendMessageFunction', {
-      functionName: `${props.stackStage}${props.stackName}SqsSendMessageLambdaFunction`,
+      functionName: `${props.stackName}-SqsSendMessageLambdaFunction`,
       description: 'Publish the workflow results to an SQS queue',
       handler: 'index.handler',
       code: new lambda.AssetCode('../../source/sqs-publish'),
@@ -174,7 +226,7 @@ export class LambdaFunctions extends Construct {
     });
 
     this.stepFunctions = new lambda.Function(this, 'StepFunctionsFunction', {
-      functionName: `${props.stackStage}${props.stackName}StepFunctionsLambdaFunction`,
+      functionName: `${props.stackName}-StepFunctionsLambdaFunction`,
       description:
         'Creates a unique identifier (GUID) and executes the Ingest StateMachine',
       code: new lambda.AssetCode('../../source/step-functions'),
@@ -182,6 +234,10 @@ export class LambdaFunctions extends Construct {
       runtime: lambda.Runtime.NODEJS_12_X,
       environment: {
         AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
+        IngestWorkflow: `arn:${partition}:states:${region}:${account}:stateMachine:${props.stackName}-IngestWorkflowStateMachine`,
+        ProcessWorkflow: `arn:${partition}:states:${region}:${account}:stateMachine:${props.stackName}-ProcessWorkflowStateMachine`,
+        PublishWorkflow: `arn:${partition}:states:${region}:${account}:stateMachine:${props.stackName}-PublishWorkflowStateMachine`,
+        ErrorHandler: this.errorHandler.functionArn,
       },
     });
   }

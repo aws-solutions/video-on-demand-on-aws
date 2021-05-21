@@ -13,6 +13,6 @@
     "adminEmail": "",
     "workFlowTrigger": "",
     "glacier": "DISABLED",
-    "FrameCapture": true
+    "frameCapture": "No"
   }
 }

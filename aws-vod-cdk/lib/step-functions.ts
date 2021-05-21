@@ -3,7 +3,6 @@ import { aws_stepfunctions as stepfunctions } from 'aws-cdk-lib';
 
 export interface StepFunctionsProps {
   stackName: string;
-  stackStage: string;
 }
 
 export class StepFunctions extends Construct {
@@ -26,7 +25,7 @@ export class StepFunctions extends Construct {
       this,
       'IngestWorkflowStateMachine',
       {
-        stateMachineName: `${props.stackStage}${props.stackName}IngestWorkflowStateMachine`,
+        stateMachineName: `${props.stackName}-IngestWorkflowStateMachine`,
         definition: this.ingestWorkflowChain,
       }
     );
@@ -35,7 +34,7 @@ export class StepFunctions extends Construct {
       this,
       'ProcessWorkflowStateMachine',
       {
-        stateMachineName: `${props.stackStage}${props.stackName}ProcessWorkflowStateMachine`,
+        stateMachineName: `${props.stackName}-ProcessWorkflowStateMachine`,
         definition: this.ingestWorkflowChain,
       }
     );
@@ -44,7 +43,7 @@ export class StepFunctions extends Construct {
       this,
       'PublishWorkflowStateMachine',
       {
-        stateMachineName: `${props.stackStage}${props.stackName}PublishWorkflowStateMachine`,
+        stateMachineName: `${props.stackName}-PublishWorkflowStateMachine`,
         definition: this.ingestWorkflowChain,
       }
     );

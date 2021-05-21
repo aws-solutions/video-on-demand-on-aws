@@ -3,7 +3,6 @@ import { aws_stepfunctions_tasks as tasks } from 'aws-cdk-lib';
 
 export interface StepFunctionsTasksProps {
   stackName: string;
-  stackStage: string;
 }
 
 export class StepFunctionsTasks extends Construct {

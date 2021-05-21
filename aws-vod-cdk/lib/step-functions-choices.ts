@@ -3,7 +3,6 @@ import { aws_stepfunctions as stepfunctions } from 'aws-cdk-lib';
 
 export interface StepFunctionsChoicesProps {
   stackName: string;
-  stackStage: string;
 }
 
 export class StepFunctionsChoices extends Construct {

@@ -1,9 +1,10 @@
 import { Construct } from 'constructs';
 import { aws_sqs as sqs, Duration } from 'aws-cdk-lib';
+import { KmsKeys } from './kms-keys';
 
 export interface SqsQueuesProps {
+  kmsKeys: KmsKeys;
   stackName: string;
-  stackStage: string;
 }
 
 export class SqsQueues extends Construct {
@@ -14,13 +15,17 @@ export class SqsQueues extends Construct {
     super(scope, id);
 
     this.deadLetter = new sqs.Queue(this, 'SqsDeadLetterQueue', {
-      queueName: `${props.stackStage}${props.stackName}SqsDeadLetterQueue`,
+      queueName: `${props.stackName}-SqsDeadLetterQueue`,
       visibilityTimeout: Duration.seconds(120),
+      encryptionMasterKey: props.kmsKeys.sqsMasterKey,
+      dataKeyReuse: Duration.seconds(300),
     });
 
     this.main = new sqs.Queue(this, 'MainSqsQueue', {
-      queueName: `${props.stackStage}${props.stackName}MainSqsQueue`,
+      queueName: `${props.stackName}-MainSqsQueue`,
       visibilityTimeout: Duration.seconds(120),
+      encryptionMasterKey: props.kmsKeys.sqsMasterKey,
+      dataKeyReuse: Duration.seconds(300),
       deadLetterQueue: {
         queue: this.deadLetter,
         maxReceiveCount: 1,

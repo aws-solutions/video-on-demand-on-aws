@@ -3,7 +3,6 @@ import { aws_cloudfront as cloudfront } from 'aws-cdk-lib';
 
 export interface CloudfrontOriginAccessIdentitiesProps {
   stackName: string;
-  stackStage: string;
 }
 
 export class CloudfrontOriginAccessIdentities extends Construct {

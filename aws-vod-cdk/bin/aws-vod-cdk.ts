@@ -4,7 +4,19 @@ import { App } from 'aws-cdk-lib';
 import { AwsVodCdkStack } from '../lib/aws-vod-cdk-stack';
 
 const app = new App();
+
+const stackStage =
+  app.node.tryGetContext('stackStage') !== undefined
+    ? `${app.node.tryGetContext('stackStage')}-`
+    : '';
+
+const stackName =
+  app.node.tryGetContext('stackName') !== undefined
+    ? `${app.node.tryGetContext('stackName')}-`
+    : 'AwsVodCdkStack';
+
 new AwsVodCdkStack(app, 'AwsVodCdkStack', {
+  stackName: `${stackStage}${stackName}`,
   /* If you don't specify 'env', this stack will be environment-agnostic.
    * Account/Region-dependent features and context lookups will not work,
    * but a single synthesized template can be deployed anywhere. */

@@ -3,7 +3,6 @@ import { aws_events as events } from 'aws-cdk-lib';
 
 export interface EventPatternsProps {
   stackName: string;
-  stackStage: string;
 }
 
 export class EventPatterns extends Construct {

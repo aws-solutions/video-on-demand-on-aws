@@ -1,119 +1,82 @@
 import { Construct } from 'constructs';
-import { aws_s3 as s3, CfnDeletionPolicy } from 'aws-cdk-lib';
-import { BucketAccessControl } from 'aws-cdk-lib/lib/aws-s3';
+import { aws_s3 as s3, Duration, RemovalPolicy } from 'aws-cdk-lib';
 
 export interface S3BucketsProps {
   stackName: string;
-  stackStage: string;
 }
 
 export class S3Buckets extends Construct {
-  public readonly destination: s3.CfnBucket;
-  public readonly logs: s3.CfnBucket;
-  public readonly source: s3.CfnBucket;
+  public readonly destination: s3.Bucket;
+  public readonly logs: s3.Bucket;
+  public readonly source: s3.Bucket;
 
   constructor(scope: Construct, id: string, props: S3BucketsProps) {
     super(scope, id);
 
-    this.destination = new s3.CfnBucket(this, 'DestinationBucket', {
-      bucketName: `${props.stackStage}${props.stackName}Destination`,
-      corsConfiguration: {
-        corsRules: [
-          {
-            allowedMethods: ['GET'],
-            allowedOrigins: ['*'],
-            allowedHeaders: ['*'],
-            maxAge: 3000,
-          },
-        ],
-      },
-      publicAccessBlockConfiguration: {
-        blockPublicAcls: true,
-        blockPublicPolicy: true,
-        ignorePublicAcls: true,
-        restrictPublicBuckets: true,
-      },
-      bucketEncryption: {
-        serverSideEncryptionConfiguration: [
-          { serverSideEncryptionByDefault: { sseAlgorithm: 'AES256' } },
-        ],
-      },
+    this.destination = new s3.Bucket(this, 'DestinationBucket', {
+      bucketName: `${props.stackName}-Destination`,
+      cors: [
+        {
+          allowedMethods: [s3.HttpMethods.GET],
+          allowedOrigins: ['*'],
+          allowedHeaders: ['*'],
+          maxAge: 3000,
+        },
+      ],
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      encryption: s3.BucketEncryption.KMS,
+      serverAccessLogsBucket: this.logs,
+      serverAccessLogsPrefix: 's3-access/',
+      removalPolicy: RemovalPolicy.RETAIN,
     });
 
-    this.destination.cfnOptions.deletionPolicy = CfnDeletionPolicy.RETAIN;
-    this.destination.cfnOptions.updateReplacePolicy = CfnDeletionPolicy.RETAIN;
-
-    this.logs = new s3.CfnBucket(this, 'LogsBucket', {
-      bucketName: `${props.stackStage}${props.stackName}Logs`,
-      accessControl: BucketAccessControl.LOG_DELIVERY_WRITE,
-      bucketEncryption: {
-        serverSideEncryptionConfiguration: [
-          { serverSideEncryptionByDefault: { sseAlgorithm: 'AES256' } },
-        ],
-      },
-      publicAccessBlockConfiguration: {
-        blockPublicAcls: true,
-        blockPublicPolicy: true,
-        ignorePublicAcls: true,
-        restrictPublicBuckets: true,
-      },
+    this.logs = new s3.Bucket(this, 'LogsBucket', {
+      bucketName: `${props.stackName}-Logs`,
+      accessControl: s3.BucketAccessControl.LOG_DELIVERY_WRITE,
+      encryption: s3.BucketEncryption.KMS,
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      removalPolicy: RemovalPolicy.RETAIN,
     });
 
-    this.logs.cfnOptions.deletionPolicy = CfnDeletionPolicy.RETAIN;
-    this.logs.cfnOptions.updateReplacePolicy = CfnDeletionPolicy.RETAIN;
-
-    this.source = new s3.CfnBucket(this, 'SourceBucket', {
-      bucketName: `${props.stackStage}${props.stackName}Source`,
-      lifecycleConfiguration: {
-        rules: [
-          {
-            id: `${props.stackStage}${props.stackName}source-archive`,
-            status: 'Enabled',
-            tagFilters: [
-              {
-                key: `${props.stackStage}${props.stackName}`,
-                value: 'GLACIER',
-              },
-            ],
-            transition: {
-              transitionInDays: 1,
-              storageClass: 'GLACIER',
+    this.source = new s3.Bucket(this, 'SourceBucket', {
+      bucketName: `${props.stackName}-Source`,
+      lifecycleRules: [
+        {
+          id: `${props.stackName}-source-archive`,
+          enabled: true,
+          tagFilters: [
+            {
+              key: `${props.stackName}`,
+              value: 'GLACIER',
             },
-          },
-          {
-            id: `${props.stackStage}${props.stackName}source-deep-archive`,
-            status: 'Enabled',
-            tagFilters: [
-              {
-                key: `${props.stackStage}${props.stackName}`,
-                value: 'DEEP_ARCHIVE',
-              },
-            ],
-            transition: {
-              transitionInDays: 1,
-              storageClass: 'DEEP_ARCHIVE',
+          ],
+          transitions: [
+            {
+              storageClass: s3.StorageClass.GLACIER,
+              transitionAfter: Duration.days(1),
             },
-          },
-        ],
-      },
-      bucketEncryption: {
-        serverSideEncryptionConfiguration: [
-          {
-            serverSideEncryptionByDefault: {
-              sseAlgorithm: 'AES256',
+          ],
+        },
+        {
+          id: `${props.stackName}-source-deep-archive`,
+          enabled: true,
+          tagFilters: [
+            {
+              key: `${props.stackName}`,
+              value: 'DEEP_ARCHIVE',
             },
-          },
-        ],
-      },
-      publicAccessBlockConfiguration: {
-        blockPublicAcls: true,
-        blockPublicPolicy: true,
-        ignorePublicAcls: true,
-        restrictPublicBuckets: true,
-      },
+          ],
+          transitions: [
+            {
+              storageClass: s3.StorageClass.DEEP_ARCHIVE,
+              transitionAfter: Duration.days(1),
+            },
+          ],
+        },
+      ],
+      encryption: s3.BucketEncryption.KMS,
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      removalPolicy: RemovalPolicy.RETAIN,
     });
-
-    this.source.cfnOptions.deletionPolicy = CfnDeletionPolicy.RETAIN;
-    this.source.cfnOptions.updateReplacePolicy = CfnDeletionPolicy.RETAIN;
   }
 }

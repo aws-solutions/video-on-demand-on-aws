@@ -3,7 +3,6 @@ import { Stack, aws_iam as iam } from 'aws-cdk-lib';
 
 export interface IamRolesProps {
   stackName: string;
-  stackStage: string;
 }
 
 export class IamRoles extends Construct {
@@ -28,82 +27,82 @@ export class IamRoles extends Construct {
     super(scope, id);
 
     this.archiveSource = new iam.Role(this, 'ArchiveSourceRole', {
-      roleName: `${props.stackStage}${props.stackName}ArchiveSourceRole`,
+      roleName: `${props.stackName}-ArchiveSourceRole`,
       assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
     });
 
     this.customResource = new iam.Role(this, 'CustomResourceRole', {
-      roleName: `${props.stackStage}${props.stackName}CustomResourceRole`,
+      roleName: `${props.stackName}-CustomResourceRole`,
       assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
     });
 
     this.dynamoDbUpdate = new iam.Role(this, 'DynamoUpdateRole', {
-      roleName: `${props.stackStage}${props.stackName}DynamoUpdateRole`,
+      roleName: `${props.stackName}-DynamoUpdateRole`,
       assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
     });
 
     this.encode = new iam.Role(this, 'EncodeRole', {
-      roleName: `${props.stackStage}${props.stackName}EncodeRole`,
+      roleName: `${props.stackName}-EncodeRole`,
       assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
     });
 
     this.encode = new iam.Role(this, 'ErrorHandlerRole', {
-      roleName: `${props.stackStage}${props.stackName}ErrorHandlerRole`,
+      roleName: `${props.stackName}-ErrorHandlerRole`,
       assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
     });
 
     this.inputValidate = new iam.Role(this, 'InputValidateRole', {
-      roleName: `${props.stackStage}${props.stackName}InputValidateRole`,
+      roleName: `${props.stackName}-InputValidateRole`,
       assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
     });
 
     this.mediaConvert = new iam.Role(this, 'MediaConvertRole', {
-      roleName: `${props.stackStage}${props.stackName}MediaConvertRole`,
+      roleName: `${props.stackName}-MediaConvertRole`,
       assumedBy: new iam.ServicePrincipal(`mediaconvert.amazonaws.com`),
     });
 
     this.mediaInfo = new iam.Role(this, 'MediaInfoRole', {
-      roleName: `${props.stackStage}${props.stackName}MediaInfoRole`,
+      roleName: `${props.stackName}-MediaInfoRole`,
       assumedBy: new iam.ServicePrincipal(`lambda.amazonaws.com`),
     });
 
     this.mediaPackageAsset = new iam.Role(this, 'MediaPackageAssetRole', {
-      roleName: `${props.stackStage}${props.stackName}MediaPackageAssetRole`,
+      roleName: `${props.stackName}-MediaPackageAssetRole`,
       assumedBy: new iam.ServicePrincipal(`lambda.amazonaws.com`),
     });
 
     this.mediaPackageVod = new iam.Role(this, 'MediaPackageVodRole', {
-      roleName: `${props.stackStage}${props.stackName}MediaPackageVodRole`,
+      roleName: `${props.stackName}-MediaPackageVodRole`,
       assumedBy: new iam.ServicePrincipal(`mediapackage.amazonaws.com`),
     });
 
     this.outputValidate = new iam.Role(this, 'OutputValidateRole', {
-      roleName: `${props.stackStage}${props.stackName}OutputValidateRole`,
+      roleName: `${props.stackName}-OutputValidateRole`,
       assumedBy: new iam.ServicePrincipal(`lambda.amazonaws.com`),
     });
 
     this.profiler = new iam.Role(this, 'ProfilerRole', {
-      roleName: `${props.stackStage}${props.stackName}ProfilerRole`,
+      roleName: `${props.stackName}-ProfilerRole`,
       assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
     });
 
     this.snsNotification = new iam.Role(this, 'SnsNotificationRole', {
-      roleName: `${props.stackStage}${props.stackName}SnsNotificationRole`,
+      roleName: `${props.stackName}-SnsNotificationRole`,
       assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
     });
 
     this.sqsSendMessage = new iam.Role(this, 'SqsSendMessageRole', {
-      roleName: `${props.stackStage}${props.stackName}SqsSendMessageRole`,
+      roleName: `${props.stackName}-SqsSendMessageRole`,
       assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
     });
 
     this.stepFunctions = new iam.Role(this, 'StepFunctionsRole', {
-      roleName: `${props.stackStage}${props.stackName}StepFunctionsRole`,
+      roleName: `${props.stackName}-StepFunctionsRole`,
       assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
     });
 
     this.stepFunctionsService = new iam.Role(this, 'StepFunctionsServiceRole', {
-      roleName: `${props.stackStage}${props.stackName}StepFunctionsServiceRole`,
+      roleName: `${props.stackName}-StepFunctionsServiceRole`,
       assumedBy: new iam.ServicePrincipal(
         `states.${Stack.of(this).region}.amazonaws.com`
       ),

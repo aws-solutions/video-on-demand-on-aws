@@ -1,13 +1,20 @@
-import { Stack, StackProps } from 'aws-cdk-lib';
+import {
+  Stack,
+  StackProps,
+  aws_events_targets as targets,
+  aws_cloudfront as cloudFront,
+  aws_cloudfront_origins as origins,
+  CustomResource,
+  CfnOutput,
+} from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-import { Cloudfront } from './cloudfront';
 import { CloudfrontOriginAccessIdentities } from './cloudfront-origin-access-identities';
 import { DynamoDbTables } from './dynamodb-tables';
 import { EventPatterns } from './event-patterns';
 import { IamRoles } from './iam-roles';
+import { KmsKeys } from './kms-keys';
 import { LambdaFunctions } from './lambda-functions';
 import { LambdaPermissions } from './lambda-permissions';
-import { PolicyDocuments } from './policy-documents';
 import { PolicyStatements } from './policy-statements';
 import { Rules } from './rules';
 import { S3Buckets } from './s3-buckets';
@@ -18,95 +25,138 @@ import { StepFunctionsChoices } from './step-functions-choices';
 import { StepFunctionsPasses } from './step-functions-passes';
 import { StepFunctionsTasks } from './step-functions-tasks';
 
+// Create an extension method to allow easy conversion to boolean
+// values from 'yes', 1, 'true', etc.
+Object.defineProperty(String.prototype, 'toBool', {
+  value: function toBool() {
+    switch (this) {
+      case true:
+      case 'true':
+      case 1:
+      case '1':
+      case 'on':
+      case 'yes':
+        return true;
+      default:
+        return false;
+    }
+  },
+  writable: true,
+  configurable: true,
+});
+
 export class AwsVodCdkStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
 
     // Attempt to set constant variables from context;
     // set default values (empty string) if not found
-    const stackStage =
-      this.node.tryGetContext('stackStage') !== undefined
-        ? `${this.node.tryGetContext('stackStage')}-`
+    const stackName = this.stackName;
+
+    const adminEmail =
+      this.node.tryGetContext('adminEmail') !== undefined
+        ? this.node.tryGetContext('adminEmail')
         : '';
 
-    const stackName =
-      this.node.tryGetContext('stackName') !== undefined
-        ? `${this.node.tryGetContext('stackName')}-`
-        : '';
+    const workflowTrigger =
+      this.node.tryGetContext('workflowTrigger') !== undefined
+        ? this.node.tryGetContext('workflowTrigger')
+        : 'VideoFile';
+
+    const glacier =
+      this.node.tryGetContext('glacier') !== undefined
+        ? this.node.tryGetContext('glacier')
+        : 'DISABLED';
+
+    const frameCapture =
+      this.node.tryGetContext('frameCapture') !== undefined
+        ? this.node.tryGetContext('frameCapture').toBool()
+        : false;
+
+    const enableMediaPackage =
+      this.node.tryGetContext('enableMediaPackage') !== undefined
+        ? this.node.tryGetContext('enableMediaPackage').toBool()
+        : false;
+
+    const enableSns =
+      this.node.tryGetContext('enableSns') !== undefined
+        ? this.node.tryGetContext('enableSns').toBool()
+        : true;
+
+    const enableSqs =
+      this.node.tryGetContext('enableSqs') !== undefined
+        ? this.node.tryGetContext('enableSqs').toBool()
+        : true;
+
+    const acceleratedTranscoding =
+      this.node.tryGetContext('acceleratedTranscoding') !== undefined
+        ? this.node.tryGetContext('acceleratedTranscoding')
+        : 'PREFERRED';
 
     // Initialize Custom Constructs
-    const cloudfront = new Cloudfront(this, 'Cloudfront', {
-      stackName: stackName,
-      stackStage: stackStage,
-    });
-
-    const cloudfrontOriginAccessIdentities = new CloudfrontOriginAccessIdentities(
-      this,
-      'CloudFrontOriginAccessIdentities',
-      {
-        stackName: stackName,
-        stackStage: stackStage,
-      }
-    );
+    const cloudfrontOriginAccessIdentities =
+      new CloudfrontOriginAccessIdentities(
+        this,
+        'CloudFrontOriginAccessIdentities',
+        {
+          stackName: stackName,
+        }
+      );
 
     const dynamoDbTables = new DynamoDbTables(this, 'DynamoDbTables', {
       stackName: stackName,
-      stackStage: stackStage,
     });
 
     const eventPatterns = new EventPatterns(this, 'EventPatterns', {
       stackName: stackName,
-      stackStage: stackStage,
     });
 
     const iamRoles = new IamRoles(this, 'IamRoles', {
       stackName: stackName,
-      stackStage: stackStage,
+    });
+
+    const kmsKeys = new KmsKeys(this, 'KmsKeys', {
+      stackName: stackName,
     });
 
     const lambdaFunctions = new LambdaFunctions(this, 'LambdaFunctions', {
+      acceleratedTranscoding: acceleratedTranscoding,
+      enableMediaPackage: enableMediaPackage,
+      enableSns: enableSns,
+      enableSqs: enableSqs,
+      frameCapture: frameCapture,
+      glacier: glacier,
       stackName: stackName,
-      stackStage: stackStage,
     });
 
     const lambdaPermissions = new LambdaPermissions(this, 'Permissions', {
-      stackName: stackName,
-      stackStage: stackStage,
-    });
-
-    const policyDocuments = new PolicyDocuments(this, 'PolicyDocuments', {
-      stackStage: stackStage,
       stackName: stackName,
     });
 
     const policyStatements = new PolicyStatements(this, 'PolicyStatements', {
       stackName: stackName,
-      stackStage: stackStage,
     });
 
     const rules = new Rules(this, 'Rules', {
       stackName: stackName,
-      stackStage: stackStage,
     });
 
     const s3Buckets = new S3Buckets(this, 'S3Buckets', {
       stackName: stackName,
-      stackStage: stackStage,
     });
 
     const snsTopics = new SnsTopics(this, 'SnsTopics', {
+      kmsKeys: kmsKeys,
       stackName: stackName,
-      stackStage: stackStage,
     });
 
     const sqsQueues = new SqsQueues(this, 'SqsQueues', {
+      kmsKeys: kmsKeys,
       stackName: stackName,
-      stackStage: stackStage,
     });
 
     const stepFunctions = new StepFunctions(this, 'StepFunctions', {
       stackName: stackName,
-      stackStage: stackStage,
     });
 
     const stepFunctionsChoices = new StepFunctionsChoices(
@@ -114,7 +164,6 @@ export class AwsVodCdkStack extends Stack {
       'StepFunctionsChoices',
       {
         stackName: stackName,
-        stackStage: stackStage,
       }
     );
 
@@ -123,7 +172,6 @@ export class AwsVodCdkStack extends Stack {
       'StepFunctionsPasses',
       {
         stackName: stackName,
-        stackStage: stackStage,
       }
     );
 
@@ -132,12 +180,136 @@ export class AwsVodCdkStack extends Stack {
       'StepFunctionsTasks',
       {
         stackName: stackName,
-        stackStage: stackStage,
       }
     );
 
-    // Associate Policy Statements with Policy Documents
-    policyDocuments.destinationBucket.addStatements(
+    // Create CloudFront Distribution
+    const cloudfrontDistribution = new cloudFront.Distribution(
+      this,
+      'CloudFrontDistribution',
+      {
+        domainNames: [
+          `${s3Buckets.destination}.s3.${this.region}.amazonaws.com`,
+        ],
+        defaultBehavior: {
+          origin: new origins.S3Origin(s3Buckets.destination, {
+            originAccessIdentity: cloudfrontOriginAccessIdentities.destination,
+          }),
+          allowedMethods: cloudFront.AllowedMethods.ALLOW_GET_HEAD,
+          compress: true,
+          viewerProtocolPolicy:
+            cloudFront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+          cachePolicy: new cloudFront.CachePolicy(
+            this,
+            'CloudFrontDistributionCachePolicy',
+            {
+              cookieBehavior: cloudFront.CacheCookieBehavior.none(),
+              headerBehavior: cloudFront.CacheHeaderBehavior.allowList(
+                'Origin',
+                'Access-Control-Request-Method',
+                'Access-Control-Request-Headers'
+              ),
+              queryStringBehavior: cloudFront.CacheQueryStringBehavior.none(),
+            }
+          ),
+        },
+        priceClass: cloudFront.PriceClass.PRICE_CLASS_100,
+        enableLogging: true,
+        logBucket: s3Buckets.logs,
+        logFilePrefix: 'cloudfront/',
+      }
+    );
+
+    // Create custom resources
+    const s3Config = new CustomResource(this, 'S3Config', {
+      resourceType: 'Custom::S3',
+      serviceToken: lambdaFunctions.customResource.functionArn,
+      properties: [
+        { Source: s3Buckets.source },
+        { IngestArn: lambdaFunctions.stepFunctions.functionArn },
+        { Resource: 'S3Notification' },
+        { WorkflowTrigger: workflowTrigger },
+      ],
+    });
+
+    const mediaConvertEndPoint = new CustomResource(
+      this,
+      'MediaConvertEndPoint',
+      {
+        resourceType: 'Custom::LoadLambda',
+        serviceToken: lambdaFunctions.customResource.functionArn,
+        properties: [{ Resource: 'EndPoint' }],
+      }
+    );
+
+    const mediaConvertTemplates = new CustomResource(
+      this,
+      'MediaConvertTemplates',
+      {
+        resourceType: 'Custom::LoadLambda',
+        serviceToken: lambdaFunctions.customResource.functionArn,
+        properties: [
+          { Resource: 'MediaConvertTemplates' },
+          { StackName: this.stackName },
+          { EndPoint: mediaConvertEndPoint.getAtt('EndpointUrl') },
+          { EnableMediaPackage: enableMediaPackage },
+          { EnableNewTemplates: true },
+        ],
+      }
+    );
+
+    const mediaPackageVod = new CustomResource(this, 'MediaPackageVod', {
+      resourceType: 'Custom::LoadLambda',
+      serviceToken: lambdaFunctions.customResource.functionArn,
+      properties: [
+        { Resource: 'MediaPackageVod' },
+        { StackName: this.stackName },
+        { GroupId: `${this.stackName}-packaging-group` },
+        { PackagingConfigurations: 'HLS,DASH,MSS,CMAF' },
+        { DistributionId: cloudFront },
+        { EnableMediaPackage: enableMediaPackage },
+      ],
+    });
+
+    // Add Principals to PolicyStatements (if required)
+    policyStatements.destinationBucket.addCanonicalUserPrincipal(
+      cloudfrontOriginAccessIdentities.destination
+        .cloudFrontOriginAccessIdentityS3CanonicalUserId
+    );
+
+    // Associate Policy Statements with Specific Resources
+    policyStatements.customResourceRoleCloudFront.addResources(
+      `arn:${this.partition}:cloudfront::${this.account}:distribution/${cloudfrontDistribution.distributionId}`
+    );
+
+    policyStatements.customResourceRoleS3.addResources(
+      s3Buckets.source.bucketArn
+    );
+
+    policyStatements.destinationBucket.addResources(
+      `arn:${this.partition}:s3:::${s3Buckets.destination}/*`
+    );
+
+    policyStatements.inputValidateRoleS3.addResources(
+      `${s3Buckets.source.bucketArn}/*`
+    );
+
+    policyStatements.mediaConvertRoleS3.addResources(
+      `${s3Buckets.source.bucketArn}/*`,
+      `${s3Buckets.destination.bucketArn}/*`
+    );
+
+    policyStatements.mediaPackageVodRoleS3.addResources(
+      `${s3Buckets.destination.bucketArn}`,
+      `${s3Buckets.destination.bucketArn}/*`
+    );
+
+    policyStatements.mediaInfoRoleS3.addResources(
+      `${s3Buckets.source.bucketArn}/*`
+    );
+
+    // Associate destinationBucket PolicyStatement with destination S3Bucket
+    s3Buckets.destination.addToResourcePolicy(
       policyStatements.destinationBucket
     );
 
@@ -239,7 +411,7 @@ export class AwsVodCdkStack extends Stack {
     );
 
     iamRoles.mediaPackageVod.addToPolicy(
-      policyStatements.mediaPackageVodRoleS3PolicyStatement
+      policyStatements.mediaPackageVodRoleS3
     );
 
     iamRoles.outputValidate.addToPolicy(
@@ -296,6 +468,52 @@ export class AwsVodCdkStack extends Stack {
 
     iamRoles.stepFunctionsService.addToPolicy(
       policyStatements.stepFunctionServiceRoleLambda
+    );
+
+    // Add Environment Variables to LambdaFunctions
+    lambdaFunctions.inputValidate.addEnvironment(
+      'Source',
+      s3Buckets.source.bucketName
+    );
+
+    lambdaFunctions.inputValidate.addEnvironment(
+      'Destination',
+      s3Buckets.destination.bucketName
+    );
+
+    lambdaFunctions.inputValidate.addEnvironment(
+      'CloudFront',
+      cloudfrontDistribution.domainName
+    );
+
+    // Associate LambdaPermissions to LambdaFunctions
+    lambdaFunctions.stepFunctions.addPermission(
+      'S3LambdaInvokeVideo',
+      lambdaPermissions.s3LambdaInvokeVideo
+    );
+
+    lambdaFunctions.errorHandler.addPermission(
+      'CloudWatchLambdaInvokeErrors',
+      lambdaPermissions.cloudwatchLambdaInvokeErrors
+    );
+
+    lambdaFunctions.stepFunctions.addPermission(
+      'CloudWatchLambdaInvokeComplete',
+      lambdaPermissions.cloudwatchLambdaInvokeComplete
+    );
+
+    // Associate EventPatterns to Rules
+    rules.encodeComplete.addEventPattern(eventPatterns.encodeComplete);
+
+    rules.encodeError.addEventPattern(eventPatterns.encodeError);
+
+    // Associate Rules to targets
+    rules.encodeComplete.addTarget(
+      new targets.LambdaFunction(lambdaFunctions.stepFunctions)
+    );
+
+    rules.encodeError.addTarget(
+      new targets.LambdaFunction(lambdaFunctions.errorHandler)
     );
   }
 }

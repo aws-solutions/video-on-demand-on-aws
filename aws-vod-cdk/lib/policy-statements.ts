@@ -1,9 +1,8 @@
 import { Construct } from 'constructs';
-import { aws_iam as iam } from 'aws-cdk-lib';
+import { aws_iam as iam, Stack } from 'aws-cdk-lib';
 
 export interface PolicyStatementsProps {
   stackName: string;
-  stackStage: string;
 }
 
 export class PolicyStatements extends Construct {
@@ -48,6 +47,7 @@ export class PolicyStatements extends Construct {
   public readonly inputValidateRoleS3: iam.PolicyStatement;
 
   // MediaConvertRole Policy Statements
+  public readonly mediaConvertRoleExecuteApi: iam.PolicyStatement;
   public readonly mediaConvertRoleS3: iam.PolicyStatement;
 
   // MediaInfoRole Policy Statements
@@ -62,7 +62,7 @@ export class PolicyStatements extends Construct {
   public readonly mediaPackageAssetRoleMediaPackage: iam.PolicyStatement;
 
   // MediaPackageVodRole Policy Statements
-  public readonly mediaPackageVodRoleS3PolicyStatement: iam.PolicyStatement;
+  public readonly mediaPackageVodRoleS3: iam.PolicyStatement;
 
   // OutputValidateRole Policy Statements
   public readonly outputValidateRoleDynamoDb: iam.PolicyStatement;
@@ -96,6 +96,12 @@ export class PolicyStatements extends Construct {
   constructor(scope: Construct, id: string, props: PolicyStatementsProps) {
     super(scope, id);
 
+    const partition = Stack.of(this).partition;
+
+    const region = Stack.of(this).region;
+
+    const account = Stack.of(this).account;
+
     this.archiveSourceRoleLambda = new iam.PolicyStatement({
       actions: ['lambda:InvokeFunction'],
     });
@@ -117,6 +123,7 @@ export class PolicyStatements extends Construct {
         'cloudfront:GetDistributionConfig',
         'cloudfront:UpdateDistribution',
       ],
+      // Resources set in aws-vod-cdk-stack.ts
     });
 
     this.customResourceRoleLogs = new iam.PolicyStatement({
@@ -124,6 +131,9 @@ export class PolicyStatements extends Construct {
         'logs:CreateLogGroup',
         'logs:CreateLogStream',
         'logs:PutLogEvents',
+      ],
+      resources: [
+        `arn:${partition}:logs:${region}:${account}:log-group:/aws/lambda/*`,
       ],
     });
 
@@ -136,6 +146,7 @@ export class PolicyStatements extends Construct {
         'mediaconvert:DescribeEndpoints',
         'mediaconvert:ListJobTemplates',
       ],
+      resources: [`arn:${partition}:mediaconvert:${region}:${account}:*`],
     });
 
     this.customResourceRoleMediaPackageCreateList = new iam.PolicyStatement({
@@ -146,12 +157,17 @@ export class PolicyStatements extends Construct {
         'mediapackage-vod:ListPackagingConfigurations',
         'mediapackage-vod:ListPackagingGroups',
       ],
+      resources: [`arn:${partition}:mediaconvert:${region}:${account}:*`],
     });
 
     this.customResourceRoleMediaPackageDelete = new iam.PolicyStatement({
       actions: [
         'mediapackage-vod:DeleteAsset',
         'mediapackage-vod:DeletePackagingConfiguration',
+      ],
+      resources: [
+        `arn:${partition}:mediapackage-vod:${region}:${account}:assets/*`,
+        `arn:${partition}:mediapackage-vod:${region}:${account}:packaging-configurations/packaging-config-*`,
       ],
     });
 
@@ -161,16 +177,21 @@ export class PolicyStatements extends Construct {
           'mediapackage-vod:DescribePackagingGroup',
           'mediapackage-vod:DeletePackagingGroup',
         ],
+        resources: [
+          `arn:${partition}:mediapackage-vod:${region}:${account}:packaging-groups/${props.stackName}-packaging-group`,
+        ],
       }
     );
 
     this.customResourceRoleS3 = new iam.PolicyStatement({
       actions: ['s3:PutBucketNotification', 's3:PutObject', 's3:PutObjectAcl'],
+      // Resources set in aws-vod-cdk-stack.ts
     });
 
     this.destinationBucket = new iam.PolicyStatement({
       effect: iam.Effect.ALLOW,
       actions: ['s3:GetObject'],
+      // Resources set in aws-vod-cdk-stack.ts
     });
 
     this.dynamoDbUpdateRoleLambda = new iam.PolicyStatement({
@@ -235,6 +256,9 @@ export class PolicyStatements extends Construct {
 
     this.inputValidateRoleLambda = new iam.PolicyStatement({
       actions: ['lambda:InvokeFunction'],
+      resources: [
+        `arn:${partition}:lambda:${region}:${account}:function:${props.stackName}-ErrorHandlerFunction`,
+      ],
     });
 
     this.inputValidateRoleLogs = new iam.PolicyStatement({
@@ -243,14 +267,24 @@ export class PolicyStatements extends Construct {
         'logs:CreateLogStream',
         'logs:PutLogEvents',
       ],
+      resources: [
+        `arn:${partition}:logs:${region}:${account}:log-group:/aws/lambda/*`,
+      ],
     });
 
     this.inputValidateRoleS3 = new iam.PolicyStatement({
       actions: ['s3:GetObject'],
+      // Resources set in aws-vod-cdk-stak.ts
+    });
+
+    this.mediaConvertRoleExecuteApi = new iam.PolicyStatement({
+      actions: ['execute-api:Invoke'],
+      resources: [`arn:${partition}:execute-api:${region}:${account}:*`],
     });
 
     this.mediaConvertRoleS3 = new iam.PolicyStatement({
       actions: ['s3:GetObject', 's3:PutObject'],
+      // Resources set in aws-vod-cdk-stack.ts
     });
 
     this.mediaInfoRoleLambda = new iam.PolicyStatement({
@@ -267,6 +301,7 @@ export class PolicyStatements extends Construct {
 
     this.mediaInfoRoleS3 = new iam.PolicyStatement({
       actions: ['s3:GetObject'],
+      // Resources set in aws-vod-cdk-stack.ts
     });
 
     this.mediaPackageAssetRoleIam = new iam.PolicyStatement({
@@ -290,12 +325,13 @@ export class PolicyStatements extends Construct {
       resources: ['*'],
     });
 
-    this.mediaPackageVodRoleS3PolicyStatement = new iam.PolicyStatement({
+    this.mediaPackageVodRoleS3 = new iam.PolicyStatement({
       actions: [
         's3:GetObject',
         's3:GetBucketLocation',
         's3:GetBucketRequestPayment',
       ],
+      // Resources set in aws-vod-cdk-stack.ts
     });
 
     this.outputValidateRoleDynamoDb = new iam.PolicyStatement({
@@ -370,6 +406,9 @@ export class PolicyStatements extends Construct {
 
     this.stepFunctionsRoleLambda = new iam.PolicyStatement({
       actions: ['lambda:InvokeFunction'],
+      resources: [
+        `arn:${partition}:lambda:${region}:${account}:function:${props.stackName}-ErrorHandlerFunction`,
+      ],
     });
 
     this.stepFunctionsRoleLogs = new iam.PolicyStatement({
@@ -378,14 +417,23 @@ export class PolicyStatements extends Construct {
         'logs:CreateLogStream',
         'logs:PutLogEvents',
       ],
+      resources: [
+        `arn:${partition}:logs:${region}:${account}:log-group:/aws/lambda/*`,
+      ],
     });
 
     this.stepFunctionsRoleStates = new iam.PolicyStatement({
       actions: ['states:StartExecution'],
+      resources: [
+        `arn:${partition}:states:${region}:${account}:stateMachine:${props.stackName}-IngestWorkflowStateMachine`,
+        `arn:${partition}:states:${region}:${account}:stateMachine:}${props.stackName}-ProcessWorkflowStateMachine`,
+        `arn:${partition}:states:${region}:${account}:stateMachine:${props.stackName}-PublishWorkflowStateMachine`,
+      ],
     });
 
     this.stepFunctionServiceRoleLambda = new iam.PolicyStatement({
       actions: ['lambda:InvokeFunction'],
+      resources: [`arn:${partition}:lambda:${region}:${account}:function:*`],
     });
   }
 }

@@ -3,7 +3,6 @@ import { aws_dynamodb as dynamoDb, CfnDeletionPolicy } from 'aws-cdk-lib';
 
 export interface DynamoDbTablesProps {
   stackName: string;
-  stackStage: string;
 }
 
 export class DynamoDbTables extends Construct {
@@ -15,6 +14,7 @@ export class DynamoDbTables extends Construct {
     // Utilize CfnTable Construct to allow access to
     // required items such as KeySchema, etc.
     this.videoInfo = new dynamoDb.CfnTable(this, 'VideoInfoDynamoDbTable', {
+      tableName: `${props.stackName}-DynamoDb`,
       attributeDefinitions: [
         {
           attributeName: 'guid',
