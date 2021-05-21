@@ -1,5 +1,6 @@
 import { Construct } from 'constructs';
 import { aws_lambda as lambda, Duration, Stack } from 'aws-cdk-lib';
+import { IamRoles } from './iam-roles';
 
 export interface LambdaFunctionsProps {
   acceleratedTranscoding: string;
@@ -8,6 +9,7 @@ export interface LambdaFunctionsProps {
   enableSqs: boolean;
   frameCapture: boolean;
   glacier: string;
+  iamRoles: IamRoles;
   stackName: string;
 }
 
@@ -45,6 +47,7 @@ export class LambdaFunctions extends Construct {
       environment: {
         AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
       },
+      role: props.iamRoles.archiveSource,
     });
 
     this.customResource = new lambda.Function(this, 'CustomResourceFunction', {
@@ -57,6 +60,7 @@ export class LambdaFunctions extends Construct {
       environment: {
         AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
       },
+      role: props.iamRoles.customResource,
     });
 
     this.dynamoDbUpdate = new lambda.Function(this, 'DynamoDbUpdateFunction', {
@@ -69,6 +73,7 @@ export class LambdaFunctions extends Construct {
       environment: {
         AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
       },
+      role: props.iamRoles.dynamoDbUpdate,
     });
 
     this.encode = new lambda.Function(this, 'EncodeFunction', {
@@ -81,6 +86,7 @@ export class LambdaFunctions extends Construct {
       environment: {
         AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
       },
+      role: props.iamRoles.encode,
     });
 
     this.errorHandler = new lambda.Function(this, 'ErrorHandlerFunction', {
@@ -93,6 +99,7 @@ export class LambdaFunctions extends Construct {
       environment: {
         AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
       },
+      role: props.iamRoles.errorHandler,
     });
 
     this.inputValidate = new lambda.Function(this, 'InputValidateFunction', {
@@ -114,6 +121,7 @@ export class LambdaFunctions extends Construct {
         EnableSqs: props.enableSqs.toString(),
         AcceleratedTranscoding: props.acceleratedTranscoding,
       },
+      role: props.iamRoles.inputValidate,
     });
 
     if (props.enableMediaPackage) {
@@ -155,6 +163,10 @@ export class LambdaFunctions extends Construct {
       code: new lambda.AssetCode('../../source/mediainfo'),
       runtime: lambda.Runtime.PYTHON_3_7,
       timeout: Duration.seconds(120),
+      environment: {
+        ErrorHandler: this.errorHandler.functionArn,
+      },
+      role: props.iamRoles.mediaInfo,
     });
 
     this.mediaPackageAssets = new lambda.Function(
@@ -170,6 +182,7 @@ export class LambdaFunctions extends Construct {
         environment: {
           AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
         },
+        role: props.iamRoles.mediaPackageAsset,
       }
     );
 
@@ -183,6 +196,7 @@ export class LambdaFunctions extends Construct {
       environment: {
         AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
       },
+      role: props.iamRoles.outputValidate,
     });
 
     this.profiler = new lambda.Function(this, 'ProfilerFunction', {
@@ -210,6 +224,7 @@ export class LambdaFunctions extends Construct {
         environment: {
           AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
         },
+        role: props.iamRoles.snsNotification,
       }
     );
 
@@ -223,6 +238,7 @@ export class LambdaFunctions extends Construct {
       environment: {
         AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
       },
+      role: props.iamRoles.sqsSendMessage,
     });
 
     this.stepFunctions = new lambda.Function(this, 'StepFunctionsFunction', {
@@ -239,6 +255,7 @@ export class LambdaFunctions extends Construct {
         PublishWorkflow: `arn:${partition}:states:${region}:${account}:stateMachine:${props.stackName}-PublishWorkflowStateMachine`,
         ErrorHandler: this.errorHandler.functionArn,
       },
+      role: props.iamRoles.stepFunctions,
     });
   }
 }
