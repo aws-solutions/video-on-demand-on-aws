@@ -1,13 +1,6 @@
-import {
-  Stack,
-  StackProps,
-  aws_events_targets as targets,
-  aws_cloudfront as cloudFront,
-  aws_cloudfront_origins as origins,
-  CustomResource,
-  CfnOutput,
-} from 'aws-cdk-lib';
+import { Stack, StackProps } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
+import { CloudFronts } from './cloudfronts';
 import { CloudfrontOriginAccessIdentities } from './cloudfront-origin-access-identities';
 import { DynamoDbTables } from './dynamodb-tables';
 import { EventPatterns } from './event-patterns';
@@ -24,6 +17,7 @@ import { StepFunctions } from './step-functions';
 import { StepFunctionsChoices } from './step-functions-choices';
 import { StepFunctionsPasses } from './step-functions-passes';
 import { StepFunctionsTasks } from './step-functions-tasks';
+import { CustomResources } from './custom-resources';
 
 // Create an extension method to allow easy conversion to boolean
 // values from 'yes', 1, 'true', etc.
@@ -51,6 +45,9 @@ export class AwsVodCdkStack extends Stack {
 
     // Attempt to set constant variables from context;
     // set default values (empty string) if not found
+    const account = this.account;
+    const partition = this.partition;
+    const region = this.region;
     const stackName = this.stackName;
 
     const adminEmail =
@@ -111,33 +108,11 @@ export class AwsVodCdkStack extends Stack {
       stackName: stackName,
     });
 
-    const iamRoles = new IamRoles(this, 'IamRoles', {
-      stackName: stackName,
-    });
-
     const kmsKeys = new KmsKeys(this, 'KmsKeys', {
       stackName: stackName,
     });
 
-    const lambdaFunctions = new LambdaFunctions(this, 'LambdaFunctions', {
-      acceleratedTranscoding: acceleratedTranscoding,
-      enableMediaPackage: enableMediaPackage,
-      enableSns: enableSns,
-      enableSqs: enableSqs,
-      frameCapture: frameCapture,
-      glacier: glacier,
-      stackName: stackName,
-    });
-
     const lambdaPermissions = new LambdaPermissions(this, 'Permissions', {
-      stackName: stackName,
-    });
-
-    const policyStatements = new PolicyStatements(this, 'PolicyStatements', {
-      stackName: stackName,
-    });
-
-    const rules = new Rules(this, 'Rules', {
       stackName: stackName,
     });
 
@@ -183,337 +158,61 @@ export class AwsVodCdkStack extends Stack {
       }
     );
 
-    // Create CloudFront Distribution
-    const cloudfrontDistribution = new cloudFront.Distribution(
-      this,
-      'CloudFrontDistribution',
-      {
-        domainNames: [
-          `${s3Buckets.destination}.s3.${this.region}.amazonaws.com`,
-        ],
-        defaultBehavior: {
-          origin: new origins.S3Origin(s3Buckets.destination, {
-            originAccessIdentity: cloudfrontOriginAccessIdentities.destination,
-          }),
-          allowedMethods: cloudFront.AllowedMethods.ALLOW_GET_HEAD,
-          compress: true,
-          viewerProtocolPolicy:
-            cloudFront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-          cachePolicy: new cloudFront.CachePolicy(
-            this,
-            'CloudFrontDistributionCachePolicy',
-            {
-              cookieBehavior: cloudFront.CacheCookieBehavior.none(),
-              headerBehavior: cloudFront.CacheHeaderBehavior.allowList(
-                'Origin',
-                'Access-Control-Request-Method',
-                'Access-Control-Request-Headers'
-              ),
-              queryStringBehavior: cloudFront.CacheQueryStringBehavior.none(),
-            }
-          ),
-        },
-        priceClass: cloudFront.PriceClass.PRICE_CLASS_100,
-        enableLogging: true,
-        logBucket: s3Buckets.logs,
-        logFilePrefix: 'cloudfront/',
-      }
-    );
-
-    // Create custom resources
-    const s3Config = new CustomResource(this, 'S3Config', {
-      resourceType: 'Custom::S3',
-      serviceToken: lambdaFunctions.customResource.functionArn,
-      properties: [
-        { Source: s3Buckets.source },
-        { IngestArn: lambdaFunctions.stepFunctions.functionArn },
-        { Resource: 'S3Notification' },
-        { WorkflowTrigger: workflowTrigger },
-      ],
+    const cloudFronts = new CloudFronts(this, 'CloudFronts', {
+      cloudfrontOriginAccessIdentities: cloudfrontOriginAccessIdentities,
+      region: region,
+      s3Buckets: s3Buckets,
+      stackName: stackName,
     });
 
-    const mediaConvertEndPoint = new CustomResource(
-      this,
-      'MediaConvertEndPoint',
-      {
-        resourceType: 'Custom::LoadLambda',
-        serviceToken: lambdaFunctions.customResource.functionArn,
-        properties: [{ Resource: 'EndPoint' }],
-      }
-    );
-
-    const mediaConvertTemplates = new CustomResource(
-      this,
-      'MediaConvertTemplates',
-      {
-        resourceType: 'Custom::LoadLambda',
-        serviceToken: lambdaFunctions.customResource.functionArn,
-        properties: [
-          { Resource: 'MediaConvertTemplates' },
-          { StackName: this.stackName },
-          { EndPoint: mediaConvertEndPoint.getAtt('EndpointUrl') },
-          { EnableMediaPackage: enableMediaPackage },
-          { EnableNewTemplates: true },
-        ],
-      }
-    );
-
-    const mediaPackageVod = new CustomResource(this, 'MediaPackageVod', {
-      resourceType: 'Custom::LoadLambda',
-      serviceToken: lambdaFunctions.customResource.functionArn,
-      properties: [
-        { Resource: 'MediaPackageVod' },
-        { StackName: this.stackName },
-        { GroupId: `${this.stackName}-packaging-group` },
-        { PackagingConfigurations: 'HLS,DASH,MSS,CMAF' },
-        { DistributionId: cloudFront },
-        { EnableMediaPackage: enableMediaPackage },
-      ],
+    const policyStatements = new PolicyStatements(this, 'PolicyStatements', {
+      account: account,
+      cloudFronts: cloudFronts,
+      cloudfrontOriginAccessIdentities: cloudfrontOriginAccessIdentities,
+      partition: partition,
+      region: region,
+      s3Buckets: s3Buckets,
+      stackName: stackName,
     });
 
-    // Add Principals to PolicyStatements (if required)
-    policyStatements.destinationBucket.addCanonicalUserPrincipal(
-      cloudfrontOriginAccessIdentities.destination
-        .cloudFrontOriginAccessIdentityS3CanonicalUserId
-    );
+    const iamRoles = new IamRoles(this, 'IamRoles', {
+      policyStatements: policyStatements,
+      stackName: stackName,
+    });
 
-    // Associate Policy Statements with Specific Resources
-    policyStatements.customResourceRoleCloudFront.addResources(
-      `arn:${this.partition}:cloudfront::${this.account}:distribution/${cloudfrontDistribution.distributionId}`
-    );
+    const lambdaFunctions = new LambdaFunctions(this, 'LambdaFunctions', {
+      acceleratedTranscoding: acceleratedTranscoding,
+      cloudFronts: cloudFronts,
+      enableMediaPackage: enableMediaPackage,
+      enableSns: enableSns,
+      enableSqs: enableSqs,
+      frameCapture: frameCapture,
+      glacier: glacier,
+      iamRoles: iamRoles,
+      lambdaPermissions: lambdaPermissions,
+      s3Buckets: s3Buckets,
+      stackName: stackName,
+    });
 
-    policyStatements.customResourceRoleS3.addResources(
-      s3Buckets.source.bucketArn
-    );
+    const rules = new Rules(this, 'Rules', {
+      eventPatterns: eventPatterns,
+      lambdaFunctions: lambdaFunctions,
+      stackName: stackName,
+    });
 
-    policyStatements.destinationBucket.addResources(
-      `arn:${this.partition}:s3:::${s3Buckets.destination}/*`
-    );
-
-    policyStatements.inputValidateRoleS3.addResources(
-      `${s3Buckets.source.bucketArn}/*`
-    );
-
-    policyStatements.mediaConvertRoleS3.addResources(
-      `${s3Buckets.source.bucketArn}/*`,
-      `${s3Buckets.destination.bucketArn}/*`
-    );
-
-    policyStatements.mediaPackageVodRoleS3.addResources(
-      `${s3Buckets.destination.bucketArn}`,
-      `${s3Buckets.destination.bucketArn}/*`
-    );
-
-    policyStatements.mediaInfoRoleS3.addResources(
-      `${s3Buckets.source.bucketArn}/*`
-    );
+    const customResources = new CustomResources(this, 'CustomResources', {
+      cloudFronts: cloudFronts,
+      enableMediaPackage: enableMediaPackage,
+      lambdaFunctions: lambdaFunctions,
+      s3Buckets: s3Buckets,
+      stackName: stackName,
+      workflowTrigger: workflowTrigger,
+    });
 
     // Associate destinationBucket PolicyStatement with destination S3Bucket
+    // This must be done here to prevent circular dependency issues
     s3Buckets.destination.addToResourcePolicy(
       policyStatements.destinationBucket
-    );
-
-    // Associate Policy Statements with IAM Roles
-    iamRoles.archiveSource.addToPolicy(
-      policyStatements.archiveSourceRoleLambda
-    );
-
-    iamRoles.archiveSource.addToPolicy(policyStatements.archiveSourceRoleLogs);
-
-    iamRoles.archiveSource.addToPolicy(policyStatements.archiveSourceRoleS3);
-
-    iamRoles.customResource.addToPolicy(
-      policyStatements.customResourceRoleCloudFront
-    );
-
-    iamRoles.customResource.addToPolicy(
-      policyStatements.customResourceRoleLogs
-    );
-
-    iamRoles.customResource.addToPolicy(
-      policyStatements.customResourceRoleMediaConvert
-    );
-
-    iamRoles.customResource.addToPolicy(
-      policyStatements.customResourceRoleMediaPackageCreateList
-    );
-
-    iamRoles.customResource.addToPolicy(
-      policyStatements.customResourceRoleMediaPackageDelete
-    );
-
-    iamRoles.customResource.addToPolicy(
-      policyStatements.customResourceRoleMediaPackageDescribeDelete
-    );
-
-    iamRoles.customResource.addToPolicy(policyStatements.customResourceRoleS3);
-
-    iamRoles.dynamoDbUpdate.addToPolicy(
-      policyStatements.dynamoDbUpdateRoleLambda
-    );
-
-    iamRoles.dynamoDbUpdate.addToPolicy(
-      policyStatements.dynamoDbUpdateRoleLogs
-    );
-
-    iamRoles.dynamoDbUpdate.addToPolicy(policyStatements.dynamoDbUpdateRoleS3);
-
-    iamRoles.encode.addToPolicy(policyStatements.encodeRoleIam);
-
-    iamRoles.encode.addToPolicy(policyStatements.encodeRoleLambda);
-
-    iamRoles.encode.addToPolicy(policyStatements.encodeRoleLogs);
-
-    iamRoles.encode.addToPolicy(policyStatements.encodeRoleMediaConvert);
-
-    iamRoles.encode.addToPolicy(policyStatements.encodeRoleS3GetObject);
-
-    iamRoles.encode.addToPolicy(policyStatements.encodeRoleS3PutObject);
-
-    iamRoles.errorHandler.addToPolicy(
-      policyStatements.errorHandlerRoleDynamoDb
-    );
-
-    iamRoles.errorHandler.addToPolicy(policyStatements.errorHandlerRoleLogs);
-
-    iamRoles.errorHandler.addToPolicy(policyStatements.errorHandlerRoleSns);
-
-    iamRoles.inputValidate.addToPolicy(
-      policyStatements.inputValidateRoleLambda
-    );
-
-    iamRoles.inputValidate.addToPolicy(policyStatements.inputValidateRoleLogs);
-
-    iamRoles.inputValidate.addToPolicy(policyStatements.inputValidateRoleS3);
-
-    iamRoles.mediaConvert.addToPolicy(policyStatements.mediaConvertRoleS3);
-
-    iamRoles.mediaInfo.addToPolicy(policyStatements.mediaInfoRoleLambda);
-
-    iamRoles.mediaInfo.addToPolicy(policyStatements.mediaInfoRoleLogs);
-
-    iamRoles.mediaInfo.addToPolicy(policyStatements.mediaInfoRoleS3);
-
-    iamRoles.mediaPackageAsset.addToPolicy(
-      policyStatements.mediaPackageAssetRoleIam
-    );
-
-    iamRoles.mediaPackageAsset.addToPolicy(
-      policyStatements.mediaPackageAssetRoleLambda
-    );
-
-    iamRoles.mediaPackageAsset.addToPolicy(
-      policyStatements.mediaPackageAssetRoleLogs
-    );
-
-    iamRoles.mediaPackageAsset.addToPolicy(
-      policyStatements.mediaPackageAssetRoleMediaPackage
-    );
-
-    iamRoles.mediaPackageVod.addToPolicy(
-      policyStatements.mediaPackageVodRoleS3
-    );
-
-    iamRoles.outputValidate.addToPolicy(
-      policyStatements.outputValidateRoleDynamoDb
-    );
-
-    iamRoles.outputValidate.addToPolicy(
-      policyStatements.outputValidateRoleLambda
-    );
-
-    iamRoles.outputValidate.addToPolicy(
-      policyStatements.outputValidateRoleLogs
-    );
-
-    iamRoles.outputValidate.addToPolicy(policyStatements.outputValidateRoleS3);
-
-    iamRoles.profiler.addToPolicy(policyStatements.profilerRoleDynamoDb);
-
-    iamRoles.profiler.addToPolicy(policyStatements.profilerRoleLambda);
-
-    iamRoles.profiler.addToPolicy(policyStatements.profilerRoleLogs);
-
-    iamRoles.snsNotification.addToPolicy(
-      policyStatements.snsNotificationRoleLambda
-    );
-
-    iamRoles.snsNotification.addToPolicy(
-      policyStatements.snsNotificationRoleLogs
-    );
-
-    iamRoles.snsNotification.addToPolicy(
-      policyStatements.snsNotificationRoleSns
-    );
-
-    iamRoles.sqsSendMessage.addToPolicy(
-      policyStatements.sqsSendMessageRoleLambda
-    );
-
-    iamRoles.sqsSendMessage.addToPolicy(
-      policyStatements.sqsSendMessageRoleLogs
-    );
-
-    iamRoles.sqsSendMessage.addToPolicy(policyStatements.sqsSendMessageRoleSqs);
-
-    iamRoles.stepFunctions.addToPolicy(
-      policyStatements.stepFunctionsRoleLambda
-    );
-
-    iamRoles.stepFunctions.addToPolicy(policyStatements.stepFunctionsRoleLogs);
-
-    iamRoles.stepFunctions.addToPolicy(
-      policyStatements.stepFunctionsRoleStates
-    );
-
-    iamRoles.stepFunctionsService.addToPolicy(
-      policyStatements.stepFunctionServiceRoleLambda
-    );
-
-    // Add Environment Variables to LambdaFunctions
-    lambdaFunctions.inputValidate.addEnvironment(
-      'Source',
-      s3Buckets.source.bucketName
-    );
-
-    lambdaFunctions.inputValidate.addEnvironment(
-      'Destination',
-      s3Buckets.destination.bucketName
-    );
-
-    lambdaFunctions.inputValidate.addEnvironment(
-      'CloudFront',
-      cloudfrontDistribution.domainName
-    );
-
-    // Associate LambdaPermissions to LambdaFunctions
-    lambdaFunctions.stepFunctions.addPermission(
-      'S3LambdaInvokeVideo',
-      lambdaPermissions.s3LambdaInvokeVideo
-    );
-
-    lambdaFunctions.errorHandler.addPermission(
-      'CloudWatchLambdaInvokeErrors',
-      lambdaPermissions.cloudwatchLambdaInvokeErrors
-    );
-
-    lambdaFunctions.stepFunctions.addPermission(
-      'CloudWatchLambdaInvokeComplete',
-      lambdaPermissions.cloudwatchLambdaInvokeComplete
-    );
-
-    // Associate EventPatterns to Rules
-    rules.encodeComplete.addEventPattern(eventPatterns.encodeComplete);
-
-    rules.encodeError.addEventPattern(eventPatterns.encodeError);
-
-    // Associate Rules to targets
-    rules.encodeComplete.addTarget(
-      new targets.LambdaFunction(lambdaFunctions.stepFunctions)
-    );
-
-    rules.encodeError.addTarget(
-      new targets.LambdaFunction(lambdaFunctions.errorHandler)
     );
   }
 }

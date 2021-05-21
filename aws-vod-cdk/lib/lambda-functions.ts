@@ -1,15 +1,21 @@
 import { Construct } from 'constructs';
 import { aws_lambda as lambda, Duration, Stack } from 'aws-cdk-lib';
 import { IamRoles } from './iam-roles';
+import { S3Buckets } from './s3-buckets';
+import { CloudFronts } from './cloudfronts';
+import { LambdaPermissions } from './lambda-permissions';
 
 export interface LambdaFunctionsProps {
   acceleratedTranscoding: string;
+  cloudFronts: CloudFronts;
   enableMediaPackage: boolean;
   enableSns: boolean;
   enableSqs: boolean;
   frameCapture: boolean;
   glacier: string;
   iamRoles: IamRoles;
+  lambdaPermissions: LambdaPermissions;
+  s3Buckets: S3Buckets;
   stackName: string;
 }
 
@@ -102,6 +108,11 @@ export class LambdaFunctions extends Construct {
       role: props.iamRoles.errorHandler,
     });
 
+    this.errorHandler.addPermission(
+      'S3LambdaInvokeVideo',
+      props.lambdaPermissions.s3LambdaInvokeVideo
+    );
+
     this.inputValidate = new lambda.Function(this, 'InputValidateFunction', {
       functionName: `${props.stackName}-InputValidateLambdaFunction`,
       description: 'Validates the input given to the workflow',
@@ -120,6 +131,9 @@ export class LambdaFunctions extends Construct {
         EnableSns: props.enableSns.toString(),
         EnableSqs: props.enableSqs.toString(),
         AcceleratedTranscoding: props.acceleratedTranscoding,
+        Source: props.s3Buckets.source.bucketName,
+        Destination: props.s3Buckets.destination.bucketName,
+        CloudFront: props.cloudFronts.distribution.domainName,
       },
       role: props.iamRoles.inputValidate,
     });
@@ -257,5 +271,15 @@ export class LambdaFunctions extends Construct {
       },
       role: props.iamRoles.stepFunctions,
     });
+
+    this.stepFunctions.addPermission(
+      'S3LambdaInvokeVideo',
+      props.lambdaPermissions.s3LambdaInvokeVideo
+    );
+
+    this.stepFunctions.addPermission(
+      'CloudWatchLambdaInvokeComplete',
+      props.lambdaPermissions.cloudwatchLambdaInvokeComplete
+    );
   }
 }
