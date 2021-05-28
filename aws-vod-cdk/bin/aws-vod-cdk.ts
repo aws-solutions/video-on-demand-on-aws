@@ -12,7 +12,7 @@ const stackStage =
 
 const stackName =
   app.node.tryGetContext('stackName') !== undefined
-    ? `${app.node.tryGetContext('stackName')}-`
+    ? `${app.node.tryGetContext('stackName')}`
     : 'AwsVodCdkStack';
 
 new AwsVodCdkStack(app, 'AwsVodCdkStack', {

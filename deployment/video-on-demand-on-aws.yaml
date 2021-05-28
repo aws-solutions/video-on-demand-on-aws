@@ -1300,6 +1300,7 @@ Resources:
           AWS_NODEJS_CONNECTION_REUSE_ENABLED: "1"
           ErrorHandler: !GetAtt ErrorHandler.Arn
           SqsQueue: !Ref SqsQueue
+
   SnsNotificationRole:
     Type: AWS::IAM::Role
     Properties:

@@ -14,7 +14,7 @@ export class DynamoDbTables extends Construct {
     // Utilize CfnTable Construct to allow access to
     // required items such as KeySchema, etc.
     this.videoInfo = new dynamoDb.CfnTable(this, 'VideoInfoDynamoDbTable', {
-      tableName: `${props.stackName}-DynamoDb`,
+      tableName: `${props.stackName}-VideoInfo`,
       attributeDefinitions: [
         {
           attributeName: 'guid',

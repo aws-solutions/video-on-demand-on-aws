@@ -18,6 +18,7 @@ import { StepFunctionsChoices } from './step-functions-choices';
 import { StepFunctionsPasses } from './step-functions-passes';
 import { StepFunctionsTasks } from './step-functions-tasks';
 import { CustomResources } from './custom-resources';
+import { Outputs } from './outputs';
 
 // Create an extension method to allow easy conversion to boolean
 // values from 'yes', 1, 'true', etc.
@@ -44,51 +45,34 @@ export class AwsVodCdkStack extends Stack {
     super(scope, id, props);
 
     // Attempt to set constant variables from context;
-    // set default values (empty string) if not found
+    // set default values if not found
     const account = this.account;
     const partition = this.partition;
     const region = this.region;
     const stackName = this.stackName;
 
-    const adminEmail =
-      this.node.tryGetContext('adminEmail') !== undefined
-        ? this.node.tryGetContext('adminEmail')
-        : '';
+    const adminEmail = this.node.tryGetContext('adminEmail') ?? '';
 
     const workflowTrigger =
-      this.node.tryGetContext('workflowTrigger') !== undefined
-        ? this.node.tryGetContext('workflowTrigger')
-        : 'VideoFile';
+      this.node.tryGetContext('workflowTrigger') ?? 'VideoFile';
 
-    const glacier =
-      this.node.tryGetContext('glacier') !== undefined
-        ? this.node.tryGetContext('glacier')
-        : 'DISABLED';
+    const glacier = this.node.tryGetContext('glacier') ?? 'DISABLED';
 
     const frameCapture =
-      this.node.tryGetContext('frameCapture') !== undefined
-        ? this.node.tryGetContext('frameCapture').toBool()
-        : false;
+      this.node.tryGetContext('frameCapture').toBool() ?? false;
 
     const enableMediaPackage =
-      this.node.tryGetContext('enableMediaPackage') !== undefined
-        ? this.node.tryGetContext('enableMediaPackage').toBool()
-        : false;
+      this.node.tryGetContext('enableMediaPackage').toBool() ?? false;
 
-    const enableSns =
-      this.node.tryGetContext('enableSns') !== undefined
-        ? this.node.tryGetContext('enableSns').toBool()
-        : true;
+    const enableSns = this.node.tryGetContext('enableSns').toBool() ?? true;
 
-    const enableSqs =
-      this.node.tryGetContext('enableSqs') !== undefined
-        ? this.node.tryGetContext('enableSqs').toBool()
-        : true;
+    const enableSqs = this.node.tryGetContext('enableSqs').toBool() ?? true;
 
     const acceleratedTranscoding =
-      this.node.tryGetContext('acceleratedTranscoding') !== undefined
-        ? this.node.tryGetContext('acceleratedTranscoding')
-        : 'PREFERRED';
+      this.node.tryGetContext('acceleratedTranscoding') ?? 'PREFERRED';
+
+    const sendAnonymousMetrics =
+      this.node.tryGetContext('sendAnonymousMetrics').toBool() ?? false;
 
     // Initialize Custom Constructs
     const cloudfrontOriginAccessIdentities =
@@ -130,10 +114,6 @@ export class AwsVodCdkStack extends Stack {
       stackName: stackName,
     });
 
-    const stepFunctions = new StepFunctions(this, 'StepFunctions', {
-      stackName: stackName,
-    });
-
     const stepFunctionsChoices = new StepFunctionsChoices(
       this,
       'StepFunctionsChoices',
@@ -169,9 +149,12 @@ export class AwsVodCdkStack extends Stack {
       account: account,
       cloudFronts: cloudFronts,
       cloudfrontOriginAccessIdentities: cloudfrontOriginAccessIdentities,
+      dynamoDbTables: dynamoDbTables,
       partition: partition,
       region: region,
       s3Buckets: s3Buckets,
+      snsTopics: snsTopics,
+      sqsQueues: sqsQueues,
       stackName: stackName,
     });
 
@@ -180,9 +163,19 @@ export class AwsVodCdkStack extends Stack {
       stackName: stackName,
     });
 
+    const stepFunctions = new StepFunctions(this, 'StepFunctions', {
+      iamRoles: iamRoles,
+      stackName: stackName,
+      stepFunctionsChoices: stepFunctionsChoices,
+      stepFunctionsPasses: stepFunctionsPasses,
+      stepFunctionsTasks: stepFunctionsTasks,
+    });
+
     const lambdaFunctions = new LambdaFunctions(this, 'LambdaFunctions', {
       acceleratedTranscoding: acceleratedTranscoding,
+      account: account,
       cloudFronts: cloudFronts,
+      dynamoDbTables: dynamoDbTables,
       enableMediaPackage: enableMediaPackage,
       enableSns: enableSns,
       enableSqs: enableSqs,
@@ -190,7 +183,11 @@ export class AwsVodCdkStack extends Stack {
       glacier: glacier,
       iamRoles: iamRoles,
       lambdaPermissions: lambdaPermissions,
+      partition: partition,
+      region: region,
       s3Buckets: s3Buckets,
+      snsTopics: snsTopics,
+      sqsQueues: sqsQueues,
       stackName: stackName,
     });
 
@@ -203,16 +200,58 @@ export class AwsVodCdkStack extends Stack {
     const customResources = new CustomResources(this, 'CustomResources', {
       cloudFronts: cloudFronts,
       enableMediaPackage: enableMediaPackage,
+      frameCapture: frameCapture,
+      glacier: glacier,
       lambdaFunctions: lambdaFunctions,
       s3Buckets: s3Buckets,
+      sendAnonymousMetrics: sendAnonymousMetrics,
       stackName: stackName,
       workflowTrigger: workflowTrigger,
     });
+
+    const outputs = new Outputs(this, 'Outputs', {
+      cloudFronts: cloudFronts,
+      customResources: customResources,
+      dynamoDbTables: dynamoDbTables,
+      s3Buckets: s3Buckets,
+      snsTopics: snsTopics,
+      sqsQueues: sqsQueues,
+      stackName: stackName,
+    });
+
+    // Add IamRoles to PolicyStatements as resources
+    // This must be done here to prevent circular dependency issues
+    policyStatements.encodeRoleIam.addResources(iamRoles.mediaConvert.roleArn);
+
+    policyStatements.mediaPackageAssetRoleIam.addResources(
+      iamRoles.mediaPackageVod.roleArn
+    );
 
     // Associate destinationBucket PolicyStatement with destination S3Bucket
     // This must be done here to prevent circular dependency issues
     s3Buckets.destination.addToResourcePolicy(
       policyStatements.destinationBucket
+    );
+
+    // Add environment variables to LambdaFunctions
+    // This must be done here to prevent circular dependency issues
+    lambdaFunctions.encode.addEnvironment(
+      'EndPoint',
+      customResources.mediaConvertEndPoint.getAttString('EndPointUrl')
+    );
+
+    lambdaFunctions.outputValidate.addEnvironment(
+      'EndPoint',
+      customResources.mediaConvertEndPoint.getAttString('EndPointUrl')
+    );
+
+    lambdaFunctions.mediaPackageAssets.addEnvironment(
+      'GroupId',
+      customResources.mediaPackageVod.getAttString('GroupId')
+    );
+    lambdaFunctions.mediaPackageAssets.addEnvironment(
+      'GroupDomainName',
+      customResources.mediaPackageVod.getAttString('GroupDomainName')
     );
   }
 }

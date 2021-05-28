@@ -4,14 +4,20 @@ import { CloudfrontOriginAccessIdentities } from './cloudfront-origin-access-ide
 import { CanonicalUserPrincipal } from 'aws-cdk-lib/lib/aws-iam';
 import { CloudFronts } from './cloudfronts';
 import { S3Buckets } from './s3-buckets';
+import { DynamoDbTables } from './dynamodb-tables';
+import { SqsQueues } from './sqs-queues';
+import { SnsTopics } from './sns-topics';
 
 export interface PolicyStatementsProps {
   account: string;
   cloudFronts: CloudFronts;
   cloudfrontOriginAccessIdentities: CloudfrontOriginAccessIdentities;
+  dynamoDbTables: DynamoDbTables;
   partition: string;
   region: string;
   s3Buckets: S3Buckets;
+  snsTopics: SnsTopics;
+  sqsQueues: SqsQueues;
   stackName: string;
 }
 
@@ -36,7 +42,7 @@ export class PolicyStatements extends Construct {
   // DynamoDbUpdateRole Policy Statements
   public readonly dynamoDbUpdateRoleLambda: iam.PolicyStatement;
   public readonly dynamoDbUpdateRoleLogs: iam.PolicyStatement;
-  public readonly dynamoDbUpdateRoleS3: iam.PolicyStatement;
+  public readonly dynamoDbUpdateRoleDynamoDb: iam.PolicyStatement;
 
   // EncodeRole Policy Statements
   public readonly encodeRoleIam: iam.PolicyStatement;
@@ -108,18 +114,25 @@ export class PolicyStatements extends Construct {
 
     this.archiveSourceRoleLambda = new iam.PolicyStatement({
       actions: ['lambda:InvokeFunction'],
+      resources: [
+        `arn:${props.partition}:lambda:${props.region}:${props.account}:function:${props.stackName}-ErrorHandlerFunction`,
+      ],
     });
 
-    this.archiveSourceRoleLambda = new iam.PolicyStatement({
+    this.archiveSourceRoleLogs = new iam.PolicyStatement({
       actions: [
         'logs:CreateLogGroup',
         'logs:CreateLogStream',
         'logs:PutLogEvents',
       ],
+      resources: [
+        `arn:${props.partition}:logs:${props.region}:${props.account}:log-group:/aws/lambda/*`,
+      ],
     });
 
-    this.archiveSourceRoleLambda = new iam.PolicyStatement({
+    this.archiveSourceRoleS3 = new iam.PolicyStatement({
       actions: ['s3:PutObjectTagging'],
+      resources: [props.s3Buckets.source.bucketArn],
     });
 
     this.customResourceRoleCloudFront = new iam.PolicyStatement({
@@ -213,6 +226,9 @@ export class PolicyStatements extends Construct {
 
     this.dynamoDbUpdateRoleLambda = new iam.PolicyStatement({
       actions: ['lambda:InvokeFunction'],
+      resources: [
+        `arn:${props.partition}:lambda:${props.region}:${props.account}:function:${props.stackName}-ErrorHandlerFunction`,
+      ],
     });
 
     this.dynamoDbUpdateRoleLogs = new iam.PolicyStatement({
@@ -221,18 +237,28 @@ export class PolicyStatements extends Construct {
         'logs:CreateLogStream',
         'logs:PutLogEvents',
       ],
+      resources: [
+        `arn:${props.partition}:logs:${props.region}:${props.stackName}:log-group:/aws/lambda/*`,
+      ],
     });
 
-    this.dynamoDbUpdateRoleS3 = new iam.PolicyStatement({
-      actions: ['s3:GetObject'],
+    this.dynamoDbUpdateRoleDynamoDb = new iam.PolicyStatement({
+      actions: ['dynamoDb:UpdateItem'],
+      resources: [
+        `arn:${props.partition}:dynamodb:${props.region}:${props.account}:table/${props.dynamoDbTables.videoInfo.tableName}`,
+      ],
     });
 
     this.encodeRoleIam = new iam.PolicyStatement({
       actions: ['iam:PassRole'],
+      // Resources set in aws-vod-cdk-stack.ts
     });
 
     this.encodeRoleLambda = new iam.PolicyStatement({
       actions: ['lambda:InvokeFunction'],
+      resources: [
+        `arn:${props.partition}:lambda:${props.region}:${props.account}:function:${props.stackName}-ErrorHandlerFunction`,
+      ],
     });
 
     this.encodeRoleLogs = new iam.PolicyStatement({
@@ -241,22 +267,33 @@ export class PolicyStatements extends Construct {
         'logs:CreateLogStream',
         'logs:PutLogEvents',
       ],
+      resources: [
+        `arn:${props.partition}:logs:${props.region}:${props.account}:log-group:/aws/lambda/*`,
+      ],
     });
 
     this.encodeRoleMediaConvert = new iam.PolicyStatement({
       actions: ['mediaconvert:CreateJob', 'mediaconvert:GetJobTemplate'],
+      resources: [
+        `arn:${props.partition}:mediaconvert:${props.region}:${props.account}:*`,
+      ],
     });
 
     this.encodeRoleS3GetObject = new iam.PolicyStatement({
       actions: ['s3:GetObject'],
+      resources: [props.s3Buckets.source.bucketArn],
     });
 
     this.encodeRoleS3PutObject = new iam.PolicyStatement({
       actions: ['s3:PutObject'],
+      resources: [props.s3Buckets.destination.bucketArn],
     });
 
     this.errorHandlerRoleDynamoDb = new iam.PolicyStatement({
       actions: ['dynamodb:UpdateItem'],
+      resources: [
+        `arn:${props.partition}:dynamodb:${props.region}:${props.account}:table/${props.dynamoDbTables.videoInfo.tableName}`,
+      ],
     });
 
     this.errorHandlerRoleLogs = new iam.PolicyStatement({
@@ -265,10 +302,14 @@ export class PolicyStatements extends Construct {
         'logs:CreateLogStream',
         'logs:PutLogEvents',
       ],
+      resources: [
+        `arn:${props.partition}:logs:${props.region}:${props.account}:log-group:/aws/lambda/*`,
+      ],
     });
 
     this.errorHandlerRoleSns = new iam.PolicyStatement({
       actions: ['sns:Publish'],
+      resources: [props.snsTopics.notifications.topicArn],
     });
 
     this.inputValidateRoleLambda = new iam.PolicyStatement({
@@ -334,10 +375,14 @@ export class PolicyStatements extends Construct {
 
     this.mediaPackageAssetRoleIam = new iam.PolicyStatement({
       actions: ['iam:PassRole'],
+      // Resources set in aws-vod-cdk-stack.ts
     });
 
     this.mediaPackageAssetRoleLambda = new iam.PolicyStatement({
       actions: ['lambda:InvokeFunction'],
+      resources: [
+        `arn:${props.partition}:lambda:${props.region}:${props.account}:function:${props.stackName}-ErrorHandlerFunction`,
+      ],
     });
 
     this.mediaPackageAssetRoleLogs = new iam.PolicyStatement({
@@ -345,6 +390,9 @@ export class PolicyStatements extends Construct {
         'logs:CreateLogGroup',
         'logs:CreateLogStream',
         'logs:PutLogEvents',
+      ],
+      resources: [
+        `arn:${props.partition}:logs:${props.region}:${props.account}:log-group:/aws/lambda/*s`,
       ],
     });
 
@@ -367,10 +415,16 @@ export class PolicyStatements extends Construct {
 
     this.outputValidateRoleDynamoDb = new iam.PolicyStatement({
       actions: ['dynamodb:GetItem'],
+      resources: [
+        `arn:${props.partition}:dynamodb:${props.region}:${props.account}:table/${props.dynamoDbTables.videoInfo.tableName}`,
+      ],
     });
 
     this.outputValidateRoleLambda = new iam.PolicyStatement({
       actions: ['lambda:InvokeFunction'],
+      resources: [
+        `arn:${props.partition}:lambda:${props.region}:${props.account}:function:${props.stackName}-ErrorHandlerFunction`,
+      ],
     });
 
     this.outputValidateRoleLogs = new iam.PolicyStatement({
@@ -379,18 +433,28 @@ export class PolicyStatements extends Construct {
         'logs:CreateLogStream',
         'logs:PutLogEvents',
       ],
+      resources: [
+        `arn:${props.partition}:logs:${props.region}:${props.account}:log-group:/aws/lambda/*`,
+      ],
     });
 
     this.outputValidateRoleS3 = new iam.PolicyStatement({
       actions: ['s3:ListBucket'],
+      resources: [props.s3Buckets.destination.bucketArn],
     });
 
     this.profilerRoleDynamoDb = new iam.PolicyStatement({
       actions: ['dynamodb:GetItem'],
+      resources: [
+        `arn:${props.partition}:dynamodb:${props.region}:${props.account}:table/${props.dynamoDbTables.videoInfo.tableName}`,
+      ],
     });
 
     this.profilerRoleLambda = new iam.PolicyStatement({
       actions: ['lambda:InvokeFunction'],
+      resources: [
+        `arn:${props.partition}:lambda:${props.region}:${props.account}:function:${props.stackName}-ErrorHandlerFunction`,
+      ],
     });
 
     this.profilerRoleLogs = new iam.PolicyStatement({
@@ -399,10 +463,16 @@ export class PolicyStatements extends Construct {
         'logs:CreateLogStream',
         'logs:PutLogEvents',
       ],
+      resources: [
+        `arn:${props.partition}:logs:${props.region}:${props.account}:log-group:/aws/lambda/*`,
+      ],
     });
 
     this.snsNotificationRoleLambda = new iam.PolicyStatement({
       actions: ['lambda:InvokeFunction'],
+      resources: [
+        `arn:${props.partition}:lambda:${props.region}:${props.account}:function:${props.stackName}-ErrorHandlerFunction`,
+      ],
     });
 
     this.snsNotificationRoleLogs = new iam.PolicyStatement({
@@ -411,15 +481,22 @@ export class PolicyStatements extends Construct {
         'logs:CreateLogStream',
         'log:PutLogEvents',
       ],
+      resources: [
+        `arn:${props.partition}:logs:${props.region}:${props.account}:log-group:/aws/lambda/*`,
+      ],
     });
 
     this.snsNotificationRoleSns = new iam.PolicyStatement({
       actions: ['sns:Publish'],
+      resources: [props.snsTopics.notifications.topicArn],
       conditions: { 'aws:SecureTransport': 'true' },
     });
 
     this.sqsSendMessageRoleLambda = new iam.PolicyStatement({
       actions: ['lambda:InvokeFunction'],
+      resources: [
+        `arn:aws:lambda:${props.region}:${props.account}:function:${props.stackName}-ErrorHandlerFunction`,
+      ],
     });
 
     this.sqsSendMessageRoleLogs = new iam.PolicyStatement({
@@ -428,10 +505,14 @@ export class PolicyStatements extends Construct {
         'logs:CreateLogStream',
         'log:PutLogEvents',
       ],
+      resources: [
+        `arn:aws:logs:${props.region}:${props.account}:log-group:/aws/lambda/*`,
+      ],
     });
 
     this.sqsSendMessageRoleSqs = new iam.PolicyStatement({
       actions: ['sqs:SendMessage'],
+      resources: [props.sqsQueues.main.queueArn],
       conditions: { 'aws:SecureTransport': 'true' },
     });
 

@@ -90,7 +90,7 @@ export class IamRoles extends Construct {
     );
 
     this.dynamoDbUpdate.addToPolicy(
-      props.policyStatements.dynamoDbUpdateRoleS3
+      props.policyStatements.dynamoDbUpdateRoleDynamoDb
     );
 
     this.encode = new iam.Role(this, 'EncodeRole', {

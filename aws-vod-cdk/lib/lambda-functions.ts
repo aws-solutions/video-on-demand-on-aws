@@ -4,10 +4,15 @@ import { IamRoles } from './iam-roles';
 import { S3Buckets } from './s3-buckets';
 import { CloudFronts } from './cloudfronts';
 import { LambdaPermissions } from './lambda-permissions';
+import { DynamoDbTables } from './dynamodb-tables';
+import { SqsQueues } from './sqs-queues';
+import { SnsTopics } from './sns-topics';
 
 export interface LambdaFunctionsProps {
   acceleratedTranscoding: string;
+  account: string;
   cloudFronts: CloudFronts;
+  dynamoDbTables: DynamoDbTables;
   enableMediaPackage: boolean;
   enableSns: boolean;
   enableSqs: boolean;
@@ -15,7 +20,11 @@ export interface LambdaFunctionsProps {
   glacier: string;
   iamRoles: IamRoles;
   lambdaPermissions: LambdaPermissions;
+  partition: string;
+  region: string;
   s3Buckets: S3Buckets;
+  snsTopics: SnsTopics;
+  sqsQueues: SqsQueues;
   stackName: string;
 }
 
@@ -37,12 +46,6 @@ export class LambdaFunctions extends Construct {
   constructor(scope: Construct, id: string, props: LambdaFunctionsProps) {
     super(scope, id);
 
-    const partition = Stack.of(this).partition;
-
-    const region = Stack.of(this).region;
-
-    const account = Stack.of(this).account;
-
     this.archiveSource = new lambda.Function(this, 'ArchiveSourceFunction', {
       functionName: `${props.stackName}-ArchiveSourceLambdaFunction`,
       description: 'Updates tags on source files to enable Glacier',
@@ -52,6 +55,7 @@ export class LambdaFunctions extends Construct {
       timeout: Duration.seconds(120),
       environment: {
         AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
+        ErrorHandler: this.errorHandler.functionArn,
       },
       role: props.iamRoles.archiveSource,
     });
@@ -78,6 +82,8 @@ export class LambdaFunctions extends Construct {
       timeout: Duration.seconds(120),
       environment: {
         AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
+        DynamoDbTable: props.dynamoDbTables.videoInfo.tableName ?? '',
+        ErrorHandler: this.errorHandler.functionArn,
       },
       role: props.iamRoles.dynamoDbUpdate,
     });
@@ -91,6 +97,8 @@ export class LambdaFunctions extends Construct {
       timeout: Duration.seconds(120),
       environment: {
         AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
+        ErrorHandler: this.errorHandler.functionArn,
+        MediaConvertRole: props.iamRoles.mediaConvert.roleArn,
       },
       role: props.iamRoles.encode,
     });
@@ -104,6 +112,8 @@ export class LambdaFunctions extends Construct {
       timeout: Duration.seconds(120),
       environment: {
         AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
+        DynamoDBTable: props.dynamoDbTables.videoInfo.tableName ?? '',
+        SnsTopic: props.snsTopics.notifications.topicArn,
       },
       role: props.iamRoles.errorHandler,
     });
@@ -195,6 +205,9 @@ export class LambdaFunctions extends Construct {
         timeout: Duration.seconds(300),
         environment: {
           AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
+          ErrorHandler: this.errorHandler.functionArn,
+          MediaPackageVodRole: props.iamRoles.mediaPackageVod.roleArn,
+          // GroupId, GroupDomainName added in aws-vod-cdk-stack.ts
         },
         role: props.iamRoles.mediaPackageAsset,
       }
@@ -209,6 +222,8 @@ export class LambdaFunctions extends Construct {
       timeout: Duration.seconds(120),
       environment: {
         AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
+        DynamoDBTable: props.dynamoDbTables.videoInfo.tableName ?? '',
+        ErrorHandler: this.errorHandler.functionArn,
       },
       role: props.iamRoles.outputValidate,
     });
@@ -223,6 +238,7 @@ export class LambdaFunctions extends Construct {
       environment: {
         AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
       },
+      role: props.iamRoles.profiler,
     });
 
     this.snsNotification = new lambda.Function(
@@ -237,6 +253,8 @@ export class LambdaFunctions extends Construct {
         timeout: Duration.seconds(120),
         environment: {
           AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
+          ErrorHandler: this.errorHandler.functionArn,
+          SnsTopic: props.snsTopics.notifications.topicArn,
         },
         role: props.iamRoles.snsNotification,
       }
@@ -251,6 +269,8 @@ export class LambdaFunctions extends Construct {
       timeout: Duration.seconds(120),
       environment: {
         AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
+        ErrorHandler: this.errorHandler.functionArn,
+        SqsQueue: props.sqsQueues.main.queueArn,
       },
       role: props.iamRoles.sqsSendMessage,
     });
@@ -264,9 +284,9 @@ export class LambdaFunctions extends Construct {
       runtime: lambda.Runtime.NODEJS_12_X,
       environment: {
         AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
-        IngestWorkflow: `arn:${partition}:states:${region}:${account}:stateMachine:${props.stackName}-IngestWorkflowStateMachine`,
-        ProcessWorkflow: `arn:${partition}:states:${region}:${account}:stateMachine:${props.stackName}-ProcessWorkflowStateMachine`,
-        PublishWorkflow: `arn:${partition}:states:${region}:${account}:stateMachine:${props.stackName}-PublishWorkflowStateMachine`,
+        IngestWorkflow: `arn:${props.partition}:states:${props.region}:${props.account}:stateMachine:${props.stackName}-IngestWorkflowStateMachine`,
+        ProcessWorkflow: `arn:${props.partition}:states:${props.region}:${props.account}:stateMachine:${props.stackName}-ProcessWorkflowStateMachine`,
+        PublishWorkflow: `arn:${props.partition}:states:${props.region}:${props.account}:stateMachine:${props.stackName}-PublishWorkflowStateMachine`,
         ErrorHandler: this.errorHandler.functionArn,
       },
       role: props.iamRoles.stepFunctions,
