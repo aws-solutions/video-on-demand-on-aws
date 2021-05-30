@@ -30,6 +30,20 @@ export class StepFunctions extends Construct {
   constructor(scope: Construct, id: string, props: StepFunctionsProps) {
     super(scope, id);
 
+    this.ingestWorkflowChain =
+      props.stepFunctionsTasks.ingestWorkflowInputValidate
+        .next(props.stepFunctionsTasks.ingestWorkflowMediaInfo)
+        .next(props.stepFunctionsTasks.ingestWorkflowDynamoDbUpdate)
+        .next(
+          props.stepFunctionsChoices.ingestWorkflowSnsChoice
+            .when(
+              Condition.booleanEquals('$.enableSns', true),
+              props.stepFunctionsTasks.ingestWorkflowSnsNotifications
+            )
+            .afterwards()
+            .next(props.stepFunctionsTasks.ingestWorkflowProcessExecute)
+        );
+
     this.ingestWorkflowStateMachine = new stepfunctions.StateMachine(
       this,
       'IngestWorkflowStateMachine',
@@ -40,30 +54,8 @@ export class StepFunctions extends Construct {
       }
     );
 
-    this.ingestWorkflowChain =
-      props.stepFunctionsTasks.ingestWorkflowInputValidate
-        .next(props.stepFunctionsTasks.ingestWorkflowMediaInfo)
-        .next(props.stepFunctionsTasks.ingestWorkflowDynamoDbUpdate)
-        .next(
-          props.stepFunctionsChoices.ingestWorkflowSnsChoice.when(
-            Condition.booleanEquals('$.enableSns', true),
-            props.stepFunctionsTasks.ingestWorkflowSnsNotifications
-          )
-        )
-        .next(props.stepFunctionsTasks.ingestWorkflowProcessExecute);
-
-    this.processWorkflowStateMachine = new stepfunctions.StateMachine(
-      this,
-      'ProcessWorkflowStateMachine',
-      {
-        stateMachineName: `${props.stackName}-ProcessWorkflowStateMachine`,
-        definition: this.processWorkflowChain,
-        role: props.iamRoles.stepFunctionsService,
-      }
-    );
-
-    this.processWorkflowChain = props.stepFunctionsTasks.processWorkflowProfiler
-      .next(
+    this.processWorkflowChain =
+      props.stepFunctionsTasks.processWorkflowProfiler.next(
         props.stepFunctionsChoices.processWorkflowEncodingProfileCheck
           .when(
             Condition.booleanEquals('$.isCustomTemplate', true),
@@ -81,35 +73,90 @@ export class StepFunctions extends Construct {
             Condition.numberEquals('$.encodingProfile', 720),
             props.stepFunctionsPasses.processWorkflowJobTemplate720p
           )
-      )
-      .next(
-        props.stepFunctionsChoices.processWorkflowAcceleratedTranscodingCheck
+          .afterwards()
+          .next(
+            props.stepFunctionsChoices.processWorkflowAcceleratedTranscodingCheck
+              .when(
+                Condition.stringEquals('$.acceleratedTranscoding', 'ENABLED'),
+                props.stepFunctionsPasses
+                  .processWorkflowAcceleratedTranscodingEnabled
+              )
+              .when(
+                Condition.stringEquals('$.acceleratedTranscoding', 'PREFERRED'),
+                props.stepFunctionsPasses
+                  .processWorkflowAcceleratedTranscodingPreferred
+              )
+              .when(
+                Condition.stringEquals('$.acceleratedTranscoding', 'DISABLED'),
+                props.stepFunctionsPasses
+                  .processWorkflowAcceleratedTranscodingDisabled
+              )
+              .afterwards()
+              .next(
+                props.stepFunctionsChoices.processWorkflowFrameCaptureCheck
+                  .when(
+                    Condition.booleanEquals('$.frameCapture', true),
+                    props.stepFunctionsPasses.processWorkflowFrameCaptureOn
+                  )
+                  .otherwise(
+                    props.stepFunctionsPasses.processWorkflowFrameCaptureOff
+                  )
+                  .afterwards()
+                  .next(props.stepFunctionsTasks.processWorkflowEncodeJobSubmit)
+                  .next(props.stepFunctionsTasks.processWorkflowDynamoDbUpdate)
+              )
+          )
+      );
+
+    this.processWorkflowStateMachine = new stepfunctions.StateMachine(
+      this,
+      'ProcessWorkflowStateMachine',
+      {
+        stateMachineName: `${props.stackName}-ProcessWorkflowStateMachine`,
+        definition: this.processWorkflowChain,
+        role: props.iamRoles.stepFunctionsService,
+      }
+    );
+
+    this.publishWorkflowChain =
+      props.stepFunctionsTasks.publishWorkflowValidateEncodingOutput.next(
+        props.stepFunctionsChoices.publishWorkflowArchiveSource
           .when(
-            Condition.stringEquals('acceleratedTranscoding', 'ENABLED'),
-            props.stepFunctionsPasses
-              .processWorkflowAcceleratedTranscodingEnabled
+            Condition.stringEquals('$.archiveSource', 'GLACIER'),
+            props.stepFunctionsTasks.publishWorkflowArchive
           )
           .when(
-            Condition.stringEquals('acceleratedTranscoding', 'PREFERRED'),
-            props.stepFunctionsPasses
-              .processWorkflowAcceleratedTranscodingPreferred
+            Condition.stringEquals('$.archiveSource', 'DEEP_ARCHIVE'),
+            props.stepFunctionsTasks.publishWorkflowDeepArchive
           )
-          .when(
-            Condition.stringEquals('acceleratedTranscoding', 'DISABLED'),
-            props.stepFunctionsPasses
-              .processWorkflowAcceleratedTranscodingDisabled
+          .afterwards()
+          .next(
+            props.stepFunctionsChoices.publishWorkflowMediaPackage
+              .when(
+                Condition.booleanEquals('$.enableMediaPackage', true),
+                props.stepFunctionsTasks.publishWorkflowMediaPackageAssets
+              )
+              .afterwards()
+              .next(props.stepFunctionsTasks.publishWorkflowDynamoDbUpdate)
+              .next(
+                props.stepFunctionsChoices.publishWorkflowSqs
+                  .when(
+                    Condition.booleanEquals('$.enableSqs', true),
+                    props.stepFunctionsTasks.publishWorkflowSqsSendMessage
+                  )
+                  .afterwards()
+                  .next(
+                    props.stepFunctionsChoices.publishWorkflowSns
+                      .when(
+                        Condition.booleanEquals('$.enableSns', true),
+                        props.stepFunctionsTasks.publishWorkflowSnsNotification
+                      )
+                      .afterwards()
+                      .next(props.stepFunctionsPasses.publishWorkflowComplete)
+                  )
+              )
           )
-      )
-      .next(
-        props.stepFunctionsChoices.processWorkflowFrameCaptureCheck
-          .when(
-            Condition.booleanEquals('$.frameCapture', true),
-            props.stepFunctionsPasses.processWorkflowFrameCaptureOn
-          )
-          .otherwise(props.stepFunctionsPasses.processWorkflowFrameCaptureOff)
-      )
-      .next(props.stepFunctionsTasks.processWorkflowEncodeJobSubmit)
-      .next(props.stepFunctionsTasks.processWorkflowDynamoDbUpdate);
+      );
 
     this.publishWorkflowStateMachine = new stepfunctions.StateMachine(
       this,
@@ -120,39 +167,5 @@ export class StepFunctions extends Construct {
         role: props.iamRoles.stepFunctionsService,
       }
     );
-
-    this.publishWorkflowChain =
-      props.stepFunctionsTasks.publishWorkflowValidateEncodingOutput
-        .next(
-          props.stepFunctionsChoices.publishWorkflowArchiveSource
-            .when(
-              Condition.stringEquals('$.archiveSource', 'GLACIER'),
-              props.stepFunctionsTasks.publishWorkflowArchive
-            )
-            .when(
-              Condition.stringEquals('$.archiveSource', 'DEEP_ARCHIVE'),
-              props.stepFunctionsTasks.publishWorkflowDeepArchive
-            )
-        )
-        .next(
-          props.stepFunctionsChoices.publishWorkflowMediaPackage.when(
-            Condition.booleanEquals('$.enableMediaPackage', true),
-            props.stepFunctionsTasks.publishWorkflowMediaPackageAssets
-          )
-        )
-        .next(props.stepFunctionsTasks.publishWorkflowDynamoDbUpdate)
-        .next(
-          props.stepFunctionsChoices.publishWorkflowSqs.when(
-            Condition.booleanEquals('$.enableSqs', true),
-            props.stepFunctionsTasks.publishWorkflowSqsSendMessage
-          )
-        )
-        .next(
-          props.stepFunctionsChoices.publishWorkflowSns.when(
-            Condition.booleanEquals('$.enableSns', true),
-            props.stepFunctionsTasks.publishWorkflowSnsNotification
-          )
-        )
-        .next(props.stepFunctionsPasses.publishWorkflowComplete);
   }
 }

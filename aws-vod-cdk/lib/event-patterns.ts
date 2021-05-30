@@ -19,7 +19,7 @@ export class EventPatterns extends Construct {
       },
     };
 
-    this.encodeComplete = {
+    this.encodeError = {
       source: ['aws.mediaconvert'],
       detail: {
         status: 'ERROR',

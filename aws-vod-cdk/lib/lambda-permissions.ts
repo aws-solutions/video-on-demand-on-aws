@@ -14,10 +14,6 @@ export class LambdaPermissions extends Construct {
   constructor(scope: Construct, id: string, props: LambdaPermissionsProps) {
     super(scope, id);
 
-    const rules = new Rules(this, 'Rules', {
-      stackName: props.stackName,
-    });
-
     this.s3LambdaInvokeVideo = {
       principal: new iam.ServicePrincipal('s3.amazonaws.com'),
       action: 'lambda:InvokeFunction',
@@ -27,13 +23,11 @@ export class LambdaPermissions extends Construct {
     this.cloudwatchLambdaInvokeErrors = {
       principal: new iam.ServicePrincipal('events.amazonaws.com'),
       action: 'lambda:InvokeFunction',
-      sourceArn: rules.encodeError.ruleArn,
     };
 
     this.cloudwatchLambdaInvokeComplete = {
       principal: new iam.ServicePrincipal('events.amazonaws.com'),
       action: 'lambda:InvokeFunction',
-      sourceArn: rules.encodeComplete.ruleArn,
     };
   }
 }

@@ -80,7 +80,7 @@ export class CustomResources extends Construct {
         { StackName: props.stackName },
         { GroupId: `${props.stackName}-packaging-group` },
         { PackagingConfigurations: 'HLS,DASH,MSS,CMAF' },
-        { DistributionId: props.cloudFronts.distribution },
+        { DistributionId: props.cloudFronts.distribution.distributionId },
         { EnableMediaPackage: props.enableMediaPackage },
       ],
     });
@@ -89,7 +89,7 @@ export class CustomResources extends Construct {
       resourceType: 'Custom::S3',
       serviceToken: props.lambdaFunctions.customResource.functionArn,
       properties: [
-        { Source: props.s3Buckets.source },
+        { Source: props.s3Buckets.source.bucketName },
         { IngestArn: props.lambdaFunctions.stepFunctions.functionArn },
         { Resource: 'S3Notification' },
         { WorkflowTrigger: props.workflowTrigger },

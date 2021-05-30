@@ -13,11 +13,11 @@ export class KmsKeys extends Construct {
     super(scope, id);
 
     this.snsMasterKey = new kms.Key(this, 'SnsKmsMasterKey', {
-      alias: `alias/aws/${props.stackName}-SnsMasterKey`,
+      alias: `${props.stackName}-SnsMasterKey`,
     });
 
     this.sqsMasterKey = new kms.Key(this, 'SqsKmsMasterKey', {
-      alias: `alias/aws/${props.stackName}-SqsMasterKey`,
+      alias: `${props.stackName}-SqsMasterKey`,
     });
   }
 }

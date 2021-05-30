@@ -238,7 +238,7 @@ export class PolicyStatements extends Construct {
         'logs:PutLogEvents',
       ],
       resources: [
-        `arn:${props.partition}:logs:${props.region}:${props.stackName}:log-group:/aws/lambda/*`,
+        `arn:${props.partition}:logs:${props.region}:${props.account}:log-group:/aws/lambda/*`,
       ],
     });
 
@@ -489,7 +489,7 @@ export class PolicyStatements extends Construct {
     this.snsNotificationRoleSns = new iam.PolicyStatement({
       actions: ['sns:Publish'],
       resources: [props.snsTopics.notifications.topicArn],
-      conditions: { 'aws:SecureTransport': 'true' },
+      conditions: { Bool: { 'aws:SecureTransport': 'true' } },
     });
 
     this.sqsSendMessageRoleLambda = new iam.PolicyStatement({
@@ -513,7 +513,7 @@ export class PolicyStatements extends Construct {
     this.sqsSendMessageRoleSqs = new iam.PolicyStatement({
       actions: ['sqs:SendMessage'],
       resources: [props.sqsQueues.main.queueArn],
-      conditions: { 'aws:SecureTransport': 'true' },
+      conditions: { Bool: { 'aws:SecureTransport': 'true' } },
     });
 
     this.stepFunctionsRoleLambda = new iam.PolicyStatement({

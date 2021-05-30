@@ -45,7 +45,7 @@ export class DynamoDbTables extends Construct {
             },
             {
               attributeName: 'startTime',
-              keyType: 'HASH',
+              keyType: 'RANGE',
             },
           ],
           projection: {

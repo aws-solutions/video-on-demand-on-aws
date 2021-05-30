@@ -20,25 +20,19 @@ import { StepFunctionsTasks } from './step-functions-tasks';
 import { CustomResources } from './custom-resources';
 import { Outputs } from './outputs';
 
-// Create an extension method to allow easy conversion to boolean
-// values from 'yes', 1, 'true', etc.
-Object.defineProperty(String.prototype, 'toBool', {
-  value: function toBool() {
-    switch (this) {
-      case true:
-      case 'true':
-      case 1:
-      case '1':
-      case 'on':
-      case 'yes':
-        return true;
-      default:
-        return false;
-    }
-  },
-  writable: true,
-  configurable: true,
-});
+const convertToBool = (value: string | boolean | Number) => {
+  switch (value) {
+    case true:
+    case 'true':
+    case 1:
+    case '1':
+    case 'on':
+    case 'yes':
+      return true;
+    default:
+      return false;
+  }
+};
 
 export class AwsVodCdkStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
@@ -59,20 +53,22 @@ export class AwsVodCdkStack extends Stack {
     const glacier = this.node.tryGetContext('glacier') ?? 'DISABLED';
 
     const frameCapture =
-      this.node.tryGetContext('frameCapture').toBool() ?? false;
+      convertToBool(this.node.tryGetContext('frameCapture')) ?? false;
 
     const enableMediaPackage =
-      this.node.tryGetContext('enableMediaPackage').toBool() ?? false;
+      convertToBool(this.node.tryGetContext('enableMediaPackage')) ?? false;
 
-    const enableSns = this.node.tryGetContext('enableSns').toBool() ?? true;
+    const enableSns =
+      convertToBool(this.node.tryGetContext('enableSns')) ?? true;
 
-    const enableSqs = this.node.tryGetContext('enableSqs').toBool() ?? true;
+    const enableSqs =
+      convertToBool(this.node.tryGetContext('enableSqs')) ?? true;
 
     const acceleratedTranscoding =
       this.node.tryGetContext('acceleratedTranscoding') ?? 'PREFERRED';
 
     const sendAnonymousMetrics =
-      this.node.tryGetContext('sendAnonymousMetrics').toBool() ?? false;
+      convertToBool(this.node.tryGetContext('sendAnonymousMetrics')) ?? false;
 
     // Initialize Custom Constructs
     const cloudfrontOriginAccessIdentities =
@@ -105,6 +101,7 @@ export class AwsVodCdkStack extends Stack {
     });
 
     const snsTopics = new SnsTopics(this, 'SnsTopics', {
+      adminEmail: adminEmail,
       kmsKeys: kmsKeys,
       stackName: stackName,
     });
@@ -113,30 +110,6 @@ export class AwsVodCdkStack extends Stack {
       kmsKeys: kmsKeys,
       stackName: stackName,
     });
-
-    const stepFunctionsChoices = new StepFunctionsChoices(
-      this,
-      'StepFunctionsChoices',
-      {
-        stackName: stackName,
-      }
-    );
-
-    const stepFunctionsPasses = new StepFunctionsPasses(
-      this,
-      'StepFunctionsPasses',
-      {
-        stackName: stackName,
-      }
-    );
-
-    const stepFunctionsTasks = new StepFunctionsTasks(
-      this,
-      'StepFunctionsTasks',
-      {
-        stackName: stackName,
-      }
-    );
 
     const cloudFronts = new CloudFronts(this, 'CloudFronts', {
       cloudfrontOriginAccessIdentities: cloudfrontOriginAccessIdentities,
@@ -161,14 +134,6 @@ export class AwsVodCdkStack extends Stack {
     const iamRoles = new IamRoles(this, 'IamRoles', {
       policyStatements: policyStatements,
       stackName: stackName,
-    });
-
-    const stepFunctions = new StepFunctions(this, 'StepFunctions', {
-      iamRoles: iamRoles,
-      stackName: stackName,
-      stepFunctionsChoices: stepFunctionsChoices,
-      stepFunctionsPasses: stepFunctionsPasses,
-      stepFunctionsTasks: stepFunctionsTasks,
     });
 
     const lambdaFunctions = new LambdaFunctions(this, 'LambdaFunctions', {
@@ -217,6 +182,39 @@ export class AwsVodCdkStack extends Stack {
       snsTopics: snsTopics,
       sqsQueues: sqsQueues,
       stackName: stackName,
+    });
+
+    const stepFunctionsChoices = new StepFunctionsChoices(
+      this,
+      'StepFunctionsChoices',
+      {
+        stackName: stackName,
+      }
+    );
+
+    const stepFunctionsPasses = new StepFunctionsPasses(
+      this,
+      'StepFunctionsPasses',
+      {
+        stackName: stackName,
+      }
+    );
+
+    const stepFunctionsTasks = new StepFunctionsTasks(
+      this,
+      'StepFunctionsTasks',
+      {
+        lambdaFunctions: lambdaFunctions,
+        stackName: stackName,
+      }
+    );
+
+    const stepFunctions = new StepFunctions(this, 'StepFunctions', {
+      iamRoles: iamRoles,
+      stackName: stackName,
+      stepFunctionsChoices: stepFunctionsChoices,
+      stepFunctionsPasses: stepFunctionsPasses,
+      stepFunctionsTasks: stepFunctionsTasks,
     });
 
     // Add IamRoles to PolicyStatements as resources
