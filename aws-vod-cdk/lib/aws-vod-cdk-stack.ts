@@ -47,10 +47,18 @@ export class AwsVodCdkStack extends Stack {
 
     const adminEmail = this.node.tryGetContext('adminEmail') ?? '';
 
+    const cloudFrontDomainPrefix =
+      this.node.tryGetContext('cloudFrontDomainPrefix') ?? '';
+
+    const cloudFrontRootDomain =
+      this.node.tryGetContext('cloudFrontRootDomain') ?? '';
+
     const workflowTrigger =
       this.node.tryGetContext('workflowTrigger') ?? 'VideoFile';
 
     const glacier = this.node.tryGetContext('glacier') ?? 'DISABLED';
+
+    const hostedZoneId = this.node.tryGetContext('hostedZoneId') ?? '';
 
     const frameCapture =
       convertToBool(this.node.tryGetContext('frameCapture')) ?? false;
@@ -112,7 +120,10 @@ export class AwsVodCdkStack extends Stack {
     });
 
     const cloudFronts = new CloudFronts(this, 'CloudFronts', {
+      cloudFrontDomainPrefix: cloudFrontDomainPrefix,
+      cloudFrontRootDomain: cloudFrontRootDomain,
       cloudfrontOriginAccessIdentities: cloudfrontOriginAccessIdentities,
+      hostedZoneId: hostedZoneId,
       region: region,
       s3Buckets: s3Buckets,
       stackName: stackName,
@@ -235,12 +246,12 @@ export class AwsVodCdkStack extends Stack {
     // This must be done here to prevent circular dependency issues
     lambdaFunctions.encode.addEnvironment(
       'EndPoint',
-      customResources.mediaConvertEndPoint.getAttString('EndPointUrl')
+      customResources.mediaConvertEndPoint.getAttString('EndpointUrl')
     );
 
     lambdaFunctions.outputValidate.addEnvironment(
       'EndPoint',
-      customResources.mediaConvertEndPoint.getAttString('EndPointUrl')
+      customResources.mediaConvertEndPoint.getAttString('EndpointUrl')
     );
 
     lambdaFunctions.mediaPackageAssets.addEnvironment(

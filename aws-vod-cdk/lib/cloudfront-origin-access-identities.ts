@@ -1,5 +1,6 @@
 import { Construct } from 'constructs';
 import { aws_cloudfront as cloudfront } from 'aws-cdk-lib';
+import { S3Buckets } from './s3-buckets';
 
 export interface CloudfrontOriginAccessIdentitiesProps {
   stackName: string;

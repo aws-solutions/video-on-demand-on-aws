@@ -212,7 +212,6 @@ export class PolicyStatements extends Construct {
     });
 
     this.destinationBucket = new iam.PolicyStatement({
-      effect: iam.Effect.ALLOW,
       actions: ['s3:GetObject'],
       principals: [
         new CanonicalUserPrincipal(
@@ -220,7 +219,7 @@ export class PolicyStatements extends Construct {
         ),
       ],
       resources: [
-        `arn:${props.partition}:s3:::${props.s3Buckets.destination}/*`,
+        `arn:${props.partition}:s3:::${props.s3Buckets.destination.bucketName}/*`,
       ],
     });
 

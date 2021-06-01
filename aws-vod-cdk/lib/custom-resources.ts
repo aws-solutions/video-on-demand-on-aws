@@ -27,6 +27,14 @@ export class CustomResources extends Construct {
   constructor(scope: Construct, id: string, props: CustomResourcesProps) {
     super(scope, id);
 
+    this.uuid = props.sendAnonymousMetrics
+      ? new CustomResource(this, 'UUID', {
+          resourceType: 'Custom::UUID',
+          serviceToken: props.lambdaFunctions.customResource.functionArn,
+          properties: [{ Resource: 'UUID' }],
+        })
+      : undefined;
+
     this.anonymousMetrics =
       props.sendAnonymousMetrics && this.uuid !== undefined
         ? new CustomResource(this, 'AnonymousMetrics', {
@@ -95,13 +103,5 @@ export class CustomResources extends Construct {
         { WorkflowTrigger: props.workflowTrigger },
       ],
     });
-
-    this.uuid = props.sendAnonymousMetrics
-      ? new CustomResource(this, 'UUID', {
-          resourceType: 'Custom::UUID',
-          serviceToken: props.lambdaFunctions.customResource.functionArn,
-          properties: [{ Resource: 'UUID' }],
-        })
-      : undefined;
   }
 }

@@ -15,14 +15,14 @@ export class EventPatterns extends Construct {
     this.encodeComplete = {
       source: ['aws.mediaconvert'],
       detail: {
-        status: 'COMPLETE',
+        status: ['COMPLETE'],
       },
     };
 
     this.encodeError = {
       source: ['aws.mediaconvert'],
       detail: {
-        status: 'ERROR',
+        status: ['ERROR'],
       },
     };
   }
