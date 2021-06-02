@@ -19,8 +19,12 @@ import { StepFunctionsPasses } from './step-functions-passes';
 import { StepFunctionsTasks } from './step-functions-tasks';
 import { CustomResources } from './custom-resources';
 import { Outputs } from './outputs';
+import { send } from 'process';
 
-const convertToBool = (value: string | boolean | Number) => {
+const convertToBool = (value: string | boolean | Number | null | undefined) => {
+  if (value === undefined || !value) {
+    return null;
+  }
   switch (value) {
     case true:
     case 'true':
@@ -45,7 +49,7 @@ export class AwsVodCdkStack extends Stack {
     const region = this.region;
     const stackName = this.stackName;
 
-    const adminEmail = this.node.tryGetContext('adminEmail') ?? '';
+    const adminEmail = this.node.tryGetContext('adminEmail');
 
     const cloudFrontDomainPrefix =
       this.node.tryGetContext('cloudFrontDomainPrefix') ?? '';

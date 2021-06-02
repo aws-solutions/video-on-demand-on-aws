@@ -27,6 +27,7 @@ export class SnsTopics extends Construct {
     // A bug report has been filed  (https://github.com/aws/aws-cdk/issues/14919)
     this.notifications.addSubscription(
       new subscriptions.EmailSubscription(props.adminEmail)
+      // new subscriptions.EmailSubscription('amkuchta@gmail.com')
     );
   }
 }

@@ -9,8 +9,18 @@
     "@aws-cdk/aws-ecs-patterns:removeDefaultDesiredCount": true,
     "@aws-cdk/aws-rds:lowercaseDbIdentifier": true,
     "adminEmail": "",
-    "workFlowTrigger": "",
-    "archiveSource": "DISABLED",
-    "frameCapture": "No"
+    "workflowTrigger": "VideoFile",
+    "glacier": "DISABLED",
+    "frameCapture": false,
+    "enableMediaPackage": false,
+    "enableSns": true,
+    "enableSqs": true,
+    "acceleratedTranscoding": "PREFERRED",
+    "stackName": "",
+    "stackStage": "",
+    "cloudFrontDomainPrefix": "",
+    "cloudFrontRootDomain": "",
+    "hostedZoneId": "",
+    "sendAnonymousMetrics": true
   }
 }

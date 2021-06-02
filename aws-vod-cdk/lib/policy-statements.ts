@@ -178,9 +178,7 @@ export class PolicyStatements extends Construct {
         'mediapackage-vod:ListPackagingConfigurations',
         'mediapackage-vod:ListPackagingGroups',
       ],
-      resources: [
-        `arn:${props.partition}:mediaconvert:${props.region}:${props.account}:*`,
-      ],
+      resources: ['*'],
     });
 
     this.customResourceRoleMediaPackageDelete = new iam.PolicyStatement({

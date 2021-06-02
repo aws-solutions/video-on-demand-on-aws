@@ -19,111 +19,118 @@ const MediaConvert = require('./lib/mediaconvert');
 const MediaPackage = require('./lib/mediapackage');
 
 exports.handler = async (event, context) => {
-    console.log(`REQUEST:: ${JSON.stringify(event, null, 2)}`);
-    let config = event.ResourceProperties;
-    let responseData = {};
+  console.log(`REQUEST:: ${JSON.stringify(event, null, 2)}`);
+  let config = event.ResourceProperties;
+  console.log(`CONFIG:: ${JSON.stringify(config, null, 2)}`);
+  let responseData = {};
 
-    // Each resource returns a promise with a json object to return cloudformation.
-    try {
-        console.log(`RESOURCE:: ${config.Resource}`);
+  // Each resource returns a promise with a json object to return cloudformation.
+  try {
+    console.log(`RESOURCE:: ${config.Resource}`);
 
-        if (event.RequestType === 'Create') {
-            switch (config.Resource) {
-                case 'S3Notification':
-                    await S3.putNotification(config);
-                    break;
+    if (event.RequestType === 'Create') {
+      switch (config.Resource) {
+        case 'S3Notification':
+          await S3.putNotification(config);
+          break;
 
-                case 'EndPoint':
-                    responseData = await MediaConvert.getEndpoint(config);
-                    break;
+        case 'EndPoint':
+          responseData = await MediaConvert.getEndpoint(config);
+          break;
 
-                case 'MediaConvertTemplates':
-                    await MediaConvert.createTemplates(config);
-                    break;
+        case 'MediaConvertTemplates':
+          await MediaConvert.createTemplates(config);
+          break;
 
-                case 'UUID':
-                    responseData = { UUID: uuidv4() };
-                    break;
+        case 'UUID':
+          responseData = { UUID: uuidv4() };
+          break;
 
-                case 'AnonymousMetric':
-                    await Metrics.send(config);
-                    break;
+        case 'AnonymousMetric':
+          await Metrics.send(config);
+          break;
 
-                case 'MediaPackageVod':
-                    if (config.EnableMediaPackage === 'true') {
-                        responseData = await MediaPackage.create(config);
-                    }
-                    else {
-                        // response data with these attributes still needs to be returned even if we're not using MediaPackageVod
-                        responseData = {
-                            GroupId: null,
-                            GroupDomainName: null
-                        };
-                    }
-                    break;
+        case 'MediaPackageVod':
+          if (config.EnableMediaPackage === 'true') {
+            responseData = await MediaPackage.create(config);
+          } else {
+            // response data with these attributes still needs to be returned even if we're not using MediaPackageVod
+            responseData = {
+              GroupId: null,
+              GroupDomainName: null,
+            };
+          }
+          break;
 
-                default:
-                    console.log(config.Resource, ': not defined as a custom resource, sending success response');
-            }
-        }
-        if (event.RequestType === 'Update') {
-            switch (config.Resource) {
-                case 'S3Notification':
-                    await S3.putNotification(config);
-                    break;
-
-                case 'EndPoint':
-                    responseData = await MediaConvert.getEndpoint(config);
-                    break;
-
-                case 'MediaConvertTemplates':
-                    await MediaConvert.updateTemplates(config);
-                    break;
-
-                case 'MediaPackageVod':
-                    if (config.EnableMediaPackage === 'true') {
-                        responseData = await MediaPackage.update(config);
-                    }
-                    else {
-                        // response data with these attributes still needs to be returned even if we're not using MediaPackageVod
-                        responseData = {
-                            GroupId: null,
-                            GroupDomainName: null
-                        };
-                    }
-                    break;
-                default:
-                    console.log(config.Resource, ': update not supported, sending success response');
-            }
-        }
-        if (event.RequestType === 'Delete') {
-            switch (config.Resource) {
-                case 'MediaConvertTemplates':
-                    await MediaConvert.deleteTemplates(config);
-                    break;
-
-                case 'MediaPackageVod':
-                    if (config.EnableMediaPackage === 'true') {
-                        responseData = await MediaPackage.purge(config);
-                    }
-                    else {
-                        // response data with these attributes still needs to be returned even if we're not using MediaPackageVod
-                        responseData = {
-                            GroupId: null
-                        };
-                    }
-                    break;
-
-                default:
-                    console.log(config.Resource, ': delete not required, sending success response');
-            }
-        }
-
-        const response = await cfn.send(event, context, 'SUCCESS', responseData);
-        console.log(`RESPONSE:: ${JSON.stringify(responseData, null, 2)}`);
-        console.log(`CFN STATUS:: ${response}`);
-    } catch (err) {
-        console.error(JSON.stringify(err, null, 2));
-        await cfn.send(event, context, 'FAILED');
+        default:
+          console.log(
+            config.Resource,
+            ': not defined as a custom resource, sending success response'
+          );
+      }
     }
+    if (event.RequestType === 'Update') {
+      switch (config.Resource) {
+        case 'S3Notification':
+          await S3.putNotification(config);
+          break;
+
+        case 'EndPoint':
+          responseData = await MediaConvert.getEndpoint(config);
+          break;
+
+        case 'MediaConvertTemplates':
+          await MediaConvert.updateTemplates(config);
+          break;
+
+        case 'MediaPackageVod':
+          if (config.EnableMediaPackage === 'true') {
+            responseData = await MediaPackage.update(config);
+          } else {
+            // response data with these attributes still needs to be returned even if we're not using MediaPackageVod
+            responseData = {
+              GroupId: null,
+              GroupDomainName: null,
+            };
+          }
+          break;
+        default:
+          console.log(
+            config.Resource,
+            ': update not supported, sending success response'
+          );
+      }
+    }
+    if (event.RequestType === 'Delete') {
+      switch (config.Resource) {
+        case 'MediaConvertTemplates':
+          await MediaConvert.deleteTemplates(config);
+          break;
+
+        case 'MediaPackageVod':
+          if (config.EnableMediaPackage === 'true') {
+            responseData = await MediaPackage.purge(config);
+          } else {
+            // response data with these attributes still needs to be returned even if we're not using MediaPackageVod
+            responseData = {
+              GroupId: null,
+            };
+          }
+          break;
+
+        default:
+          console.log(
+            config.Resource,
+            ': delete not required, sending success response'
+          );
+      }
+    }
+
+    const response = await cfn.send(event, context, 'SUCCESS', responseData);
+    console.log(`RESPONSE:: ${JSON.stringify(responseData, null, 2)}`);
+    console.log(`CFN STATUS:: ${response}`);
+  } catch (err) {
+    console.error(JSON.stringify(err, null, 2));
+    await cfn.send(event, context, 'FAILED');
+  }
 };
