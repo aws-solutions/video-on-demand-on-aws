@@ -76,9 +76,9 @@ export class ContextVariables {
         ? !this.prependDomainWithStackStage &&
           stack.node.tryGetContext('stackStage') !== undefined
           ? stack.node.tryGetContext('cloudFrontDomain')
-          : `${stack.node.tryGetContext(
-              'stackStage'
-            )}.${stack.node.tryGetContext('cloudFrontDomain')}`
+          : `${stack.node
+              .tryGetContext('stackStage')
+              .toLowerCase()}.${stack.node.tryGetContext('cloudFrontDomain')}`
         : undefined;
 
     this.enableMediaPackage =
