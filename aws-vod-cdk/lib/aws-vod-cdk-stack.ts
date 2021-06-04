@@ -1,5 +1,6 @@
 import { Stack, StackProps } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
+import { ContextVariables } from './_context-variables';
 import { CloudFronts } from './cloudfronts';
 import { CloudfrontOriginAccessIdentities } from './cloudfront-origin-access-identities';
 import { DynamoDbTables } from './dynamodb-tables';
@@ -19,68 +20,20 @@ import { StepFunctionsPasses } from './step-functions-passes';
 import { StepFunctionsTasks } from './step-functions-tasks';
 import { CustomResources } from './custom-resources';
 import { Outputs } from './outputs';
-import { send } from 'process';
-
-const convertToBool = (value: string | boolean | Number | null | undefined) => {
-  if (value === undefined || !value) {
-    return null;
-  }
-  switch (value) {
-    case true:
-    case 'true':
-    case 1:
-    case '1':
-    case 'on':
-    case 'yes':
-      return true;
-    default:
-      return false;
-  }
-};
+import { PolicyDocuments } from './policy-documents';
 
 export class AwsVodCdkStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
 
-    // Attempt to set constant variables from context;
-    // set default values if not found
+    // Set constant values from the Stack
     const account = this.account;
     const partition = this.partition;
     const region = this.region;
     const stackName = this.stackName;
 
-    const adminEmail = this.node.tryGetContext('adminEmail');
-
-    const cloudFrontDomainPrefix =
-      this.node.tryGetContext('cloudFrontDomainPrefix') ?? '';
-
-    const cloudFrontRootDomain =
-      this.node.tryGetContext('cloudFrontRootDomain') ?? '';
-
-    const workflowTrigger =
-      this.node.tryGetContext('workflowTrigger') ?? 'VideoFile';
-
-    const glacier = this.node.tryGetContext('glacier') ?? 'DISABLED';
-
-    const hostedZoneId = this.node.tryGetContext('hostedZoneId') ?? '';
-
-    const frameCapture =
-      convertToBool(this.node.tryGetContext('frameCapture')) ?? false;
-
-    const enableMediaPackage =
-      convertToBool(this.node.tryGetContext('enableMediaPackage')) ?? false;
-
-    const enableSns =
-      convertToBool(this.node.tryGetContext('enableSns')) ?? true;
-
-    const enableSqs =
-      convertToBool(this.node.tryGetContext('enableSqs')) ?? true;
-
-    const acceleratedTranscoding =
-      this.node.tryGetContext('acceleratedTranscoding') ?? 'PREFERRED';
-
-    const sendAnonymousMetrics =
-      convertToBool(this.node.tryGetContext('sendAnonymousMetrics')) ?? false;
+    // Import Context Variables
+    const contextVariables = new ContextVariables(this);
 
     // Initialize Custom Constructs
     const cloudfrontOriginAccessIdentities =
@@ -113,7 +66,7 @@ export class AwsVodCdkStack extends Stack {
     });
 
     const snsTopics = new SnsTopics(this, 'SnsTopics', {
-      adminEmail: adminEmail,
+      adminEmail: contextVariables.adminEmail,
       kmsKeys: kmsKeys,
       stackName: stackName,
     });
@@ -124,10 +77,10 @@ export class AwsVodCdkStack extends Stack {
     });
 
     const cloudFronts = new CloudFronts(this, 'CloudFronts', {
-      cloudFrontDomainPrefix: cloudFrontDomainPrefix,
-      cloudFrontRootDomain: cloudFrontRootDomain,
+      cloudFrontDomainPrefix: contextVariables.cloudFrontDomainPrefix,
+      cloudFrontRootDomain: contextVariables.cloudFrontRootDomain,
       cloudfrontOriginAccessIdentities: cloudfrontOriginAccessIdentities,
-      hostedZoneId: hostedZoneId,
+      hostedZoneId: contextVariables.hostedZoneId,
       region: region,
       s3Buckets: s3Buckets,
       stackName: stackName,
@@ -146,21 +99,27 @@ export class AwsVodCdkStack extends Stack {
       stackName: stackName,
     });
 
+    const policyDocuments = new PolicyDocuments(this, 'PolicyDocuments', {
+      policyStatements: policyStatements,
+      stackName: stackName,
+    });
+
     const iamRoles = new IamRoles(this, 'IamRoles', {
+      policyDocuments: policyDocuments,
       policyStatements: policyStatements,
       stackName: stackName,
     });
 
     const lambdaFunctions = new LambdaFunctions(this, 'LambdaFunctions', {
-      acceleratedTranscoding: acceleratedTranscoding,
+      acceleratedTranscoding: contextVariables.acceleratedTranscoding,
       account: account,
       cloudFronts: cloudFronts,
       dynamoDbTables: dynamoDbTables,
-      enableMediaPackage: enableMediaPackage,
-      enableSns: enableSns,
-      enableSqs: enableSqs,
-      frameCapture: frameCapture,
-      glacier: glacier,
+      enableMediaPackage: contextVariables.enableMediaPackage,
+      enableSns: contextVariables.enableSns,
+      enableSqs: contextVariables.enableSqs,
+      frameCapture: contextVariables.frameCapture,
+      glacier: contextVariables.glacier,
       iamRoles: iamRoles,
       lambdaPermissions: lambdaPermissions,
       partition: partition,
@@ -179,14 +138,14 @@ export class AwsVodCdkStack extends Stack {
 
     const customResources = new CustomResources(this, 'CustomResources', {
       cloudFronts: cloudFronts,
-      enableMediaPackage: enableMediaPackage,
-      frameCapture: frameCapture,
-      glacier: glacier,
+      enableMediaPackage: contextVariables.enableMediaPackage,
+      frameCapture: contextVariables.frameCapture,
+      glacier: contextVariables.glacier,
       lambdaFunctions: lambdaFunctions,
       s3Buckets: s3Buckets,
-      sendAnonymousMetrics: sendAnonymousMetrics,
+      sendAnonymousMetrics: contextVariables.sendAnonymousMetrics,
       stackName: stackName,
-      workflowTrigger: workflowTrigger,
+      workflowTrigger: contextVariables.workflowTrigger,
     });
 
     const outputs = new Outputs(this, 'Outputs', {

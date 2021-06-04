@@ -16,7 +16,7 @@ export class S3Buckets extends Construct {
     this.logs = new s3.Bucket(this, 'LogsBucket', {
       bucketName: `${props.stackName.toLowerCase()}-logs`,
       accessControl: s3.BucketAccessControl.LOG_DELIVERY_WRITE,
-      encryption: s3.BucketEncryption.KMS,
+      encryption: s3.BucketEncryption.S3_MANAGED,
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       removalPolicy: RemovalPolicy.RETAIN,
     });
@@ -32,7 +32,7 @@ export class S3Buckets extends Construct {
         },
       ],
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
-      encryption: s3.BucketEncryption.KMS,
+      encryption: s3.BucketEncryption.S3_MANAGED,
       serverAccessLogsBucket: this.logs,
       serverAccessLogsPrefix: 's3-access/',
       removalPolicy: RemovalPolicy.RETAIN,
@@ -70,7 +70,7 @@ export class S3Buckets extends Construct {
           ],
         },
       ],
-      encryption: s3.BucketEncryption.KMS,
+      encryption: s3.BucketEncryption.S3_MANAGED,
       serverAccessLogsBucket: this.logs,
       serverAccessLogsPrefix: 's3-access/',
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,

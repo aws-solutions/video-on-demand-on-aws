@@ -22,12 +22,8 @@ export class SnsTopics extends Construct {
       masterKey: props.kmsKeys.snsMasterKey,
     });
 
-    // The below code does not work; passing a parameter to the EmailSubscription
-    // construct results in an error. For now, hard-code an email.
-    // A bug report has been filed  (https://github.com/aws/aws-cdk/issues/14919)
     this.notifications.addSubscription(
       new subscriptions.EmailSubscription(props.adminEmail)
-      // new subscriptions.EmailSubscription('amkuchta@gmail.com')
     );
   }
 }

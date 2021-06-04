@@ -209,7 +209,7 @@ export class LambdaFunctions extends Construct {
           MediaPackageVodRole: props.iamRoles.mediaPackageVod.roleArn,
           // GroupId, GroupDomainName added in aws-vod-cdk-stack.ts
         },
-        role: props.iamRoles.mediaPackageAsset,
+        role: props.iamRoles.mediaPackageAssets,
       }
     );
 
