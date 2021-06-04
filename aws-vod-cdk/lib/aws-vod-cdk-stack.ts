@@ -77,8 +77,7 @@ export class AwsVodCdkStack extends Stack {
     });
 
     const cloudFronts = new CloudFronts(this, 'CloudFronts', {
-      cloudFrontDomainPrefix: contextVariables.cloudFrontDomainPrefix,
-      cloudFrontRootDomain: contextVariables.cloudFrontRootDomain,
+      cloudFrontDomain: contextVariables.cloudFrontDomain,
       cloudfrontOriginAccessIdentities: cloudfrontOriginAccessIdentities,
       hostedZoneId: contextVariables.hostedZoneId,
       region: region,

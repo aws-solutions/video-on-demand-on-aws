@@ -18,8 +18,8 @@
     "acceleratedTranscoding": "PREFERRED",
     "stackName": "",
     "stackStage": "",
-    "cloudFrontDomainPrefix": "",
-    "cloudFrontRootDomain": "",
+    "cloudFrontDomain": "",
+    "prependDomainWithStackStage": false,
     "hostedZoneId": "",
     "sendAnonymousMetrics": true
   }

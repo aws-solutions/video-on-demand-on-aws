@@ -20,14 +20,14 @@ const convertToBool = (value: string | boolean | Number | null | undefined) => {
 export class ContextVariables {
   public readonly acceleratedTranscoding: string;
   public readonly adminEmail: string;
-  public readonly cloudFrontDomainPrefix: string;
-  public readonly cloudFrontRootDomain: string;
+  public readonly cloudFrontDomain: string;
   public readonly enableMediaPackage: boolean;
   public readonly enableSns: boolean;
   public readonly enableSqs: boolean;
   public readonly frameCapture: boolean;
   public readonly glacier: string;
   public readonly hostedZoneId: string;
+  public readonly prependDomainWithStackStage: boolean;
   public readonly sendAnonymousMetrics: boolean;
   public readonly workflowTrigger: string;
 
@@ -68,13 +68,18 @@ export class ContextVariables {
       );
     }
 
-    this.cloudFrontDomainPrefix = stack.node.tryGetContext(
-      'cloudFrontDomainPrefix'
-    );
+    this.prependDomainWithStackStage =
+      stack.node.tryGetContext('prependDomainWithStackStage') ?? false;
 
-    this.cloudFrontRootDomain = stack.node.tryGetContext(
-      'cloudFrontRootDomain'
-    );
+    this.cloudFrontDomain =
+      stack.node.tryGetContext('cloudFrontDomain') !== undefined
+        ? !this.prependDomainWithStackStage &&
+          stack.node.tryGetContext('stackStage') !== undefined
+          ? stack.node.tryGetContext('cloudFrontDomain')
+          : `${stack.node.tryGetContext(
+              'stackStage'
+            )}.${stack.node.tryGetContext('cloudFrontDomain')}`
+        : undefined;
 
     this.enableMediaPackage =
       convertToBool(stack.node.tryGetContext('enableMediaPackage')) ?? false;

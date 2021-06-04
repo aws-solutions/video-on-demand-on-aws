@@ -9,8 +9,7 @@ import { S3Buckets } from './s3-buckets';
 import { CloudfrontOriginAccessIdentities } from './cloudfront-origin-access-identities';
 
 export interface CloudFrontsProps {
-  cloudFrontDomainPrefix: string;
-  cloudFrontRootDomain: string;
+  cloudFrontDomain: string;
   cloudfrontOriginAccessIdentities: CloudfrontOriginAccessIdentities;
   hostedZoneId: string;
   region: string;
@@ -31,35 +30,28 @@ export class CloudFronts extends Construct {
       props.hostedZoneId &&
       props.hostedZoneId !== '';
 
-    const cloudFrontDomainPrefixCheck =
-      props.cloudFrontDomainPrefix !== undefined &&
-      props.cloudFrontDomainPrefix &&
-      props.cloudFrontDomainPrefix !== '';
-
-    const cloudFrontRootDomainCheck =
-      props.cloudFrontRootDomain !== undefined &&
-      props.cloudFrontRootDomain &&
-      props.cloudFrontRootDomain !== '';
+    const cloudFrontDomainCheck =
+      props.cloudFrontDomain !== undefined &&
+      props.cloudFrontDomain &&
+      props.cloudFrontDomain !== '';
 
     // Only create the following if all of the required information
     // for a domain name has been provided
-    if (hostedZoneCheck && cloudFrontRootDomainCheck) {
+    if (hostedZoneCheck && cloudFrontDomainCheck) {
       this.hostedZone = route53.HostedZone.fromHostedZoneAttributes(
         this,
         'ExternalHostedZone',
         {
           hostedZoneId: props.hostedZoneId,
-          zoneName: props.cloudFrontRootDomain,
+          zoneName: props.cloudFrontDomain,
         }
       );
 
       this.certificate = new acm.DnsValidatedCertificate(
         this,
-        `${props.cloudFrontRootDomain}-DnsValidatedCertificate`,
+        `${props.cloudFrontDomain}-DnsValidatedCertificate`,
         {
-          domainName: cloudFrontDomainPrefixCheck
-            ? `*.${props.cloudFrontDomainPrefix}.${props.cloudFrontRootDomain}`
-            : `*.${props.cloudFrontRootDomain}`,
+          domainName: `*.${props.cloudFrontDomain}`,
           hostedZone: this.hostedZone,
         }
       );
@@ -71,17 +63,12 @@ export class CloudFronts extends Construct {
       {
         // Only create a domain name if all of the pieces are required
         domainNames:
-          hostedZoneCheck && cloudFrontRootDomainCheck
-            ? // Root domain provided, but no prefix (sub-domain)
-              [`${props.cloudFrontRootDomain}`]
-            : cloudFrontDomainPrefixCheck
-            ? // Prefix (sub-domain) is provided
-              [`${props.cloudFrontDomainPrefix}.${props.cloudFrontRootDomain}`]
-            : // No domain data or Hosted Zone ID provided
-              undefined,
+          hostedZoneCheck && cloudFrontDomainCheck
+            ? [`${props.cloudFrontDomain}`]
+            : undefined,
         certificate:
           // Only add the certificate if required
-          hostedZoneCheck && cloudFrontRootDomainCheck
+          hostedZoneCheck && cloudFrontDomainCheck
             ? this.certificate
             : undefined,
         defaultBehavior: {
