@@ -37,6 +37,7 @@ export class StepFunctionsTasks extends Construct {
       'IngestWorkflowInputValidateTask',
       {
         lambdaFunction: props.lambdaFunctions.inputValidate,
+        payloadResponseOnly: true,
       }
     );
 
@@ -45,6 +46,7 @@ export class StepFunctionsTasks extends Construct {
       'IngestWorkflowMediaInfoTask',
       {
         lambdaFunction: props.lambdaFunctions.mediaInfo,
+        payloadResponseOnly: true,
       }
     );
 
@@ -53,6 +55,7 @@ export class StepFunctionsTasks extends Construct {
       'IngestWorkflowDynamoDbUpdateTask',
       {
         lambdaFunction: props.lambdaFunctions.dynamoDbUpdate,
+        payloadResponseOnly: true,
       }
     );
 
@@ -61,6 +64,7 @@ export class StepFunctionsTasks extends Construct {
       'IngestWorkflowSnsNotificationsTask',
       {
         lambdaFunction: props.lambdaFunctions.snsNotification,
+        payloadResponseOnly: true,
       }
     );
 
@@ -69,6 +73,7 @@ export class StepFunctionsTasks extends Construct {
       'IngestWorkflowProcessExecuteTask',
       {
         lambdaFunction: props.lambdaFunctions.stepFunctions,
+        payloadResponseOnly: true,
       }
     );
 
@@ -77,6 +82,7 @@ export class StepFunctionsTasks extends Construct {
       'ProcessWorkflowDynamoDbUpdateTask',
       {
         lambdaFunction: props.lambdaFunctions.dynamoDbUpdate,
+        payloadResponseOnly: true,
       }
     );
 
@@ -85,6 +91,7 @@ export class StepFunctionsTasks extends Construct {
       'ProcessWorkflowEncodeJobSubmitTask',
       {
         lambdaFunction: props.lambdaFunctions.encode,
+        payloadResponseOnly: true,
       }
     );
 
@@ -93,6 +100,7 @@ export class StepFunctionsTasks extends Construct {
       'ProcessWorkflowProfilerTask',
       {
         lambdaFunction: props.lambdaFunctions.profiler,
+        payloadResponseOnly: true,
       }
     );
 
@@ -101,6 +109,7 @@ export class StepFunctionsTasks extends Construct {
       'PublishWorkflowArchiveTask',
       {
         lambdaFunction: props.lambdaFunctions.archiveSource,
+        payloadResponseOnly: true,
       }
     );
 
@@ -109,6 +118,7 @@ export class StepFunctionsTasks extends Construct {
       'PublishWorkflowDeepArchiveTask',
       {
         lambdaFunction: props.lambdaFunctions.archiveSource,
+        payloadResponseOnly: true,
       }
     );
 
@@ -117,6 +127,7 @@ export class StepFunctionsTasks extends Construct {
       'PublishWorkflowDynamoDbUpdateTask',
       {
         lambdaFunction: props.lambdaFunctions.dynamoDbUpdate,
+        payloadResponseOnly: true,
       }
     );
 
@@ -125,6 +136,7 @@ export class StepFunctionsTasks extends Construct {
       'PublishWorkflowMediaPackageAssetsTask',
       {
         lambdaFunction: props.lambdaFunctions.mediaPackageAssets,
+        payloadResponseOnly: true,
       }
     );
 
@@ -133,6 +145,7 @@ export class StepFunctionsTasks extends Construct {
       'PublishWorkflowSnsNotificationTask',
       {
         lambdaFunction: props.lambdaFunctions.snsNotification,
+        payloadResponseOnly: true,
       }
     );
 
@@ -141,6 +154,7 @@ export class StepFunctionsTasks extends Construct {
       'PublishWorkflowSqsSendMessageTask',
       {
         lambdaFunction: props.lambdaFunctions.sqsSendMessage,
+        payloadResponseOnly: true,
       }
     );
 
@@ -149,6 +163,7 @@ export class StepFunctionsTasks extends Construct {
       'PublishWorkflowValidateEncodingOutputTask',
       {
         lambdaFunction: props.lambdaFunctions.outputValidate,
+        payloadResponseOnly: true,
       }
     );
   }

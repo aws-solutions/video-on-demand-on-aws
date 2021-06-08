@@ -101,5 +101,6 @@ exports.handler = async (event) => {
     throw err;
   }
 
+  console.log(`DATA::${JSON.stringify(data)}`);
   return data;
 };

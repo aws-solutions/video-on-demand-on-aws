@@ -17,14 +17,14 @@ export class SqsQueues extends Construct {
     this.deadLetter = new sqs.Queue(this, 'SqsDeadLetterQueue', {
       queueName: `${props.stackName}-SqsDeadLetterQueue`,
       visibilityTimeout: Duration.seconds(120),
-      encryptionMasterKey: props.kmsKeys.sqsMasterKey,
+      // encryptionMasterKey: props.kmsKeys.sqsMasterKey,
       dataKeyReuse: Duration.seconds(300),
     });
 
     this.main = new sqs.Queue(this, 'MainSqsQueue', {
       queueName: `${props.stackName}-MainSqsQueue`,
       visibilityTimeout: Duration.seconds(120),
-      encryptionMasterKey: props.kmsKeys.sqsMasterKey,
+      // encryptionMasterKey: props.kmsKeys.sqsMasterKey,
       dataKeyReuse: Duration.seconds(300),
       deadLetterQueue: {
         queue: this.deadLetter,

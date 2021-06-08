@@ -51,7 +51,7 @@ export class CloudFronts extends Construct {
         this,
         `${props.cloudFrontDomain}-DnsValidatedCertificate`,
         {
-          domainName: `*.${props.cloudFrontDomain}`,
+          domainName: `${props.cloudFrontDomain}`,
           hostedZone: this.hostedZone,
         }
       );

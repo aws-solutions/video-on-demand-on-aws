@@ -38,10 +38,11 @@ export class StepFunctions extends Construct {
           props.stepFunctionsChoices.ingestWorkflowSnsChoice
             .when(
               Condition.booleanEquals('$.enableSns', true),
-              props.stepFunctionsTasks.ingestWorkflowSnsNotifications
+              props.stepFunctionsTasks.ingestWorkflowSnsNotifications.next(
+                props.stepFunctionsTasks.ingestWorkflowProcessExecute
+              )
             )
-            .afterwards()
-            .next(props.stepFunctionsTasks.ingestWorkflowProcessExecute)
+            .otherwise(props.stepFunctionsTasks.ingestWorkflowProcessExecute)
         );
 
     this.ingestWorkflowStateMachine = new stepfunctions.StateMachine(
@@ -123,37 +124,46 @@ export class StepFunctions extends Construct {
         props.stepFunctionsChoices.publishWorkflowArchiveSource
           .when(
             Condition.stringEquals('$.archiveSource', 'GLACIER'),
-            props.stepFunctionsTasks.publishWorkflowArchive
+            props.stepFunctionsTasks.publishWorkflowArchive.next(
+              props.stepFunctionsChoices.publishWorkflowMediaPackage
+            )
           )
           .when(
             Condition.stringEquals('$.archiveSource', 'DEEP_ARCHIVE'),
-            props.stepFunctionsTasks.publishWorkflowDeepArchive
+            props.stepFunctionsTasks.publishWorkflowDeepArchive.next(
+              props.stepFunctionsChoices.publishWorkflowMediaPackage
+            )
           )
-          .afterwards()
-          .next(
+          .otherwise(
             props.stepFunctionsChoices.publishWorkflowMediaPackage
               .when(
                 Condition.booleanEquals('$.enableMediaPackage', true),
-                props.stepFunctionsTasks.publishWorkflowMediaPackageAssets
+                props.stepFunctionsTasks.publishWorkflowMediaPackageAssets.next(
+                  props.stepFunctionsTasks.publishWorkflowDynamoDbUpdate
+                )
               )
-              .afterwards()
-              .next(props.stepFunctionsTasks.publishWorkflowDynamoDbUpdate)
-              .next(
-                props.stepFunctionsChoices.publishWorkflowSqs
-                  .when(
-                    Condition.booleanEquals('$.enableSqs', true),
-                    props.stepFunctionsTasks.publishWorkflowSqsSendMessage
-                  )
-                  .afterwards()
-                  .next(
-                    props.stepFunctionsChoices.publishWorkflowSns
-                      .when(
-                        Condition.booleanEquals('$.enableSns', true),
-                        props.stepFunctionsTasks.publishWorkflowSnsNotification
+              .otherwise(
+                props.stepFunctionsTasks.publishWorkflowDynamoDbUpdate.next(
+                  props.stepFunctionsChoices.publishWorkflowSqs
+                    .when(
+                      Condition.booleanEquals('$.enableSqs', true),
+                      props.stepFunctionsTasks.publishWorkflowSqsSendMessage.next(
+                        props.stepFunctionsChoices.publishWorkflowSns
                       )
-                      .afterwards()
-                      .next(props.stepFunctionsPasses.publishWorkflowComplete)
-                  )
+                    )
+                    .otherwise(
+                      props.stepFunctionsChoices.publishWorkflowSns
+                        .when(
+                          Condition.booleanEquals('$.enableSns', true),
+                          props.stepFunctionsTasks.publishWorkflowSnsNotification.next(
+                            props.stepFunctionsPasses.publishWorkflowComplete
+                          )
+                        )
+                        .otherwise(
+                          props.stepFunctionsPasses.publishWorkflowComplete
+                        )
+                    )
+                )
               )
           )
       );

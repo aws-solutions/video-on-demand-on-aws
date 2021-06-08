@@ -19,7 +19,7 @@ export class SnsTopics extends Construct {
 
     this.notifications = new sns.Topic(this, 'Notifications', {
       displayName: `${props.stackName}-Notifications`,
-      masterKey: props.kmsKeys.snsMasterKey,
+      // masterKey: props.kmsKeys.snsMasterKey,
     });
 
     this.notifications.addSubscription(

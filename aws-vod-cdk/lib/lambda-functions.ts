@@ -55,7 +55,9 @@ export class LambdaFunctions extends Construct {
       timeout: Duration.seconds(120),
       environment: {
         AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
-        DynamoDBTable: props.dynamoDbTables.videoInfo.tableName ?? '',
+        DynamoDBTable:
+          props.dynamoDbTables.videoInfo.tableName ??
+          `${props.stackName}-VideoInfo`,
         SnsTopic: props.snsTopics.notifications.topicArn,
       },
       role: props.iamRoles.errorHandler,
@@ -102,7 +104,9 @@ export class LambdaFunctions extends Construct {
       timeout: Duration.seconds(120),
       environment: {
         AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
-        DynamoDbTable: props.dynamoDbTables.videoInfo.tableName ?? '',
+        DynamoDBTable:
+          props.dynamoDbTables.videoInfo.tableName ??
+          `${props.stackName}-VideoInfo`,
         ErrorHandler: this.errorHandler.functionArn,
       },
       role: props.iamRoles.dynamoDbUpdate,
@@ -222,7 +226,9 @@ export class LambdaFunctions extends Construct {
       timeout: Duration.seconds(120),
       environment: {
         AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
-        DynamoDBTable: props.dynamoDbTables.videoInfo.tableName ?? '',
+        DynamoDBTable:
+          props.dynamoDbTables.videoInfo.tableName ??
+          `${props.stackName}-VideoInfo`,
         ErrorHandler: this.errorHandler.functionArn,
       },
       role: props.iamRoles.outputValidate,
@@ -237,6 +243,10 @@ export class LambdaFunctions extends Construct {
       timeout: Duration.seconds(120),
       environment: {
         AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
+        DynamoDBTable:
+          props.dynamoDbTables.videoInfo.tableName ??
+          `${props.stackName}-VideoInfo`,
+        ErrorHandler: this.errorHandler.functionArn,
       },
       role: props.iamRoles.profiler,
     });
@@ -270,7 +280,7 @@ export class LambdaFunctions extends Construct {
       environment: {
         AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
         ErrorHandler: this.errorHandler.functionArn,
-        SqsQueue: props.sqsQueues.main.queueArn,
+        SqsQueue: props.sqsQueues.main.queueUrl,
       },
       role: props.iamRoles.sqsSendMessage,
     });

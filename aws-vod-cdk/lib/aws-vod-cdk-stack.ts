@@ -90,6 +90,7 @@ export class AwsVodCdkStack extends Stack {
       cloudFronts: cloudFronts,
       cloudfrontOriginAccessIdentities: cloudfrontOriginAccessIdentities,
       dynamoDbTables: dynamoDbTables,
+      kmsKeys: kmsKeys,
       partition: partition,
       region: region,
       s3Buckets: s3Buckets,

@@ -135,6 +135,7 @@ export class PolicyDocuments extends Construct {
 
     this.snsNotification = new iam.PolicyDocument({
       statements: [
+        props.policyStatements.snsNotificationRoleKms,
         props.policyStatements.snsNotificationRoleLambda,
         props.policyStatements.snsNotificationRoleLogs,
         props.policyStatements.snsNotificationRoleSns,
@@ -143,6 +144,7 @@ export class PolicyDocuments extends Construct {
 
     this.sqsSendMessage = new iam.PolicyDocument({
       statements: [
+        props.policyStatements.sqsSendMessageRoleKms,
         props.policyStatements.sqsSendMessageRoleLambda,
         props.policyStatements.sqsSendMessageRoleLogs,
         props.policyStatements.sqsSendMessageRoleSqs,

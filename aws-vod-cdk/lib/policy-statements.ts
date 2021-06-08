@@ -7,12 +7,14 @@ import { S3Buckets } from './s3-buckets';
 import { DynamoDbTables } from './dynamodb-tables';
 import { SqsQueues } from './sqs-queues';
 import { SnsTopics } from './sns-topics';
+import { KmsKeys } from './kms-keys';
 
 export interface PolicyStatementsProps {
   account: string;
   cloudFronts: CloudFronts;
   cloudfrontOriginAccessIdentities: CloudfrontOriginAccessIdentities;
   dynamoDbTables: DynamoDbTables;
+  kmsKeys: KmsKeys;
   partition: string;
   region: string;
   s3Buckets: S3Buckets;
@@ -54,6 +56,7 @@ export class PolicyStatements extends Construct {
 
   // ErrorHandlerRole Policy Statements
   public readonly errorHandlerRoleDynamoDb: iam.PolicyStatement;
+  public readonly errorHandlerRoleKms: iam.PolicyStatement;
   public readonly errorHandlerRoleLogs: iam.PolicyStatement;
   public readonly errorHandlerRoleSns: iam.PolicyStatement;
 
@@ -92,11 +95,13 @@ export class PolicyStatements extends Construct {
   public readonly profilerRoleLogs: iam.PolicyStatement;
 
   // SnsNotificationRole Policy Statements
+  public readonly snsNotificationRoleKms: iam.PolicyStatement;
   public readonly snsNotificationRoleLambda: iam.PolicyStatement;
   public readonly snsNotificationRoleLogs: iam.PolicyStatement;
   public readonly snsNotificationRoleSns: iam.PolicyStatement;
 
   // SqsSendMessageRole Policy Statements
+  public readonly sqsSendMessageRoleKms: iam.PolicyStatement;
   public readonly sqsSendMessageRoleLambda: iam.PolicyStatement;
   public readonly sqsSendMessageRoleLogs: iam.PolicyStatement;
   public readonly sqsSendMessageRoleSqs: iam.PolicyStatement;
@@ -115,7 +120,7 @@ export class PolicyStatements extends Construct {
     this.archiveSourceRoleLambda = new iam.PolicyStatement({
       actions: ['lambda:InvokeFunction'],
       resources: [
-        `arn:${props.partition}:lambda:${props.region}:${props.account}:function:${props.stackName}-ErrorHandlerFunction`,
+        `arn:${props.partition}:lambda:${props.region}:${props.account}:function:${props.stackName}-ErrorHandlerLambdaFunction`,
       ],
     });
 
@@ -224,7 +229,7 @@ export class PolicyStatements extends Construct {
     this.dynamoDbUpdateRoleLambda = new iam.PolicyStatement({
       actions: ['lambda:InvokeFunction'],
       resources: [
-        `arn:${props.partition}:lambda:${props.region}:${props.account}:function:${props.stackName}-ErrorHandlerFunction`,
+        `arn:${props.partition}:lambda:${props.region}:${props.account}:function:${props.stackName}-ErrorHandlerLambdaFunction`,
       ],
     });
 
@@ -254,7 +259,7 @@ export class PolicyStatements extends Construct {
     this.encodeRoleLambda = new iam.PolicyStatement({
       actions: ['lambda:InvokeFunction'],
       resources: [
-        `arn:${props.partition}:lambda:${props.region}:${props.account}:function:${props.stackName}-ErrorHandlerFunction`,
+        `arn:${props.partition}:lambda:${props.region}:${props.account}:function:${props.stackName}-ErrorHandlerLambdaFunction`,
       ],
     });
 
@@ -293,6 +298,11 @@ export class PolicyStatements extends Construct {
       ],
     });
 
+    // this.errorHandlerRoleKms = new iam.PolicyStatement({
+    //   actions: ['kms:GenerateDataKey'],
+    //   resources: ['*'],
+    // });
+
     this.errorHandlerRoleLogs = new iam.PolicyStatement({
       actions: [
         'logs:CreateLogGroup',
@@ -312,7 +322,7 @@ export class PolicyStatements extends Construct {
     this.inputValidateRoleLambda = new iam.PolicyStatement({
       actions: ['lambda:InvokeFunction'],
       resources: [
-        `arn:${props.partition}:lambda:${props.region}:${props.account}:function:${props.stackName}-ErrorHandlerFunction`,
+        `arn:${props.partition}:lambda:${props.region}:${props.account}:function:${props.stackName}-ErrorHandlerLambdaFunction`,
       ],
     });
 
@@ -350,7 +360,7 @@ export class PolicyStatements extends Construct {
     this.mediaInfoRoleLambda = new iam.PolicyStatement({
       actions: ['lambda:InvokeFunction'],
       resources: [
-        `arn:${props.partition}:lambda:${props.region}:${props.account}:function:${props.stackName}-ErrorHandlerFunction`,
+        `arn:${props.partition}:lambda:${props.region}:${props.account}:function:${props.stackName}-ErrorHandlerLambdaFunction`,
       ],
     });
 
@@ -378,7 +388,7 @@ export class PolicyStatements extends Construct {
     this.mediaPackageAssetRoleLambda = new iam.PolicyStatement({
       actions: ['lambda:InvokeFunction'],
       resources: [
-        `arn:${props.partition}:lambda:${props.region}:${props.account}:function:${props.stackName}-ErrorHandlerFunction`,
+        `arn:${props.partition}:lambda:${props.region}:${props.account}:function:${props.stackName}-ErrorHandlerLambdaFunction`,
       ],
     });
 
@@ -420,7 +430,7 @@ export class PolicyStatements extends Construct {
     this.outputValidateRoleLambda = new iam.PolicyStatement({
       actions: ['lambda:InvokeFunction'],
       resources: [
-        `arn:${props.partition}:lambda:${props.region}:${props.account}:function:${props.stackName}-ErrorHandlerFunction`,
+        `arn:${props.partition}:lambda:${props.region}:${props.account}:function:${props.stackName}-ErrorHandlerLambdaFunction`,
       ],
     });
 
@@ -450,7 +460,7 @@ export class PolicyStatements extends Construct {
     this.profilerRoleLambda = new iam.PolicyStatement({
       actions: ['lambda:InvokeFunction'],
       resources: [
-        `arn:${props.partition}:lambda:${props.region}:${props.account}:function:${props.stackName}-ErrorHandlerFunction`,
+        `arn:${props.partition}:lambda:${props.region}:${props.account}:function:${props.stackName}-ErrorHandlerLambdaFunction`,
       ],
     });
 
@@ -465,10 +475,15 @@ export class PolicyStatements extends Construct {
       ],
     });
 
+    this.snsNotificationRoleKms = new iam.PolicyStatement({
+      actions: ['kms:GenerateDataKey'],
+      resources: [props.kmsKeys.snsMasterKey.keyArn],
+    });
+
     this.snsNotificationRoleLambda = new iam.PolicyStatement({
       actions: ['lambda:InvokeFunction'],
       resources: [
-        `arn:${props.partition}:lambda:${props.region}:${props.account}:function:${props.stackName}-ErrorHandlerFunction`,
+        `arn:${props.partition}:lambda:${props.region}:${props.account}:function:${props.stackName}-ErrorHandlerLambdaFunction`,
       ],
     });
 
@@ -489,10 +504,15 @@ export class PolicyStatements extends Construct {
       conditions: { Bool: { 'aws:SecureTransport': 'true' } },
     });
 
+    this.sqsSendMessageRoleKms = new iam.PolicyStatement({
+      actions: ['kms:GenerateDataKey'],
+      resources: [props.kmsKeys.sqsMasterKey.keyArn],
+    });
+
     this.sqsSendMessageRoleLambda = new iam.PolicyStatement({
       actions: ['lambda:InvokeFunction'],
       resources: [
-        `arn:aws:lambda:${props.region}:${props.account}:function:${props.stackName}-ErrorHandlerFunction`,
+        `arn:${props.partition}:lambda:${props.region}:${props.account}:function:${props.stackName}-ErrorHandlerLambdaFunction`,
       ],
     });
 
@@ -516,7 +536,7 @@ export class PolicyStatements extends Construct {
     this.stepFunctionsRoleLambda = new iam.PolicyStatement({
       actions: ['lambda:InvokeFunction'],
       resources: [
-        `arn:${props.partition}:lambda:${props.region}:${props.account}:function:${props.stackName}-ErrorHandlerFunction`,
+        `arn:${props.partition}:lambda:${props.region}:${props.account}:function:${props.stackName}-ErrorHandlerLambdaFunction`,
       ],
     });
 
@@ -535,7 +555,7 @@ export class PolicyStatements extends Construct {
       actions: ['states:StartExecution'],
       resources: [
         `arn:${props.partition}:states:${props.region}:${props.account}:stateMachine:${props.stackName}-IngestWorkflowStateMachine`,
-        `arn:${props.partition}:states:${props.region}:${props.account}:stateMachine:}${props.stackName}-ProcessWorkflowStateMachine`,
+        `arn:${props.partition}:states:${props.region}:${props.account}:stateMachine:${props.stackName}-ProcessWorkflowStateMachine`,
         `arn:${props.partition}:states:${props.region}:${props.account}:stateMachine:${props.stackName}-PublishWorkflowStateMachine`,
       ],
     });
