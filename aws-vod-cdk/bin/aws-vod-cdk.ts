@@ -15,7 +15,7 @@ const stackName =
     ? `${app.node.tryGetContext('stackName')}`
     : 'AwsVodCdkStack';
 
-new AwsVodCdkStack(app, 'AwsVodCdkStack', {
+new AwsVodCdkStack(app, stackName, {
   stackName: `${stackStage}${stackName}`,
   /* If you don't specify 'env', this stack will be environment-agnostic.
    * Account/Region-dependent features and context lookups will not work,
