@@ -27,10 +27,6 @@ const qvbrPresets = [
         file: './lib/mediaconvert/presets/_Mp4_Avc_Aac_16x9_1920x1080p_24Hz_6Mbps_qvbr.json'
     },
     {
-        name: '_Mp4_Hevc_Aac_16x9_3840x2160p_24Hz_20Mbps_qvbr',
-        file: './lib/mediaconvert/presets/_Mp4_Hevc_Aac_16x9_3840x2160p_24Hz_20Mbps_qvbr.json'
-    },
-    {
         name: '_Ott_Dash_Mp4_Avc_16x9_1280x720p_30Hz_6.5Mbps_qvbr',
         file: './lib/mediaconvert/presets/_Ott_Dash_Mp4_Avc_16x9_1280x720p_30Hz_6.5Mbps_qvbr.json'
     },
@@ -99,10 +95,6 @@ const qvbrPresets = [
 // templates from v5.1.0 and older
 const qvbrTemplates = [
     {
-        name: '_Ott_2160p_Avc_Aac_16x9_qvbr',
-        file: './lib/mediaconvert/templates/2160p_avc_aac_16x9_qvbr.json'
-    },
-    {
         name: '_Ott_1080p_Avc_Aac_16x9_qvbr',
         file: './lib/mediaconvert/templates/1080p_avc_aac_16x9_qvbr.json'
     },
@@ -113,10 +105,6 @@ const qvbrTemplates = [
 ];
 
 const mediaPackageTemplates = [
-    {
-        name: '_Ott_2160p_Avc_Aac_16x9_mvod',
-        file: './lib/mediaconvert/templates/2160p_avc_aac_16x9_mvod.json'
-    },
     {
         name: '_Ott_1080p_Avc_Aac_16x9_mvod',
         file: './lib/mediaconvert/templates/1080p_avc_aac_16x9_mvod.json'
@@ -130,10 +118,6 @@ const mediaPackageTemplates = [
 // updated templates for v5.2.0 that don't use presets
 const qvbrTemplatesNoPreset = [
     {
-        name: '_Ott_2160p_Avc_Aac_16x9_qvbr_no_preset',
-        file: './lib/mediaconvert/templates/2160p_avc_aac_16x9_qvbr_no_preset.json'
-    },
-    {
         name: '_Ott_1080p_Avc_Aac_16x9_qvbr_no_preset',
         file: './lib/mediaconvert/templates/1080p_avc_aac_16x9_qvbr_no_preset.json'
     },
@@ -144,10 +128,6 @@ const qvbrTemplatesNoPreset = [
 ];
 
 const mediaPackageTemplatesNoPreset = [
-    {
-        name: '_Ott_2160p_Avc_Aac_16x9_mvod_no_preset',
-        file: './lib/mediaconvert/templates/2160p_avc_aac_16x9_mvod_no_preset.json'
-    },
     {
         name: '_Ott_1080p_Avc_Aac_16x9_mvod_no_preset',
         file: './lib/mediaconvert/templates/1080p_avc_aac_16x9_mvod_no_preset.json'

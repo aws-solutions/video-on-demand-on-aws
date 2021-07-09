@@ -733,11 +733,6 @@ Resources:
           Destination: !Ref Destination
           FrameCapture: !Ref FrameCapture
           ArchiveSource: !Ref Glacier
-          MediaConvert_Template_2160p:
-            !If
-              - IsMediaPackageEnabled
-              - !Sub "${AWS::StackName}_Ott_2160p_Avc_Aac_16x9_mvod_no_preset"
-              - !Sub "${AWS::StackName}_Ott_2160p_Avc_Aac_16x9_qvbr_no_preset"
           MediaConvert_Template_1080p:
             !If
               - IsMediaPackageEnabled
@@ -1426,11 +1421,6 @@ Resources:
                   "BooleanEquals": true,
                   "Next": "Custom jobTemplate"
                 },
-                        {
-                  "Variable": "$.encodingProfile ",
-                  "NumericEquals": 2160,
-                  "Next": "jobTemplate 2160p"
-                },
                 {
                   "Variable": "$.encodingProfile ",
                   "NumericEquals": 1080,
@@ -1442,10 +1432,6 @@ Resources:
                   "Next": "jobTemplate 720p"
                 }
               ]
-            },
-            "jobTemplate 2160p": {
-              "Type": "Pass",
-              "Next": "Accelerated Transcoding Check"
             },
             "jobTemplate 1080p": {
               "Type": "Pass",

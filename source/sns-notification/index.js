@@ -44,7 +44,6 @@ exports.handler = async (event) => {
         if (event.workflowStatus === 'Complete') {
             msg = event;
             delete msg.srcMediainfo;
-            delete msg.jobTemplate_2160p;
             delete msg.jobTemplate_1080p;
             delete msg.jobTemplate_720p;
             delete msg.encodingJob;
