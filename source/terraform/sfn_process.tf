@@ -1,6 +1,6 @@
 resource "aws_iam_role" "media_transcode_role" {
   name = "${local.project}-media-transcode-role"
-  assume_role_policy = data.aws_iam_policy_document.step_function_service_role.json
+  assume_role_policy = data.aws_iam_policy_document.media_transcode_role.json
 
   inline_policy {
     name = "${local.project}-media-transcode-policy"
@@ -12,13 +12,13 @@ resource "aws_iam_role" "media_transcode_role" {
           Action = ["s3:GetObject", "s3:PutObject"]
           Effect = "Allow"
           Resource = [
-            module.s3_source.s3_bucket_arn,
-            module.s3_destination.s3_bucket_arn
+            "${module.s3_source.s3_bucket_arn}/*",
+            "${module.s3_destination.s3_bucket_arn}/*"
           ]
         }, {
           Action = ["execute-api:Invoke"]
           Effect = "Allow"
-          Resource = "arn:${data.aws_partition.current.partition}:execute-api:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:*"
+          Resource = "arn:aws:execute-api:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:*"
         },
       ]
     })
@@ -47,7 +47,7 @@ resource "aws_sfn_state_machine" "process" {
     "States": {
       "Profiler": {
         "Type": "Task",
-        "Resource": module.λ_profiler.invoke_arn,
+        "Resource": module.λ_profiler.arn,
         "Next": "Encoding Profile Check"
       },
       "Encoding Profile Check": {
@@ -148,12 +148,12 @@ resource "aws_sfn_state_machine" "process" {
       },
       "Encode Job Submit": {
         "Type": "Task",
-        "Resource": module.λ_encode.invoke_arn,
+        "Resource": module.λ_encode.arn,
         "Next": "DynamoDB Update"
       },
       "DynamoDB Update": {
         "Type": "Task",
-        "Resource": module.λ_dynamodb_update.invoke_arn,
+        "Resource": module.λ_dynamodb_update.arn,
         "End": true
       }
     }
@@ -162,22 +162,83 @@ resource "aws_sfn_state_machine" "process" {
 
 resource "null_resource" "mediaconvert_templates" {
   triggers = {
-    region = var.region
-    function_name = var.function_name
-    service_token = var.custom_resource_arn
-    solution_id = var.solution_id
-    solution_uuid = var.solution_uuid
-    version = var.solution_version
-    anonymous_usage = var.anonymous_usage
-    cluster_size = var.cluster_size
+    endpoint = data.external.mediaconvert_endpoint.result.Url
+    project = local.project
   }
 
   provisioner "local-exec" {
-    command = "node ../custom-resourc/mediaconvert/index.js ${data.external.mediaconvert_endpoint.Url} Create ${local.project}"
+    command = "node ../custom-resource/mediaconvert/index.js ${self.triggers.endpoint} Create ${self.triggers.project}"
   }
 
   provisioner "local-exec" {
     when = destroy
-    command = "node ../custom-resourc/mediaconvert/index.js ${data.external.mediaconvert_endpoint.Url} Delete ${local.project}"
+    command = "node ../custom-resource/mediaconvert/index.js ${self.triggers.endpoint} Delete ${self.triggers.project}"
   }
+}
+
+
+###############################
+# MEDIA CONVERT COMPLETE EVENTS
+###############################
+
+resource "aws_lambda_permission" "encode_complete" {
+  statement_id = "AllowExecutionFromCloudWatchWhenComplete"
+  action = "lambda:InvokeFunction"
+  function_name = module.λ_step_functions.arn
+  principal = "events.amazonaws.com"
+  source_arn = aws_cloudwatch_event_rule.encode_complete.arn
+}
+
+resource "aws_cloudwatch_event_rule" "encode_complete" {
+  name = "${local.project}-EncodeComplete"
+  description = "MediaConvert Completed event rule"
+
+  event_pattern = jsonencode({
+    source = ["aws.mediaconvert"]
+    detail = {
+      status = ["COMPLETE"],
+      userMetadata = {
+        workflow: [local.project]
+      }
+    }
+  })
+}
+
+resource "aws_cloudwatch_event_target" "encode_complete" {
+  rule = aws_cloudwatch_event_rule.encode_complete.name
+  target_id = "${local.project}-StepFunctions"
+  arn = module.λ_step_functions.arn
+}
+
+############################
+# MEDIA CONVERT ERROR EVENTS
+############################
+
+resource "aws_lambda_permission" "encode_error" {
+  statement_id = "AllowExecutionFromCloudWatchInCaseOfError"
+  action = "lambda:InvokeFunction"
+  function_name = module.λ_error_handler.arn
+  principal = "events.amazonaws.com"
+  source_arn = aws_cloudwatch_event_rule.encode_error.arn
+}
+
+resource "aws_cloudwatch_event_rule" "encode_error" {
+  name = "${local.project}-EncodeError"
+  description = "MediaConvert Error event rule"
+
+  event_pattern = jsonencode({
+    source = ["aws.mediaconvert"]
+    detail = {
+      status = ["ERROR"],
+      userMetadata = {
+        workflow: [local.project]
+      }
+    }
+  })
+}
+
+resource "aws_cloudwatch_event_target" "encode_error" {
+  rule = aws_cloudwatch_event_rule.encode_error.name
+  target_id = "${local.project}-EncodeError"
+  arn = module.λ_error_handler.arn
 }

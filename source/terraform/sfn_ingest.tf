@@ -7,17 +7,17 @@ resource "aws_sfn_state_machine" "ingest" {
     "States": {
       "Input Validate": {
         "Type": "Task",
-        "Resource": module.λ_input_validate.invoke_arn,
+        "Resource": module.λ_input_validate.arn,
         "Next": "Mediainfo"
       },
       "Mediainfo": {
         "Type": "Task",
-        "Resource": module.λ_media_info.invoke_arn,
+        "Resource": module.λ_media_info.arn,
         "Next": "DynamoDB Update"
       },
       "DynamoDB Update": {
         "Type": "Task",
-        "Resource": module.λ_dynamodb_update.invoke_arn,
+        "Resource": module.λ_dynamodb_update.arn,
         "Next": "SNS Choice"
       },
       "SNS Choice": {
@@ -33,12 +33,12 @@ resource "aws_sfn_state_machine" "ingest" {
       },
       "SNS Notification": {
         "Type": "Task",
-        "Resource": module.λ_sns_notification.invoke_arn,
+        "Resource": module.λ_sns_notification.arn,
         "Next": "Process Execute"
       },
       "Process Execute": {
         "Type": "Task",
-        "Resource": module.λ_step_functions.invoke_arn,
+        "Resource": module.λ_step_functions.arn,
         "End": true
       }
     }

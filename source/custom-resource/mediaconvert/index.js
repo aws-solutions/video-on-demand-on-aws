@@ -15,8 +15,6 @@ const fs = require('fs');
 const path = require('path');
 const AWS = require('aws-sdk');
 
-const CATEGORY = 'VOD';
-
 // updated templates for v5.2.0 that don't use presets
 const qvbrTemplatesNoPreset = [
   {

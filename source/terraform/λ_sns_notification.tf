@@ -30,7 +30,7 @@ module "λ_sns_notification" {
 
 data "aws_iam_policy_document" "λ_sns_notification" {
   statement {
-    actions = ["sns:Publishe"]
+    actions = ["sns:Publish"]
     resources = [aws_sns_topic.notifications.id]
     condition {
       test     = "Bool"

@@ -11,7 +11,7 @@ module "λ_media_info" {
 
   function_name = "${local.project}-media-info"
   description = "Creates a unique identifier (GUID) and executes the Ingest StateMachine"
-  handler = "index.handler"
+  handler = "lambda_function.lambda_handler"
 
   s3_bucket = module.s3_λ_source.s3_bucket_id
   s3_key = aws_s3_bucket_object.λ_media_info.key

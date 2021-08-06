@@ -1,29 +1,3 @@
-resource "aws_cloudwatch_event_rule" "encode_complete" {
-  name = "${local.project}-encode-complete"
-  event_pattern = jsonencode({
-    "source" : [
-      "aws.mediaconvert"
-    ],
-    "detail": {
-      "status": [
-        "COMPLETE"
-      ],
-      "userMetadata": {
-        "workflow": [
-          local.project
-        ]
-      }
-    }
-  })
-}
-
-resource "aws_cloudwatch_event_target" "encode_complete" {
-  target_id = "${local.project}-StepFunctions"
-  rule = aws_cloudwatch_event_rule.encode_complete.name
-  arn = module.λ_step_functions.arn
-  // todo
-}
-
 resource "aws_sfn_state_machine" "publish" {
   name = "${local.project}-publish"
   role_arn = aws_iam_role.step_function_service_role.arn
@@ -33,7 +7,7 @@ resource "aws_sfn_state_machine" "publish" {
     "States": {
       "Validate Encoding Outputs": {
         "Type": "Task",
-        "Resource": module.λ_output_validate.invoke_arn,
+        "Resource": module.λ_output_validate.arn,
         "Next": "Archive Source Choice"
       },
       "Archive Source Choice": {
@@ -54,17 +28,17 @@ resource "aws_sfn_state_machine" "publish" {
       },
       "Archive": {
         "Type": "Task",
-        "Resource": module.λ_archive_source.invoke_arn,
+        "Resource": module.λ_archive_source.arn,
         "Next": "DynamoDB Update"
       },
       "Deep Archive": {
         "Type": "Task",
-        "Resource": module.λ_archive_source.invoke_arn,
+        "Resource": module.λ_archive_source.arn,
         "Next": "DynamoDB Update"
       },
       "DynamoDB Update": {
         "Type": "Task",
-        "Resource": module.λ_dynamodb_update.invoke_arn,
+        "Resource": module.λ_dynamodb_update.arn,
         "Next": "SQS Choice"
       },
       "SQS Choice": {
@@ -80,7 +54,7 @@ resource "aws_sfn_state_machine" "publish" {
       },
       "SQS Send Message": {
         "Type": "Task",
-        "Resource": module.λ_sqs_publish.invoke_arn,
+        "Resource": module.λ_sqs_publish.arn,
         "Next": "SNS Choice"
       },
       "SNS Choice": {
@@ -96,7 +70,7 @@ resource "aws_sfn_state_machine" "publish" {
       },
       "SNS Notification": {
         "Type": "Task",
-        "Resource": module.λ_sns_notification.invoke_arn,
+        "Resource": module.λ_sns_notification.arn,
         "Next": "Complete"
       },
       "Complete": {

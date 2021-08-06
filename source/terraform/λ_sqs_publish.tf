@@ -22,9 +22,8 @@ module "λ_sqs_publish" {
   environment = {
     variables = {
       AWS_NODEJS_CONNECTION_REUSE_ENABLED: "1"
-      MediaConvertRole: aws_iam_role.media_transcode_role.arn
-      EndPoint: data.external.mediaconvert_endpoint.result.Url
       ErrorHandler: module.λ_error_handler.arn
+      SqsQueue: aws_sqs_queue.notifications.url
     }
   }
 }

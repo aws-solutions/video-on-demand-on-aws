@@ -14,6 +14,29 @@ module "s3_source" {
   ignore_public_acls = true
   restrict_public_buckets = true
 
+  lifecycle_rule = [
+    {
+      id = "${local.project}-source-archive"
+      enabled = true
+      tags = {
+        "${local.project}" = "GLACIER"
+      }
+      transition = [{
+        days = 1
+        storage_class = "GLACIER"
+      }]
+    }, {
+      id = "${local.project}-source-deep-archive"
+      enabled = true
+      tags = {
+        "${local.project}" = "DEEP_ARCHIVE"
+      }
+      transition = [{
+        days = 1
+        storage_class = "DEEP_ARCHIVE"
+      }]
+    }]
+
   tags = local.tags
 }
 
@@ -25,31 +48,31 @@ module "s3_source_notifications" {
 
   lambda_notifications = {
     mpg = {
-      function_arn = module.λ_step_functions.invoke_arn
+      function_arn = module.λ_step_functions.arn
       function_name = module.λ_step_functions.function_name
       events = ["s3:ObjectCreated:*"]
       filter_suffix = ".mpg"
     }
     mp4 = {
-      function_arn = module.λ_step_functions.invoke_arn
+      function_arn = module.λ_step_functions.arn
       function_name = module.λ_step_functions.function_name
       events = ["s3:ObjectCreated:*"]
       filter_suffix = ".mp4"
     }
     m4v = {
-      function_arn = module.λ_step_functions.invoke_arn
+      function_arn = module.λ_step_functions.arn
       function_name = module.λ_step_functions.function_name
       events = ["s3:ObjectCreated:*"]
       filter_suffix = ".m4v"
     }
     mov = {
-      function_arn = module.λ_step_functions.invoke_arn
+      function_arn = module.λ_step_functions.arn
       function_name = module.λ_step_functions.function_name
       events = ["s3:ObjectCreated:*"]
       filter_suffix = ".mov"
     }
     m2ts = {
-      function_arn = module.λ_step_functions.invoke_arn
+      function_arn = module.λ_step_functions.arn
       function_name = module.λ_step_functions.function_name
       events = ["s3:ObjectCreated:*"]
       filter_suffix = ".m2ts"
