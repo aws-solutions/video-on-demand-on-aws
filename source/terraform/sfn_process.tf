@@ -159,3 +159,25 @@ resource "aws_sfn_state_machine" "process" {
     }
   })
 }
+
+resource "null_resource" "mediaconvert_templates" {
+  triggers = {
+    region = var.region
+    function_name = var.function_name
+    service_token = var.custom_resource_arn
+    solution_id = var.solution_id
+    solution_uuid = var.solution_uuid
+    version = var.solution_version
+    anonymous_usage = var.anonymous_usage
+    cluster_size = var.cluster_size
+  }
+
+  provisioner "local-exec" {
+    command = "node ../custom-resourc/mediaconvert/index.js ${data.external.mediaconvert_endpoint.Url} Create ${local.project}"
+  }
+
+  provisioner "local-exec" {
+    when = destroy
+    command = "node ../custom-resourc/mediaconvert/index.js ${data.external.mediaconvert_endpoint.Url} Delete ${local.project}"
+  }
+}
