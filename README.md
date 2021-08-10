@@ -18,28 +18,12 @@ Source code for [Video on Demand on AWS](https://aws.amazon.com/solutions/video-
 ## Architecture Overview
 ![Architecture](architecture.png)
 
-## Deployment
-The solution is deployed using a CloudFormation template with a lambda backed custom resource. For details on deploying the solution please see the details on the solution home page: [Video on Demand on AWS](https://aws.amazon.com/answers/media-entertainment/video-on-demand-on-aws/)
+## About this fork
 
-> **Please ensure you test the new template before updating any production deployments.**
+This forks only purpose is to provide a terraformed version of the original solution. Using our
+teams/companies tf-modules or well-known community modules.
 
-## Workflow Configuration
-The workflow configuration is set at deployment and is defined as environment variables for the input-validate lambda function (which is the first step in the ingest process).
-
-#### Environment Variables:
-* **Archive Source:**	If enabled, the source video file will be tagged for archiving to glacier at the end of the workflow
-* **CloudFront:**	CloudFront domain name, used to generate the playback URLs for the MediaConvert outputs
-* **Destination:**	The name of the destination S3 bucket for all of the MediaConvert outputs
-* **FrameCapture:**	If enabled frame capture is added to the job submitted to MediaConvert
-* **InputRotate:**	Defines how the MediaConvert rotates your video
-* **MediaConvert_Template_2160p:**	The name of the UHD template in MediaConvert
-* **MediaConvert_Template_1080p:**	The name of the HD template in MediaConvert
-* **MediaConvert_Template_720p:**	The name of the SD template in MediaConvert
-* **Source:**	The name of the source S3 bucket
-* **WorkflowName:**	Used to tag all of the MediaConvert encoding jobs
-* **acceleratedTranscoding** Enabled Accelerated Transocding in MediaConvert. options include ENABLE, DISABLE, PREFERRED. for more detials please see: 
-* **enableSns** Send SNS notifications for the workflow results.
-* **enableSqs** Send the workflow results to an SQS queue
+We've also reduced some complexity by removing features we were not interested in (e.g. MediaPackage)
 
 ### WorkFlow Triggers
 

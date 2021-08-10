@@ -31,7 +31,7 @@ exports.handler = async (event) => {
                 // Ingest workflow triggered by s3 event::
                 event.guid = uuidv4();
 
-                // Identify file extention of s3 object::
+                // Identify file extension of s3 object::
                 let key = decodeURIComponent(event.Records[0].s3.object.key.replace(/\+/g, " "));
                 if (key.slice((key.lastIndexOf(".") - 1 >>> 0) + 2) === 'json') {
                     event.workflowTrigger = 'Metadata';
@@ -59,7 +59,7 @@ exports.handler = async (event) => {
                 break;
 
             case event.hasOwnProperty('detail'):
-                // Publish workflow triggered by MediaConver CloudWatch event::
+                // Publish workflow triggered by MediaConvert CloudWatch event::
                 params = {
                     stateMachineArn: process.env.PublishWorkflow,
                     input: JSON.stringify(event),

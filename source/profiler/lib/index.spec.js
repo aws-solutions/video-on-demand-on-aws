@@ -34,7 +34,6 @@ describe('#PROFILER::', () => {
         Item: {
             guid: '12345678',
             srcMediainfo: '{ "video": [{ "height": 720, "width": 1280 }] }',
-            jobTemplate_2160p: 'tmpl1',
             jobTemplate_1080p: 'tmpl2',
             jobTemplate_720p: 'tmpl3',
             frameCapture: true

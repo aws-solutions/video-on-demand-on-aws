@@ -40,6 +40,7 @@ data "aws_iam_policy_document" "media_transcode_role" {
 resource "aws_sfn_state_machine" "process" {
   name = "${local.project}-process"
   role_arn = aws_iam_role.step_function_service_role.arn
+  tags = local.tags
 
   definition = jsonencode({
     "Comment": "Process StateMachine to create MediaConvert Encoding Jobs",
@@ -60,11 +61,6 @@ resource "aws_sfn_state_machine" "process" {
           },
           {
             Variable: "$.encodingProfile ",
-            NumericEquals: 2160,
-            Next: "jobTemplate 2160p"
-          },
-          {
-            Variable: "$.encodingProfile ",
             NumericEquals: 1080,
             Next: "jobTemplate 1080p"
           },
@@ -74,10 +70,6 @@ resource "aws_sfn_state_machine" "process" {
             Next: "jobTemplate 720p"
           }
         ]
-      },
-      "jobTemplate 2160p": {
-        "Type": "Pass",
-        "Next": "Accelerated Transcoding Check"
       },
       "jobTemplate 1080p": {
         "Type": "Pass",
@@ -176,6 +168,8 @@ resource "null_resource" "mediaconvert_templates" {
   }
 }
 
+# todo (mana): STATUS_UPDATE events to update progress within the CMS
+# also available: PROGRESSING, INPUT_INFORMATION
 
 ###############################
 # MEDIA CONVERT COMPLETE EVENTS

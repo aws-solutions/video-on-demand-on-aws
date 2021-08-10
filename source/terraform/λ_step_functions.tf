@@ -28,6 +28,8 @@ module "λ_step_functions" {
       ErrorHandler: module.λ_error_handler.arn
     }
   }
+
+  tags = local.tags
 }
 
 data "aws_iam_policy_document" "λ_step_functions" {

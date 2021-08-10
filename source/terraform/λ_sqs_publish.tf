@@ -26,6 +26,8 @@ module "λ_sqs_publish" {
       SqsQueue: aws_sqs_queue.notifications.url
     }
   }
+
+  tags = local.tags
 }
 
 data "aws_iam_policy_document" "λ_sqs_publish" {

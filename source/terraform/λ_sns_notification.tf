@@ -26,6 +26,8 @@ module "λ_sns_notification" {
       SnsTopic: aws_sns_topic.notifications.id
     }
   }
+
+  tags = local.tags
 }
 
 data "aws_iam_policy_document" "λ_sns_notification" {

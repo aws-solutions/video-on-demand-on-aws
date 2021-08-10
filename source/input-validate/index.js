@@ -35,7 +35,6 @@ exports.handler = async (event) => {
             cloudFront: process.env.CloudFront,
             frameCapture: JSON.parse(process.env.FrameCapture),
             archiveSource:  process.env.ArchiveSource,
-            jobTemplate_2160p: process.env.MediaConvert_Template_2160p,
             jobTemplate_1080p: process.env.MediaConvert_Template_1080p,
             jobTemplate_720p: process.env.MediaConvert_Template_720p,
             inputRotate: process.env.InputRotate,

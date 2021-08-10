@@ -25,6 +25,8 @@ module "λ_dynamodb_update" {
       ErrorHandler: module.λ_error_handler.arn
     }
   }
+
+  tags = local.tags
 }
 
 data "aws_iam_policy_document" "λ_dynamodb_update" {

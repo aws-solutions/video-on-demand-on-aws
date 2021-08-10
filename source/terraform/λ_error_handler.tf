@@ -26,6 +26,8 @@ module "λ_error_handler" {
       SnsTopic: aws_sns_topic.notifications.arn
     }
   }
+
+  tags = local.tags
 }
 
 data "aws_iam_policy_document" "λ_error_handler" {

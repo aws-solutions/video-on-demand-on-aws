@@ -29,7 +29,6 @@ module "λ_input_validate" {
       AcceleratedTranscoding: var.accelerated_transcoding
       FrameCapture: var.frame_capture
       ArchiveSource: var.glacier
-      MediaConvert_Template_2160p: "${local.project}_Ott_2160p_Avc_Aac_16x9_qvbr_no_preset"
       MediaConvert_Template_1080p: "${local.project}_Ott_1080p_Avc_Aac_16x9_qvbr_no_preset"
       MediaConvert_Template_720p: "${local.project}_Ott_720p_Avc_Aac_16x9_qvbr_no_preset"
       CloudFront: "https://todo_cloudfront_distibution"
@@ -39,6 +38,8 @@ module "λ_input_validate" {
       EnableSqs: true
     }
   }
+
+  tags = local.tags
 }
 
 data "aws_iam_policy_document" "λ_input_validate" {

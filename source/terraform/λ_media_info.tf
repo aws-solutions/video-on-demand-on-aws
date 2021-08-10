@@ -24,6 +24,8 @@ module "λ_media_info" {
       ErrorHandler: module.λ_error_handler.arn
     }
   }
+
+  tags = local.tags
 }
 
 data "aws_iam_policy_document" "λ_media_info" {

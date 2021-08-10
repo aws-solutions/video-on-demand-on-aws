@@ -27,6 +27,8 @@ module "λ_output_validate" {
       EndPoint: data.external.mediaconvert_endpoint.result.Url
     }
   }
+
+  tags = local.tags
 }
 
 data "aws_iam_policy_document" "λ_output_validate" {

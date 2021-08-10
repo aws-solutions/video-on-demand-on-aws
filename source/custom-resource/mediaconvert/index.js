@@ -18,10 +18,6 @@ const AWS = require('aws-sdk');
 // updated templates for v5.2.0 that don't use presets
 const qvbrTemplatesNoPreset = [
   {
-    name: '_Ott_2160p_Avc_Aac_16x9_qvbr_no_preset',
-    file: './templates/2160p_avc_aac_16x9_qvbr_no_preset.json'
-  },
-  {
     name: '_Ott_1080p_Avc_Aac_16x9_qvbr_no_preset',
     file: './templates/1080p_avc_aac_16x9_qvbr_no_preset.json'
   },
@@ -32,10 +28,6 @@ const qvbrTemplatesNoPreset = [
 ];
 
 const mediaPackageTemplatesNoPreset = [
-  {
-    name: '_Ott_2160p_Avc_Aac_16x9_mvod_no_preset',
-    file: './templates/2160p_avc_aac_16x9_mvod_no_preset.json'
-  },
   {
     name: '_Ott_1080p_Avc_Aac_16x9_mvod_no_preset',
     file: './templates/1080p_avc_aac_16x9_mvod_no_preset.json'
