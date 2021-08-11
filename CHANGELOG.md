@@ -5,7 +5,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [5.2.0] - 2020-12-10
-### Added 
+### Added
 - Support for S3 Signature Version4 for pre-signed URLs (https://github.com/awslabs/video-on-demand-on-aws/pull/111)
 - New MediaConvert job templates with:
     - Fewer HLS and DASH ABR renditions

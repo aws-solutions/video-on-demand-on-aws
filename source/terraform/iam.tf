@@ -1,5 +1,5 @@
 resource "aws_iam_role" "step_function_service_role" {
-  name = "${local.project}-stepfunction-service-role"
+  name               = "${local.project}-stepfunction-service-role"
   assume_role_policy = data.aws_iam_policy_document.step_function_service_role.json
   inline_policy {
     name = "${local.project}-stepfunction-service-policy"
@@ -8,8 +8,8 @@ resource "aws_iam_role" "step_function_service_role" {
       Version = "2012-10-17"
       Statement = [
         {
-          Action = ["lambda:InvokeFunction"]
-          Effect = "Allow"
+          Action   = ["lambda:InvokeFunction"]
+          Effect   = "Allow"
           Resource = "*"
         },
       ]
@@ -21,9 +21,9 @@ resource "aws_iam_role" "step_function_service_role" {
 data "aws_iam_policy_document" "step_function_service_role" {
   statement {
     actions = [
-      "sts:AssumeRole"]
+    "sts:AssumeRole"]
     principals {
-      type = "Service"
+      type        = "Service"
       identifiers = ["states.${data.aws_region.current.name}.amazonaws.com"]
     }
   }

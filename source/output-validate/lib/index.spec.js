@@ -54,9 +54,9 @@ describe('#OUTPUT VALIDATE::', () => {
         Contents: [
             {
                 Key: "12345/thumbnails/dude3.000.jpg",
-         
+
                 }
-        ]   
+        ]
     }
 
     process.env.ErrorHandler = 'error_handler';

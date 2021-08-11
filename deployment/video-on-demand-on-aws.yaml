@@ -46,15 +46,15 @@ Parameters:
     Default: Yes
     AllowedValues:
       - Yes
-      - No    
-  
+      - No
+
   EnableSqs:
     Description: Publish the workflow results to an SQS queue to injest upstream
     Type: String
     Default: Yes
     AllowedValues:
       - Yes
-      - No  
+      - No
 
   AcceleratedTranscoding:
     Description: Enable accelerated transcoding in AWS Elemental MediaConvert. PREFERRED will only use acceleration if the input files is supported. ENABLED accleration is applied to all files (this will fail for unsupported file types) see MediaConvert Documentation for more detail https://docs.aws.amazon.com/mediaconvert/latest/ug/accelerated-transcoding.html
@@ -366,7 +366,7 @@ Resources:
     Type: AWS::DynamoDB::Table
     Properties:
       BillingMode: PAY_PER_REQUEST
-      PointInTimeRecoverySpecification: 
+      PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: true
       AttributeDefinitions:
         - AttributeName: guid
@@ -1202,7 +1202,7 @@ Resources:
                   - !Ref SnsTopic
                 Condition:
                   Bool:
-                    'aws:SecureTransport': 'true'                
+                    'aws:SecureTransport': 'true'
               - Effect: Allow
                 Action:
                   - logs:CreateLogGroup
@@ -1696,7 +1696,7 @@ Outputs:
     Export:
       Name: !Join [":", [!Ref "AWS::StackName", SqsQueue]]
 
-  SqsARN: 
+  SqsARN:
     Description: AmazonSQS Queue ARN
-    Value: 
+    Value:
       !Sub ${SqsQueue.Arn}

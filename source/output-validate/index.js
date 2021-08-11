@@ -65,13 +65,13 @@ exports.handler = async (event) => {
       let files = [];
       let urls = [];
       output.outputDetails.forEach((file) => {
-        
+
         if (file.outputFilePaths) {
           files.push(file.outputFilePaths[0]);
           urls.push(`https://${data.cloudFront}/${buildUrl(file.outputFilePaths[0])}`);
         }
       });
-      
+
       if (files.length >0  && files[0].split('.').pop() === 'mp4') {
       data.mp4Outputs = files;
       data.mp4Urls = urls;
@@ -122,7 +122,7 @@ exports.handler = async (event) => {
     } else {
         throw new Error('MediaConvert Thumbnails not found in S3');
     }
-    
+
   }
 
   } catch (err) {

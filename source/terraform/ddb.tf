@@ -1,7 +1,7 @@
 resource "aws_dynamodb_table" "this" {
-  name = local.project
+  name         = local.project
   billing_mode = "PAY_PER_REQUEST"
-  hash_key = "guid"
+  hash_key     = "guid"
 
   attribute {
     name = "guid"
@@ -19,9 +19,9 @@ resource "aws_dynamodb_table" "this" {
   }
 
   global_secondary_index {
-    name = "srcBucket-startTime-index"
-    hash_key = "srcBucket"
-    range_key = "startTime"
+    name            = "srcBucket-startTime-index"
+    hash_key        = "srcBucket"
+    range_key       = "startTime"
     projection_type = "ALL"
   }
 

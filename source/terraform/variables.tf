@@ -1,6 +1,6 @@
 variable "glacier" {
-  default     = "DEEP_ARCHIVE"
-  type        = string
+  default = "DEEP_ARCHIVE"
+  type    = string
   validation {
     condition     = contains(["DISABLED", "GLACIER", "DEEP_ARCHIVE"], var.glacier)
     error_message = "Must be one of (DISABLED|GLACIER|DEEP_ARCHIVE)."
@@ -15,8 +15,8 @@ variable "frame_capture" {
 }
 
 variable "accelerated_transcoding" {
-  default     = "PREFERRED"
-  type        = string
+  default = "PREFERRED"
+  type    = string
   validation {
     condition     = contains(["ENABLED", "DISABLED", "PREFERRED"], var.accelerated_transcoding)
     error_message = "Must be one of (ENABLED|DISABLED|PREFERRED)."
