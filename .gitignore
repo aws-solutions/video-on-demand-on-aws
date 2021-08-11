@@ -28,6 +28,7 @@
 **/.vscode/settings.json
 *~
 ~*
+.idea/
 
 # System Files
 **/.DS_Store

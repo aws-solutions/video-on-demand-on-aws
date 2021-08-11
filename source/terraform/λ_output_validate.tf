@@ -9,15 +9,17 @@ module "λ_output_validate" {
   source  = "moritzzimmer/lambda/aws"
   version = "5.14.0"
 
-  function_name     = "${local.project}-output-validation"
-  description       = "Parses MediaConvert job output"
-  handler           = "index.handler"
-  runtime           = "nodejs14.x"
-  s3_bucket         = module.s3_λ_source.s3_bucket_id
-  s3_key            = aws_s3_bucket_object.λ_output_validate.key
-  s3_object_version = aws_s3_bucket_object.λ_output_validate.version_id
-  tags              = local.tags
-  timeout           = 120
+  cloudwatch_lambda_insights_enabled = true
+  function_name                      = "${local.project}-output-validation"
+  description                        = "Parses MediaConvert job output"
+  handler                            = "index.handler"
+  runtime                            = "nodejs14.x"
+  s3_bucket                          = module.s3_λ_source.s3_bucket_id
+  s3_key                             = aws_s3_bucket_object.λ_output_validate.key
+  s3_object_version                  = aws_s3_bucket_object.λ_output_validate.version_id
+  tags                               = local.tags
+  timeout                            = 120
+  tracing_config_mode                = "Active"
 
   environment = {
     variables = {

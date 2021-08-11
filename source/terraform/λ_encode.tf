@@ -13,15 +13,17 @@ module "λ_encode" {
   source  = "moritzzimmer/lambda/aws"
   version = "5.14.0"
 
-  function_name     = "${local.project}-encode"
-  description       = "Creates a MediaConvert encode job"
-  handler           = "index.handler"
-  runtime           = "nodejs14.x"
-  s3_bucket         = module.s3_λ_source.s3_bucket_id
-  s3_key            = aws_s3_bucket_object.λ_encode.key
-  s3_object_version = aws_s3_bucket_object.λ_encode.version_id
-  tags              = local.tags
-  timeout           = 120
+  cloudwatch_lambda_insights_enabled = true
+  function_name                      = "${local.project}-encode"
+  description                        = "Creates a MediaConvert encode job"
+  handler                            = "index.handler"
+  runtime                            = "nodejs14.x"
+  s3_bucket                          = module.s3_λ_source.s3_bucket_id
+  s3_key                             = aws_s3_bucket_object.λ_encode.key
+  s3_object_version                  = aws_s3_bucket_object.λ_encode.version_id
+  tags                               = local.tags
+  timeout                            = 120
+  tracing_config_mode                = "Active"
 
   environment = {
     variables = {

@@ -9,15 +9,17 @@ module "λ_archive_source" {
   source  = "moritzzimmer/lambda/aws"
   version = "5.14.0"
 
-  function_name     = "${local.project}-archive_source"
-  description       = "Updates tags on source files to enable Glacier"
-  handler           = "index.handler"
-  runtime           = "nodejs14.x"
-  s3_bucket         = module.s3_λ_source.s3_bucket_id
-  s3_key            = aws_s3_bucket_object.λ_archive_source.key
-  s3_object_version = aws_s3_bucket_object.λ_archive_source.version_id
-  tags              = local.tags
-  timeout           = 120
+  cloudwatch_lambda_insights_enabled = true
+  function_name                      = "${local.project}-archive_source"
+  description                        = "Updates tags on source files to enable Glacier"
+  handler                            = "index.handler"
+  runtime                            = "nodejs14.x"
+  s3_bucket                          = module.s3_λ_source.s3_bucket_id
+  s3_key                             = aws_s3_bucket_object.λ_archive_source.key
+  s3_object_version                  = aws_s3_bucket_object.λ_archive_source.version_id
+  tags                               = local.tags
+  timeout                            = 120
+  tracing_config_mode                = "Active"
 
   environment = {
     variables = {

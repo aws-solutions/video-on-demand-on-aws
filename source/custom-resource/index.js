@@ -124,6 +124,7 @@ if (process.argv.length === 5) {
       console.error(`Unrecognized Mode '${Mode}'. Valid values are Update|Delete`);
       process.exit(3);
   }
+
 } else {
   console.error("Required parameters are missing. Usage:")
   console.error(`${process.argv[0]} ${process.argv[1]} EndPoint Update|Delete StackName`)

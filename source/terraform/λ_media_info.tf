@@ -9,15 +9,17 @@ module "λ_media_info" {
   source  = "moritzzimmer/lambda/aws"
   version = "5.14.0"
 
-  function_name     = "${local.project}-media-info"
-  description       = "Creates a unique identifier (GUID) and executes the Ingest StateMachine"
-  handler           = "lambda_function.lambda_handler"
-  runtime           = "python3.7"
-  s3_bucket         = module.s3_λ_source.s3_bucket_id
-  s3_key            = aws_s3_bucket_object.λ_media_info.key
-  s3_object_version = aws_s3_bucket_object.λ_media_info.version_id
-  timeout           = 120
-  tags              = local.tags
+  cloudwatch_lambda_insights_enabled = true
+  function_name                      = "${local.project}-media-info"
+  description                        = "Creates a unique identifier (GUID) and executes the Ingest StateMachine"
+  handler                            = "lambda_function.lambda_handler"
+  runtime                            = "python3.7"
+  s3_bucket                          = module.s3_λ_source.s3_bucket_id
+  s3_key                             = aws_s3_bucket_object.λ_media_info.key
+  s3_object_version                  = aws_s3_bucket_object.λ_media_info.version_id
+  timeout                            = 120
+  tags                               = local.tags
+  tracing_config_mode                = "Active"
 
   environment = {
     variables = {
