@@ -29,8 +29,7 @@ const data = {
 
 const _config = {
     StackName: 'test',
-    EndPoint: 'https://test.com',
-    EnableMediaPackage: 'false'
+    EndPoint: 'https://test.com'
 };
 
 const update_data = {
@@ -56,23 +55,6 @@ describe('#MEDIACONVERT::', () => {
             AWS.mock('MediaConvert', 'createJobTemplate', Promise.reject('ERROR'));
 
             await lambda.createTemplates(_config).catch(err => {
-                expect(err).to.equal('ERROR');
-            });
-        });
-    });
-
-    describe('Describe', () => {
-        it('should return "SUCCESS" on describeEndpoints', async () => {
-            AWS.mock('MediaConvert', 'describeEndpoints', Promise.resolve(data));
-
-            const response = await lambda.getEndpoint(_config);
-            expect(response.EndpointUrl).to.equal('https://test.com');
-        });
-
-        it('should fail when describeEndpoints throws an exception', async () => {
-            AWS.mock('MediaConvert', 'describeEndpoints', Promise.reject('ERROR'));
-
-            await lambda.getEndpoint(_config).catch(err => {
                 expect(err).to.equal('ERROR');
             });
         });

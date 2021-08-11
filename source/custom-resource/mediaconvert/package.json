@@ -8,7 +8,7 @@
   "main": "index.js",
   "scripts": {
     "pretest": "npm i --quiet",
-    "test": "mocha lib/**/*.spec.js"
+    "test": "mocha *.spec.js"
   },
   "devDependencies": {
     "aws-sdk": "^2.609.0",

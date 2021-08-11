@@ -19,77 +19,121 @@ AWS.setSDK(path.resolve('./node_modules/aws-sdk'));
 const lambda = require('../index.js');
 
 describe('#STEP FUNCTIONS::', () => {
-    process.env.IngestWorkflow = 'INGEST';
-    process.env.ProcessWorkflow = 'PROCESS';
-    process.env.PublishWorkflow = 'PUBLISH';
-    process.env.ErrorHandler = 'error_handler';
+  process.env.AWS_REGION = 'us-east-1';
+  process.env.IngestWorkflow = 'INGEST';
+  process.env.ProcessWorkflow = 'PROCESS';
+  process.env.PublishWorkflow = 'PUBLISH';
+  process.env.ErrorHandler = 'error_handler';
 
-    const _ingest = {
-        Records: [{
-            s3: {
-                object: {
-                    key: 'big_bunny.mp4',
-                }
-            }
-        }]
-    };
-
-    const _process = {
-        guid: '1234'
-    };
-
-    const _publish = {
-        detail: {
-            userMetadata: {
-                guid: '1234'
-            }
+  const _ingest = {
+    Records: [{
+      s3: {
+        bucket: {
+          name: "bucket_name"
+        },
+        object: {
+          key: 'big_bunny.mp4',
         }
-    };
+      }
+    }]
+  };
 
-    const _error = {};
+  const _process = {
+    guid: '1234'
+  };
 
-    const data = {
-        executionArn: 'arn'
-    };
+  const _publish = {
+    detail: {
+      userMetadata: {
+        guid: '1234'
+      }
+    }
+  };
 
-    afterEach(() => AWS.restore('StepFunctions'));
+  const _error = {};
 
-    it('should return "success" on Ingest Execute success', async () => {
-        AWS.mock('StepFunctions', 'startExecution', Promise.resolve(data));
+  const data = {
+    executionArn: 'arn'
+  };
 
-        const response = await lambda.handler(_ingest);
-        expect(response).to.equal('success');
+  afterEach(() => AWS.restore('StepFunctions'));
+  afterEach(() => AWS.restore('S3'));
+
+  it('should return "success" on Ingest Execute success', async () => {
+    AWS.mock('StepFunctions', 'startExecution', Promise.resolve(data));
+    AWS.mock('S3', 'headObject', Promise.reject(null));
+
+    const response = await lambda.handler(_ingest);
+    expect(response).to.equal('success');
+  });
+
+  it('should return "success" on process Execute success', async () => {
+    AWS.mock('StepFunctions', 'startExecution', Promise.resolve(data));
+    AWS.mock('S3', 'headObject', Promise.reject(null));
+
+    const response = await lambda.handler(_process);
+    expect(response).to.equal('success');
+  });
+
+  it('should return "success" on publish Execute success', async () => {
+    AWS.mock('StepFunctions', 'startExecution', Promise.resolve(data));
+    AWS.mock('S3', 'headObject', Promise.reject(null));
+
+    const response = await lambda.handler(_publish);
+    expect(response).to.equal('success');
+  });
+
+  it('should return "ERROR" with an invalid event object', async () => {
+    AWS.mock('StepFunctions', 'startExecution', Promise.resolve(data));
+    AWS.mock('Lambda', 'invoke', Promise.resolve());
+    AWS.mock('S3', 'headObject', Promise.reject(null));
+
+    await lambda.handler(_error).catch(err => {
+      expect(err.toString()).to.equal('Error: invalid event object');
+    });
+  });
+
+  it('should return "STEP ERROR" when step execution fails', async () => {
+    AWS.mock('StepFunctions', 'startExecution', Promise.reject('STEP ERROR'));
+    AWS.mock('Lambda', 'invoke', Promise.resolve());
+    AWS.mock('S3', 'headObject', Promise.reject(null));
+
+    await lambda.handler(_ingest).catch(err => {
+      expect(err).to.equal('STEP ERROR');
+    });
+  });
+
+  describe('s3 trigger', () => {
+
+    it("should extract the id from cms head request", async () => {
+      AWS.mock('StepFunctions', 'startExecution', Promise.resolve(data));
+      AWS.mock('Lambda', 'invoke', Promise.resolve());
+      AWS.mock('S3', 'headObject', Promise.resolve({
+        "Metadata": {
+          "cms_id": "2342"
+        }
+      }));
+
+      const response = await lambda.handler(_ingest);
+      expect(response).to.equal('success');
     });
 
-    it('should return "success" on process Execute success', async () => {
-        AWS.mock('StepFunctions', 'startExecution', Promise.resolve(data));
+    it("should generate a guid if cms_id is not present", async () => {
+      AWS.mock('StepFunctions', 'startExecution', Promise.resolve(data));
+      AWS.mock('Lambda', 'invoke', Promise.resolve());
+      AWS.mock('S3', 'headObject', Promise.resolve({}));
 
-        const response = await lambda.handler(_process);
-        expect(response).to.equal('success');
+      const response = await lambda.handler(_ingest);
+      expect(response).to.equal('success');
     });
 
-    it('should return "success" on publish Execute success', async () => {
-        AWS.mock('StepFunctions', 'startExecution', Promise.resolve(data));
+    it("should generate a guid if s3 call is failing", async () => {
+      AWS.mock('StepFunctions', 'startExecution', Promise.resolve(data));
+      AWS.mock('Lambda', 'invoke', Promise.resolve());
+      AWS.mock('S3', 'headObject', Promise.reject(null));
 
-        const response = await lambda.handler(_publish);
-        expect(response).to.equal('success');
+      const response = await lambda.handler(_ingest);
+      expect(response).to.equal('success');
     });
-
-    it('should return "ERROR" with an invalid event object', async () => {
-        AWS.mock('StepFunctions', 'startExecution', Promise.resolve(data));
-        AWS.mock('Lambda', 'invoke', Promise.resolve());
-
-        await lambda.handler(_error).catch(err => {
-            expect(err.toString()).to.equal('Error: invalid event object');
-        });
-    });
-
-    it('should return "STEP ERROR" when step execution fails', async () => {
-        AWS.mock('StepFunctions', 'startExecution', Promise.reject('STEP ERROR'));
-        AWS.mock('Lambda', 'invoke', Promise.resolve());
-
-        await lambda.handler(_ingest).catch(err => {
-            expect(err).to.equal('STEP ERROR');
-        });
-    });
+  })
 });

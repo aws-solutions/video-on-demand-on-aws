@@ -38,7 +38,7 @@ const mediaPackageTemplatesNoPreset = [
   }
 ];
 
-const _createTemplates = async (instance, templates, stackName) => {
+const createTemplates = async (instance, templates, stackName) => {
   for (let tmpl of templates) {
     // Load template and set unique template name
     let params = JSON.parse(fs.readFileSync(path.join(__dirname, tmpl.file), 'utf8'));
@@ -57,8 +57,8 @@ const Create = async (EndPoint, StackName) => {
     region: region
   });
 
-  await _createTemplates(mediaconvert, mediaPackageTemplatesNoPreset, StackName);
-  await _createTemplates(mediaconvert, qvbrTemplatesNoPreset, StackName);
+  // await createTemplates(mediaconvert, mediaPackageTemplatesNoPreset, StackName);
+  await createTemplates(mediaconvert, qvbrTemplatesNoPreset, StackName);
 
   return 'success';
 };
@@ -77,7 +77,7 @@ const Delete = async (EndPoint, StackName) => {
   const region = EndPoint.match(/\.mediaconvert\.(.*)\.amazonaws\.com/)[1]
   const mediaconvert = new AWS.MediaConvert({
     endpoint: EndPoint,
-    region: process.env.AWS_REGION
+    region: region
   });
 
   try {
@@ -91,7 +91,14 @@ const Delete = async (EndPoint, StackName) => {
   return 'success';
 };
 
+module.exports = {
+  createTemplates : createTemplates
+}
 
+/**
+ * will be called by a local-exec/null_resource provider
+ * instead of being deployed as a custom resource lambda when using CloudFormation
+ */
 if (process.argv.length === 5) {
 
   const EndPoint = process.argv[2]

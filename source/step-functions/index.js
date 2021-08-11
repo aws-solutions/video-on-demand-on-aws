@@ -16,68 +16,102 @@ const uuidv4 = require('uuid/v4');
 const error = require('./lib/error.js');
 
 exports.handler = async (event) => {
-    console.log(`REQUEST:: ${JSON.stringify(event, null, 2)}`);
+  console.log(`REQUEST:: ${JSON.stringify(event, null, 2)}`);
 
-    const stepfunctions = new AWS.StepFunctions({
-        region: process.env.AWS_REGION
-    });
+  const stepfunctions = new AWS.StepFunctions({
+    region: process.env.AWS_REGION
+  });
 
-    let response;
-    let params;
+  const s3 = new AWS.S3({
+    region: process.env.AWS_REGION
+  });
 
+  const id_from_s3 = async (bucket, key) => {
     try {
-        switch (true) {
-            case event.hasOwnProperty('Records'):
-                // Ingest workflow triggered by s3 event::
-                event.guid = uuidv4();
+      let params = {
+        Bucket: bucket,
+        Key: key
+      };
+      const s3_response = await s3.headObject(params).promise().catch((err) => {
+        console.error(`s3.headObject(${JSON.stringify(params)}) failed.`, err);
+        return Promise.resolve({});
+      });
 
-                // Identify file extension of s3 object::
-                let key = decodeURIComponent(event.Records[0].s3.object.key.replace(/\+/g, " "));
-                if (key.slice((key.lastIndexOf(".") - 1 >>> 0) + 2) === 'json') {
-                    event.workflowTrigger = 'Metadata';
-                } else {
-                    event.workflowTrigger = 'Video';
-                }
-                params = {
-                    stateMachineArn: process.env.IngestWorkflow,
-                    input: JSON.stringify(event),
-                    name: event.guid
-                };
-                response = 'success';
-                break;
+      if (s3_response.Metadata && s3_response.Metadata.hasOwnProperty("cms_id")) {
+        return s3_response.Metadata["cms_id"];
+      }
+    } catch (e) {
+      console.error("Could not execute s3:headObject", e);
+    }
+    return undefined;
+  }
 
-            case event.hasOwnProperty('guid'):
-                // Process Workflow trigger
-                params = {
-                    stateMachineArn: process.env.ProcessWorkflow,
-                    input: JSON.stringify({
-                        guid: event.guid
-                    }),
-                    name: event.guid
-                };
-                response = 'success';
-                break;
+  let response;
+  let params;
 
-            case event.hasOwnProperty('detail'):
-                // Publish workflow triggered by MediaConvert CloudWatch event::
-                params = {
-                    stateMachineArn: process.env.PublishWorkflow,
-                    input: JSON.stringify(event),
-                    name: event.detail.userMetadata.guid
-                };
-                response = 'success';
-                break;
+  try {
+    switch (true) {
+      case event.hasOwnProperty('Records'):
+        // Ingest workflow triggered by s3 event::
+        // if event originated from CMS, take its id, otherwise generate a uuid
+        const key = decodeURIComponent(event.Records[0].s3.object.key.replace(/\+/g, " "));
+        const bucket = event.Records[0].s3.bucket.name
 
-            default:
-                throw new Error('invalid event object');
+        const cms_id = await id_from_s3(bucket, key)
+        if (cms_id) {
+          console.log(`cms found in event: ${cms_id}`)
+          event.guid = cms_id;
+        } else {
+          event.guid = uuidv4();
         }
 
-        let data = await stepfunctions.startExecution(params).promise();
-        console.log(`STATEMACHINE EXECUTE:: ${JSON.stringify(data, null, 2)}`);
-    } catch (err) {
-        await error.handler(event, err);
-        throw err;
+        // Identify file extension of s3 object::
+        if (key.split('.').pop() === 'json') {
+          event.workflowTrigger = 'Metadata';
+        } else {
+          event.workflowTrigger = 'Video';
+        }
+        params = {
+          stateMachineArn: process.env.IngestWorkflow,
+          input: JSON.stringify(event),
+          name: event.guid
+        };
+        response = 'success';
+        console.log("event", event);
+        break;
+
+      case event.hasOwnProperty('guid'):
+        // Process Workflow trigger
+        params = {
+          stateMachineArn: process.env.ProcessWorkflow,
+          input: JSON.stringify({
+            guid: event.guid
+          }),
+          name: event.guid
+        };
+        response = 'success';
+        break;
+
+      case event.hasOwnProperty('detail'):
+        // Publish workflow triggered by MediaConvert CloudWatch event::
+        params = {
+          stateMachineArn: process.env.PublishWorkflow,
+          input: JSON.stringify(event),
+          name: event.detail.userMetadata.guid
+        };
+        response = 'success';
+        break;
+
+      default:
+        throw new Error('invalid event object');
     }
 
-    return response;
+    let data = await stepfunctions.startExecution(params).promise();
+    console.log(`STATEMACHINE EXECUTE:: ${JSON.stringify(data, null, 2)}`);
+  } catch (err) {
+    await error.handler(event, err);
+    throw err;
+  }
+
+  return response;
 };

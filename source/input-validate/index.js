@@ -78,8 +78,6 @@ exports.handler = async (event) => {
                 throw new Error('event.workflowTrigger is not defined.');
         }
 
-        // The MediaPackage setting is configured at the stack level, and it cannot be updated via metadata.
-        data['enableMediaPackage'] = JSON.parse(process.env.EnableMediaPackage);
     } catch (err) {
         await error.handler(event, err);
         throw err;

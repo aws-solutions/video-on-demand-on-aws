@@ -23,7 +23,6 @@ describe('#INPUT VALIDATE::', () => {
     process.env.FrameCapture = 'true';
     process.env.ArchiveSource = 'true';
     process.env.Source = 'source_bucket';
-    process.env.EnableMediaPackage = 'true';
     process.env.InputRotate = 'DEGREE_0';
     process.env.AcceleratedTranscoding = 'DISABLED'
     process.env.EnableSns = 'true';
@@ -74,20 +73,7 @@ describe('#INPUT VALIDATE::', () => {
         expect(response.frameCapture).to.be.false;
         expect(response.srcBucket).to.equal('other-source');
         expect(response.jobTemplate_720p).to.equal('other-template');
-        expect(response.enableMediaPackage).to.be.true;
         expect(response.inputRotate).to.equal('DEGREE_0');
-    });
-
-    it('should always use MediaPackage env variable', async () => {
-        const metadata = {
-            "Body": '{"srcVideo": "video_from_json.mp4", "enableMediaPackage": false }'
-        };
-
-        AWS.mock('S3', 'getObject', Promise.resolve(metadata));
-        AWS.mock('S3', 'headObject', Promise.resolve());
-
-        const response = await lambda.handler(_json);
-        expect(response.enableMediaPackage).to.be.true;
     });
 
     it('should correctly handle metadata in PascalCase', async () => {

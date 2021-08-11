@@ -59,43 +59,6 @@ describe('#SNS::', () => {
         expect(response.workflowStatus).to.equal('Complete');
     });
 
-    it('should remove properties when MediaPackage is enabled', async() => {
-        AWS.mock('SNS', 'publish', Promise.resolve());
-
-        const event = {
-            guid: '12345678',
-            srcVideo: 'video.mp4',
-            workflowStatus: 'Complete',
-            enableMediaPackage: true,
-            mp4Outputs: ['mp4-output-1'],
-            mp4Urls: ['mp4-url-1'],
-            hlsPlaylist: 'hls-playlist',
-            hlsUrl: 'hls-url',
-            dashPlaylist: 'dash-playlist',
-            dashUrl: 'dash-url',
-            mssPlaylist: 'mss-playlist',
-            mssUrl: 'mss-url',
-            cmafDashPlaylist: 'cmaf-dash-playlist',
-            cmafDashUrl: 'cmaf-dash-url',
-            cmafHlsPlaylist: 'cmaf-hls-playlist',
-            cmafHlsUrl: 'cmaf-hls-url'
-        };
-
-        const response = await lambda.handler(event);
-        expect(response.mp4Outputs).to.be.undefined;
-        expect(response.mp4Urls).to.be.undefined;
-        expect(response.hlsPlaylist).to.be.undefined;
-        expect(response.hlsUrl).to.be.undefined;
-        expect(response.dashPlaylist).to.be.undefined;
-        expect(response.dashUrl).to.be.undefined;
-        expect(response.mssPlaylist).to.be.undefined;
-        expect(response.mssUrl).to.be.undefined;
-        expect(response.cmafDashPlaylist).to.be.undefined;
-        expect(response.cmafDashUrl).to.be.undefined;
-        expect(response.cmafHlsPlaylist).to.be.undefined;
-        expect(response.cmafHlsUrl).to.be.undefined;
-    });
-
     it('should return "ERROR" when workflowStatus is not defined', async () => {
         AWS.mock('SNS', 'publish', Promise.resolve());
         AWS.mock('Lambda', 'invoke', Promise.resolve());

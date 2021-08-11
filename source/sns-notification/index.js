@@ -49,13 +49,6 @@ exports.handler = async (event) => {
             delete msg.encodingJob;
             delete msg.encodingOutput;
 
-            if (event.enableMediaPackage) {
-                /*
-                    If MediaPackage VOD is enabled, some properties can be removed from the final output.
-                    They're still saved in DynamoDB, but are not included in the notification.
-                */
-                NOT_APPLICABLE_PROPERTIES.forEach(prop => delete msg[prop]);
-            }
         } else if (event.workflowStatus === 'Ingest') {
             msg = {
                 status: event.workflowStatus,
