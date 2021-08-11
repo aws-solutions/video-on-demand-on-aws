@@ -7,25 +7,23 @@ resource "aws_s3_bucket_object" "λ_media_info" {
 
 module "λ_media_info" {
   source  = "moritzzimmer/lambda/aws"
-  version = "5.12.2"
+  version = "5.14.0"
 
-  function_name = "${local.project}-media-info"
-  description   = "Creates a unique identifier (GUID) and executes the Ingest StateMachine"
-  handler       = "lambda_function.lambda_handler"
-
+  function_name     = "${local.project}-media-info"
+  description       = "Creates a unique identifier (GUID) and executes the Ingest StateMachine"
+  handler           = "lambda_function.lambda_handler"
+  runtime           = "python3.7"
   s3_bucket         = module.s3_λ_source.s3_bucket_id
   s3_key            = aws_s3_bucket_object.λ_media_info.key
   s3_object_version = aws_s3_bucket_object.λ_media_info.version_id
+  timeout           = 120
+  tags              = local.tags
 
-  runtime = "python3.7"
-  timeout = 120
   environment = {
     variables = {
       ErrorHandler : module.λ_error_handler.arn
     }
   }
-
-  tags = local.tags
 }
 
 data "aws_iam_policy_document" "λ_media_info" {

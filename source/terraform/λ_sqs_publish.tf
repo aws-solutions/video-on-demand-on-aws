@@ -7,18 +7,18 @@ resource "aws_s3_bucket_object" "λ_sqs_publish" {
 
 module "λ_sqs_publish" {
   source  = "moritzzimmer/lambda/aws"
-  version = "5.12.2"
+  version = "5.14.0"
 
-  function_name = "${local.project}-sqs-publish"
-  description   = "Publish the workflow results to an SQS queue"
-  handler       = "index.handler"
-
+  function_name     = "${local.project}-sqs-publish"
+  description       = "Publish the workflow results to an SQS queue"
+  handler           = "index.handler"
+  runtime           = "nodejs14.x"
   s3_bucket         = module.s3_λ_source.s3_bucket_id
   s3_key            = aws_s3_bucket_object.λ_sqs_publish.key
   s3_object_version = aws_s3_bucket_object.λ_sqs_publish.version_id
+  tags              = local.tags
+  timeout           = 120
 
-  runtime = "nodejs14.x"
-  timeout = 120
   environment = {
     variables = {
       AWS_NODEJS_CONNECTION_REUSE_ENABLED : "1"
@@ -26,8 +26,6 @@ module "λ_sqs_publish" {
       SqsQueue : aws_sqs_queue.notifications.url
     }
   }
-
-  tags = local.tags
 }
 
 data "aws_iam_policy_document" "λ_sqs_publish" {

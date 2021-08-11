@@ -7,25 +7,24 @@ resource "aws_s3_bucket_object" "λ_archive_source" {
 
 module "λ_archive_source" {
   source  = "moritzzimmer/lambda/aws"
-  version = "5.12.2"
+  version = "5.14.0"
 
-  function_name = "${local.project}-archive_source"
-  description   = "Updates tags on source files to enable Glacier"
-  handler       = "index.handler"
-
+  function_name     = "${local.project}-archive_source"
+  description       = "Updates tags on source files to enable Glacier"
+  handler           = "index.handler"
+  runtime           = "nodejs14.x"
   s3_bucket         = module.s3_λ_source.s3_bucket_id
   s3_key            = aws_s3_bucket_object.λ_archive_source.key
   s3_object_version = aws_s3_bucket_object.λ_archive_source.version_id
+  tags              = local.tags
+  timeout           = 120
 
-  runtime = "nodejs14.x"
-  timeout = 120
   environment = {
     variables = {
       AWS_NODEJS_CONNECTION_REUSE_ENABLED : "1"
       ErrorHandler : module.λ_error_handler.arn
     }
   }
-  tags = local.tags
 }
 
 data "aws_iam_policy_document" "λ_archive_source" {

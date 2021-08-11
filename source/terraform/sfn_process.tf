@@ -1,6 +1,7 @@
 resource "aws_iam_role" "media_transcode_role" {
-  name               = "${local.project}-media-transcode-role"
   assume_role_policy = data.aws_iam_policy_document.media_transcode_role.json
+  name               = "${local.project}-media-transcode-role"
+  tags               = local.tags
 
   inline_policy {
     name = "${local.project}-media-transcode-policy"
@@ -23,8 +24,6 @@ resource "aws_iam_role" "media_transcode_role" {
       ]
     })
   }
-  tags = local.tags
-
 }
 
 data "aws_iam_policy_document" "media_transcode_role" {

@@ -3,6 +3,7 @@ resource "aws_sns_topic" "notifications" {
   kms_master_key_id = "alias/aws/sns"
   tags              = local.tags
 }
+
 resource "aws_sns_topic_subscription" "admin_debug" {
   endpoint  = "mnaber@stroeer.de"
   protocol  = "email"
@@ -21,6 +22,7 @@ resource "aws_sqs_queue" "notifications" {
     maxReceiveCount     = 1
   })
 }
+
 resource "aws_sqs_queue" "notifications_dlq" {
   visibility_timeout_seconds        = 120
   name                              = "${local.project}-notfications-dlq"

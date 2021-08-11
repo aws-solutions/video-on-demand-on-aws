@@ -7,18 +7,18 @@ resource "aws_s3_bucket_object" "λ_sns_notification" {
 
 module "λ_sns_notification" {
   source  = "moritzzimmer/lambda/aws"
-  version = "5.12.2"
+  version = "5.14.0"
 
-  function_name = "${local.project}-sns-notification"
-  description   = "Sends a notification when the encode job is completed"
-  handler       = "index.handler"
-
+  function_name     = "${local.project}-sns-notification"
+  description       = "Sends a notification when the encode job is completed"
+  handler           = "index.handler"
+  runtime           = "nodejs14.x"
   s3_bucket         = module.s3_λ_source.s3_bucket_id
   s3_key            = aws_s3_bucket_object.λ_sns_notification.key
   s3_object_version = aws_s3_bucket_object.λ_sns_notification.version_id
+  tags              = local.tags
+  timeout           = 120
 
-  runtime = "nodejs14.x"
-  timeout = 120
   environment = {
     variables = {
       AWS_NODEJS_CONNECTION_REUSE_ENABLED : "1"
@@ -26,8 +26,6 @@ module "λ_sns_notification" {
       SnsTopic : aws_sns_topic.notifications.id
     }
   }
-
-  tags = local.tags
 }
 
 data "aws_iam_policy_document" "λ_sns_notification" {
