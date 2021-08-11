@@ -2,7 +2,7 @@ resource "aws_s3_bucket_object" "λ_sns_notification" {
   bucket = module.s3_λ_source.s3_bucket_id
   key    = "sns-notification/package.zip"
   source = "${local.lambda_package_dir}/sns-notification.zip"
-  etag   = filesha256("${local.lambda_package_dir}/sns-notification.zip")
+  etag   = filemd5("${local.lambda_package_dir}/sns-notification.zip")
 }
 
 module "λ_sns_notification" {

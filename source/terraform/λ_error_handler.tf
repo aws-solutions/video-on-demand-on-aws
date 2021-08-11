@@ -2,7 +2,7 @@ resource "aws_s3_bucket_object" "λ_error_handler" {
   bucket = module.s3_λ_source.s3_bucket_id
   key    = "error-handler/package.zip"
   source = "${local.lambda_package_dir}/error-handler.zip"
-  etag   = filesha256("${local.lambda_package_dir}/error-handler.zip")
+  etag   = filemd5("${local.lambda_package_dir}/error-handler.zip")
 }
 
 module "λ_error_handler" {

@@ -2,7 +2,7 @@ resource "aws_s3_bucket_object" "λ_media_info" {
   bucket = module.s3_λ_source.s3_bucket_id
   key    = "mediainfo/package.zip"
   source = "${local.lambda_package_dir}/mediainfo.zip"
-  etag   = filesha256("${local.lambda_package_dir}/mediainfo.zip")
+  etag   = filemd5("${local.lambda_package_dir}/mediainfo.zip")
 }
 
 module "λ_media_info" {

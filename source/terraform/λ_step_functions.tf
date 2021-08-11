@@ -2,7 +2,7 @@ resource "aws_s3_bucket_object" "λ_step_functions" {
   bucket = module.s3_λ_source.s3_bucket_id
   key    = "step-functions/package.zip"
   source = "${local.lambda_package_dir}/step-functions.zip"
-  etag   = filesha256("${local.lambda_package_dir}/step-functions.zip")
+  etag   = filemd5("${local.lambda_package_dir}/step-functions.zip")
 }
 
 module "λ_step_functions" {

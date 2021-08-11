@@ -2,7 +2,7 @@ resource "aws_s3_bucket_object" "λ_archive_source" {
   bucket = module.s3_λ_source.s3_bucket_id
   key    = "archive-source/package.zip"
   source = "${local.lambda_package_dir}/archive-source.zip"
-  etag   = filesha256("${local.lambda_package_dir}/archive-source.zip")
+  etag   = filemd5("${local.lambda_package_dir}/archive-source.zip")
 }
 
 module "λ_archive_source" {

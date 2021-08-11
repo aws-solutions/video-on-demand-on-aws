@@ -2,7 +2,7 @@ resource "aws_s3_bucket_object" "λ_sqs_publish" {
   bucket = module.s3_λ_source.s3_bucket_id
   key    = "sqs-publish/package.zip"
   source = "${local.lambda_package_dir}/sqs-publish.zip"
-  etag   = filesha256("${local.lambda_package_dir}/sqs-publish.zip")
+  etag   = filemd5("${local.lambda_package_dir}/sqs-publish.zip")
 }
 
 module "λ_sqs_publish" {

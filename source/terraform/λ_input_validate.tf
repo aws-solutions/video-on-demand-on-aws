@@ -2,7 +2,7 @@ resource "aws_s3_bucket_object" "λ_input_validate" {
   bucket = module.s3_λ_source.s3_bucket_id
   key    = "input-validate/package.zip"
   source = "${local.lambda_package_dir}/input-validate.zip"
-  etag   = filesha256("${local.lambda_package_dir}/input-validate.zip")
+  etag   = filemd5("${local.lambda_package_dir}/input-validate.zip")
 }
 
 module "λ_input_validate" {

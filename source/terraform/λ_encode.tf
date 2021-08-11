@@ -2,7 +2,7 @@ resource "aws_s3_bucket_object" "λ_encode" {
   bucket = module.s3_λ_source.s3_bucket_id
   key    = "encode/package.zip"
   source = "${local.lambda_package_dir}/encode.zip"
-  etag   = filesha256("${local.lambda_package_dir}/encode.zip")
+  etag   = filemd5("${local.lambda_package_dir}/encode.zip")
 }
 
 data "external" "mediaconvert_endpoint" {

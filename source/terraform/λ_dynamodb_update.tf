@@ -2,7 +2,7 @@ resource "aws_s3_bucket_object" "λ_dynamodb_update" {
   bucket = module.s3_λ_source.s3_bucket_id
   key    = "dynamo/package.zip"
   source = "${local.lambda_package_dir}/dynamo.zip"
-  etag   = filesha256("${local.lambda_package_dir}/dynamo.zip")
+  etag   = filemd5("${local.lambda_package_dir}/dynamo.zip")
 }
 
 module "λ_dynamodb_update" {
