@@ -21,6 +21,23 @@ module "λ_error_handler" {
   timeout                            = 120
   tracing_config_mode                = "Active"
 
+  cloudwatch_event_rules = {
+    media_convert_errors = {
+      name        = "${local.project}-EncodeError"
+      description = "MediaConvert Error event rule"
+
+      event_pattern = jsonencode({
+        source = ["aws.mediaconvert"]
+        detail = {
+          status = ["ERROR"],
+          userMetadata = {
+            workflow : [local.project]
+          }
+        }
+      })
+    }
+  }
+
   environment = {
     variables = {
       AWS_NODEJS_CONNECTION_REUSE_ENABLED : "1"

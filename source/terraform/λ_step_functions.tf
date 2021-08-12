@@ -21,6 +21,23 @@ module "λ_step_functions" {
   timeout                            = 120
   tracing_config_mode                = "Active"
 
+  cloudwatch_event_rules = {
+    media_convert_completed = {
+      description = "MediaConvert Completed event rule"
+      name        = "${local.project}-EncodeComplete"
+
+      event_pattern = jsonencode({
+        source = ["aws.mediaconvert"]
+        detail = {
+          status = ["COMPLETE"],
+          userMetadata = {
+            workflow : [local.project]
+          }
+        }
+      })
+    }
+  }
+
   environment = {
     variables = {
       AWS_NODEJS_CONNECTION_REUSE_ENABLED : "1"
