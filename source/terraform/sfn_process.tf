@@ -16,7 +16,8 @@ resource "aws_iam_role" "media_transcode_role" {
             "${module.s3_source.s3_bucket_arn}/*",
             "${module.s3_destination.s3_bucket_arn}/*"
           ]
-          }, {
+        },
+        {
           Action   = ["execute-api:Invoke"]
           Effect   = "Allow"
           Resource = "arn:aws:execute-api:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:*"

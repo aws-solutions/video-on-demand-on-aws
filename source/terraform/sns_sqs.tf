@@ -1,11 +1,17 @@
 resource "aws_sns_topic" "notifications" {
-  display_name      = "${local.project}-notifications"
   kms_master_key_id = "alias/aws/sns"
+  name              = "${local.project}-notifications"
   tags              = local.tags
 }
 
 resource "aws_sns_topic_subscription" "admin_debug" {
   endpoint  = "mnaber@stroeer.de"
+  protocol  = "email"
+  topic_arn = aws_sns_topic.notifications.arn
+}
+
+resource "aws_sns_topic_subscription" "mozi_debug" {
+  endpoint  = "mzimmer@stroeer.de"
   protocol  = "email"
   topic_arn = aws_sns_topic.notifications.arn
 }

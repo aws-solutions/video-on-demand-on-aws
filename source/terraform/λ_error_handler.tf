@@ -32,7 +32,7 @@ module "λ_error_handler" {
 
 data "aws_iam_policy_document" "λ_error_handler" {
   statement {
-    actions   = ["sns:Publishe"]
+    actions   = ["sns:Publish"]
     resources = [aws_sns_topic.notifications.id]
     condition {
       test     = "Bool"
