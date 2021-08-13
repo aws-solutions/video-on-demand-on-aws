@@ -69,7 +69,7 @@ describe('#STEP FUNCTIONS::', () => {
 
   it('should return "success" on process Execute success', async () => {
     AWS.mock('StepFunctions', 'startExecution', Promise.resolve(data));
-    AWS.mock('S3', 'headObject', Promise.reject(null));
+    AWS.mock('S3', 'headObject', Promise.reject({}));
 
     const response = await lambda.handler(_process);
     expect(response).to.equal('success');

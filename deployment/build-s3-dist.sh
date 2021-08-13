@@ -45,8 +45,8 @@ for folder in */ ; do
     echo "Creating deployment package for $function_name at $zip_path"
 
     if [ -e "package.json" ]; then
-        rm -rf node_modules/
-        npm i --production
+        #rm -rf node_modules/
+        npm install --production
 
         zip -q -r9 $zip_path .
     elif [ -e "setup.py" ]; then
