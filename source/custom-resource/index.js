@@ -27,17 +27,6 @@ const qvbrTemplatesNoPreset = [
   }
 ];
 
-const mediaPackageTemplatesNoPreset = [
-  {
-    name: '_Ott_1080p_Avc_Aac_16x9_mvod_no_preset',
-    file: './templates/1080p_avc_aac_16x9_mvod_no_preset.json'
-  },
-  {
-    name: '_Ott_720p_Avc_Aac_16x9_mvod_no_preset',
-    file: './templates/720p_avc_aac_16x9_mvod_no_preset.json'
-  }
-];
-
 const createTemplates = async (instance, templates, stackName) => {
   for (let tmpl of templates) {
     // Load template and set unique template name
@@ -49,16 +38,15 @@ const createTemplates = async (instance, templates, stackName) => {
   }
 };
 
-const Create = async (EndPoint, StackName) => {
+const Create = async (config) => {
   // extract region from the endpoint
-  const region = EndPoint.match(/\.mediaconvert\.(.*)\.amazonaws\.com/)[1]
+  const region = config.EndPoint.match(/\.mediaconvert\.(.*)\.amazonaws\.com/)[1]
   const mediaconvert = new AWS.MediaConvert({
-    endpoint: EndPoint,
+    endpoint: config.EndPoint,
     region: region
   });
 
-  // await createTemplates(mediaconvert, mediaPackageTemplatesNoPreset, StackName);
-  await createTemplates(mediaconvert, qvbrTemplatesNoPreset, StackName);
+  await createTemplates(mediaconvert, qvbrTemplatesNoPreset, config.StackName);
 
   return 'success';
 };
@@ -72,17 +60,16 @@ const _deleteTemplates = async (instance, templates, stackName) => {
   }
 };
 
-const Delete = async (EndPoint, StackName) => {
+const Delete = async (config) => {
   // extract region from the endpoint
-  const region = EndPoint.match(/\.mediaconvert\.(.*)\.amazonaws\.com/)[1]
+  const region = config.EndPoint.match(/\.mediaconvert\.(.*)\.amazonaws\.com/)[1]
   const mediaconvert = new AWS.MediaConvert({
-    endpoint: EndPoint,
+    endpoint: config.EndPoint,
     region: region
   });
 
   try {
-    await _deleteTemplates(mediaconvert, mediaPackageTemplatesNoPreset, StackName);
-    await _deleteTemplates(mediaconvert, qvbrTemplatesNoPreset, StackName);
+    await _deleteTemplates(mediaconvert, qvbrTemplatesNoPreset, config.StackName);
   } catch (err) {
     console.log(err);
     throw err;
@@ -92,7 +79,8 @@ const Delete = async (EndPoint, StackName) => {
 };
 
 module.exports = {
-  createTemplates : createTemplates
+  createTemplates : Create,
+  deleteTemplates: Delete
 }
 
 /**
@@ -128,5 +116,4 @@ if (process.argv.length === 5) {
 } else {
   console.error("Required parameters are missing. Usage:")
   console.error(`${process.argv[0]} ${process.argv[1]} EndPoint Update|Delete StackName`)
-  process.exit(1)
 }

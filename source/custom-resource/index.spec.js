@@ -29,7 +29,7 @@ const data = {
 
 const _config = {
     StackName: 'test',
-    EndPoint: 'https://test.com'
+    EndPoint: 'https://test.mediaconvert.test.amazonaws.com/bar'
 };
 
 const update_data = {
@@ -55,60 +55,6 @@ describe('#MEDIACONVERT::', () => {
             AWS.mock('MediaConvert', 'createJobTemplate', Promise.reject('ERROR'));
 
             await lambda.createTemplates(_config).catch(err => {
-                expect(err).to.equal('ERROR');
-            });
-        });
-    });
-
-    describe('Update', () => {
-        it('should return "SUCCESS" on update templates', async () => {
-            AWS.mock('MediaConvert', 'listJobTemplates', Promise.resolve(update_data));
-            AWS.mock('MediaConvert', 'createJobTemplate', Promise.resolve(update_data));
-
-            const response = await lambda.updateTemplates(_config);
-            expect(response).to.equal('success');
-        });
-
-        it('should correctly handle updates when new templates do not exist', async () => {
-
-            let wasCreateTemplateInvoked = false;
-            let toBeCreated = [];
-
-            AWS.mock('MediaConvert', 'listJobTemplates', Promise.resolve(update_data));
-            AWS.mock('MediaConvert', 'createJobTemplate', (params) => {
-                wasCreateTemplateInvoked = true;
-                toBeCreated.push(params.Name);
-
-                return Promise.resolve(data);
-            });
-
-            await lambda.updateTemplates(_config);
-            expect(wasCreateTemplateInvoked).to.be.true;
-
-            toBeCreated.forEach(item => expect(item.endsWith('_no_preset')).to.be.true);
-        });
-
-        it('should correctly handle update when new templates exist', async () => {
-            let wasCreateTemplateInvoked = false;
-            let toBeCreated = [];
-
-            AWS.mock('MediaConvert', 'listJobTemplates', Promise.resolve(update_data_no_preset));
-            AWS.mock('MediaConvert', 'createJobTemplate', (params) => {
-                wasCreateTemplateInvoked = false;
-                toBeCreated.push(params.Name);
-
-                return Promise.resolve(data);
-            });
-
-            await lambda.updateTemplates(_config);
-            expect(wasCreateTemplateInvoked).to.be.false;
-            toBeCreated.forEach(item => expect(item.endsWith('_no_preset')).to.be.false);
-        });
-
-        it('should fail when listJobTemplates throws an exception', async () => {
-            AWS.mock('MediaConvert', 'listJobTemplates', Promise.reject('ERROR'));
-
-            await lambda.updateTemplates(_config).catch(err => {
                 expect(err).to.equal('ERROR');
             });
         });
