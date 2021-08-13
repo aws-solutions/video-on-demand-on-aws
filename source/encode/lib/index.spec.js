@@ -26,7 +26,7 @@ describe('#ENCODE::', () => {
     const _event = {
         guid: '12345678',
         jobTemplate: 'jobTemplate',
-        srcVideo: 'video.mp4',
+        srcVideo: '2021/09/video.mp4',
         srcBucket: 'src',
         destBucket: 'dest',
         acceleratedTranscoding:'PREFERRED'
