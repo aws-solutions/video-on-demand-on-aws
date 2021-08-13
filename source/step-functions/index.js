@@ -26,7 +26,7 @@ exports.handler = async (event) => {
     region: process.env.AWS_REGION
   });
 
-  const id_from_s3 = async (bucket, key) => {
+  const s3metadata = async (bucket, key) => {
     try {
       let params = {
         Bucket: bucket,
@@ -37,8 +37,10 @@ exports.handler = async (event) => {
         return Promise.resolve({});
       });
 
-      if (s3_response.Metadata && s3_response.Metadata.hasOwnProperty("cms_id")) {
-        return s3_response.Metadata["cms_id"];
+      if (s3_response.Metadata) {
+        return s3_response.Metadata;
+      } else {
+        return false;
       }
     } catch (e) {
       console.error("Could not execute s3:headObject", e);
@@ -57,10 +59,13 @@ exports.handler = async (event) => {
         const key = decodeURIComponent(event.Records[0].s3.object.key.replace(/\+/g, " "));
         const bucket = event.Records[0].s3.bucket.name
 
-        const cms_id = await id_from_s3(bucket, key)
-        if (cms_id) {
-          console.log(`cms found in event: ${cms_id}`)
-          event.guid = cms_id;
+        const metadata = await s3metadata(bucket, key)
+        if (metadata && metadata.hasOwnProperty("cms-id")) {
+          console.log("metadata for item", metadata)
+          event.guid = metadata["cms-id"];
+          if (metadata.hasOwnProperty("geo-restriction")) {
+            event.geoRestriction = metadata["geo-restriction"];
+          }
         } else {
           event.guid = uuidv4();
         }

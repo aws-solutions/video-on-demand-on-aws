@@ -110,7 +110,8 @@ describe('#STEP FUNCTIONS::', () => {
       AWS.mock('Lambda', 'invoke', Promise.resolve());
       AWS.mock('S3', 'headObject', Promise.resolve({
         "Metadata": {
-          "cms_id": "2342"
+          "cms-id": "2342",
+          "geo-restriction": "DE"
         }
       }));
 
