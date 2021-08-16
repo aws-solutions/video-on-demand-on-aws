@@ -28,6 +28,7 @@ exports.handler = async (event) => {
 
         let params = {
             MessageBody: JSON.stringify(event, null, 2),
+            MessageGroupId: event.detail.userMetadata.cmsId,
             QueueUrl: process.env.SqsQueue
         };
 
