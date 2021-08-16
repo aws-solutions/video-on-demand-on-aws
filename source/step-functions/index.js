@@ -100,7 +100,7 @@ exports.handler = async (event) => {
         params = {
           stateMachineArn: process.env.PublishWorkflow,
           input: JSON.stringify(event),
-          name: event.detail.userMetadata.cmsId || event.detail.userMetadata.guid
+          name: event.detail.userMetadata.guid
         };
         response = 'success';
         break;

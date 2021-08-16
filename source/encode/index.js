@@ -128,9 +128,15 @@ exports.handler = async (event) => {
   });
 
   try {
-    const srcPath = event.srcVideo.substring(0, event.srcVideo.lastIndexOf("/"));
     const inputPath = `s3://${event.srcBucket}/${event.srcVideo}`;
-    const outputPath = `s3://${event.destBucket}/${srcPath}/${event.guid}`;
+    const srcPath = event.srcVideo.substring(0, event.srcVideo.lastIndexOf("/"));
+    let outputPath;
+    if (event.hasOwnProperty('cmsId')) {
+      outputPath = `s3://${event.destBucket}/${srcPath}`;
+    } else {
+      outputPath = `s3://${event.destBucket}/${srcPath}/${event.guid}`;
+    }
+
 
     // Baseline for the job parameters
     let job = {
