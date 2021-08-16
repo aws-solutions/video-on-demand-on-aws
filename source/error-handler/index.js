@@ -31,7 +31,7 @@ exports.handler = async (event) => {
 
     if (event.function) {
         url = 'https://console.aws.amazon.com/cloudwatch/home?region=' + process.env.AWS_REGION + '#logStream:group=/aws/lambda/' + event.function;
-        guid = event.guid;
+        guid = event.cmsId || event.guid;
         values = {
             ':st': 'Error',
             ':ea': event.function,
@@ -51,7 +51,7 @@ exports.handler = async (event) => {
 
     if (event.detail) {
         url = 'https://console.aws.amazon.com/mediaconvert/home?region=' + process.env.AWS_REGION + '#/jobs/summary/' + event.detail.jobId;
-        guid = event.detail.userMetadata.guid;
+        guid = event.detail.userMetadata.cmsId || event.detail.userMetadata.guid;
         values = {
             ':st': 'Error',
             ':ea': 'Encoding',

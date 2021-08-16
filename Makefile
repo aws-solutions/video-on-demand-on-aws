@@ -15,7 +15,7 @@ clean ::
 test ::
 	./deployment/run-unit-tests.sh
 
-build :: test
+build ::
 	./deployment/build-s3-dist.sh
 
 export TF_VAR_region

@@ -33,7 +33,7 @@ exports.handler = async (event) => {
   let params = {
     TableName: process.env.DynamoDBTable,
     Key: {
-    guid: event.detail.userMetadata.guid,
+    guid: event.detail.userMetadata.cmsId || event.detail.userMetadata.guid,
     }
   };
 
@@ -110,12 +110,12 @@ exports.handler = async (event) => {
 
     params = {
       Bucket: data.destBucket,
-      Prefix: `${data.guid}/thumbnails/`,
+      Prefix: `${data.cmsId || data.guid}/thumbnails/`,
     };
 
     let thumbNails = await s3.listObjects(params).promise();
 
-    if (thumbNails.Contents.legnth !=0) {
+    if (thumbNails.Contents.legnth !== 0) {
       let lastImg = thumbNails.Contents.pop();
       data.thumbNails.push(`s3://${data.destBucket}/${lastImg.Key}`);
       data.thumbNailsUrls.push(`https://${data.cloudFront}/${lastImg.Key}`);

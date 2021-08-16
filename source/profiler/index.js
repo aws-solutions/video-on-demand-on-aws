@@ -21,12 +21,14 @@ exports.handler = async (event) => {
         region: process.env.AWS_REGION
     });
 
+    const execution_guid = event.guid;
+
     try {
         // Download DynamoDB data for the source file:
         let params = {
             TableName: process.env.DynamoDBTable,
             Key: {
-                guid: event.guid
+                guid: event.cmsId || event.guid
             }
         };
 
@@ -35,6 +37,8 @@ exports.handler = async (event) => {
         Object.keys(data.Item).forEach(key => {
             event[key] = data.Item[key];
         });
+
+        event.guid = execution_guid;
 
         let mediaInfo = JSON.parse(event.srcMediainfo);
         event.srcHeight = mediaInfo.video[0].height;

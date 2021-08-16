@@ -60,15 +60,12 @@ exports.handler = async (event) => {
         const bucket = event.Records[0].s3.bucket.name
 
         const metadata = await s3metadata(bucket, key)
-        if (metadata && metadata.hasOwnProperty("cms-id")) {
+        if (metadata) {
           console.log("metadata for item", metadata)
-          event.guid = metadata["cms-id"];
-          if (metadata.hasOwnProperty("geo-restriction")) {
-            event.geoRestriction = metadata["geo-restriction"];
-          }
-        } else {
-          event.guid = uuidv4();
+          if (metadata.hasOwnProperty("cms-id")) event.cmsId = metadata["cms-id"];
+          if (metadata.hasOwnProperty("geo-restriction")) event.geoRestriction = metadata["geo-restriction"];
         }
+        event.guid = uuidv4();
 
         // Identify file extension of s3 object::
         if (key.split('.').pop() === 'json') {
@@ -90,7 +87,8 @@ exports.handler = async (event) => {
         params = {
           stateMachineArn: process.env.ProcessWorkflow,
           input: JSON.stringify({
-            guid: event.guid
+            guid: event.guid,
+            cmsId: event.cmsId || 'undefined'
           }),
           name: event.guid
         };
@@ -102,7 +100,7 @@ exports.handler = async (event) => {
         params = {
           stateMachineArn: process.env.PublishWorkflow,
           input: JSON.stringify(event),
-          name: event.detail.userMetadata.guid
+          name: event.detail.userMetadata.cmsId || event.detail.userMetadata.guid
         };
         response = 'success';
         break;

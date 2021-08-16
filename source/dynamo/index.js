@@ -15,46 +15,49 @@ const AWS = require('aws-sdk');
 const error = require('./lib/error.js');
 
 exports.handler = async (event) => {
-    console.log(`REQUEST:: ${JSON.stringify(event, null, 2)}`);
+  console.log(`REQUEST:: ${JSON.stringify(event, null, 2)}`);
 
-    const dynamo = new AWS.DynamoDB.DocumentClient({
-        region: process.env.AWS_REGION
+  const dynamo = new AWS.DynamoDB.DocumentClient({
+    region: process.env.AWS_REGION
+  });
+
+  try {
+    // Remove guid from event data (primary db table key) and iterate over event objects
+    // to build the update parameters
+    let key = event.cmsId || event.guid;
+    const originalGuid = event.guid;
+    // store the original guid, since we're using the cmsId if present
+    event['execution_guid'] = originalGuid;
+    delete event.guid;
+    let expression = '';
+    let values = {};
+    let i = 0;
+
+    Object.keys(event).forEach((key) => {
+      i++;
+      expression += ' ' + key + ' = :' + i + ',';
+      values[':' + i] = event[key];
     });
 
-    try {
-        // Remove guid from event data (primary db table key) and iterate over event objects
-        // to build the update parameters
-        let guid = event.guid;
-        delete event.guid;
-        let expression = '';
-        let values = {};
-        let i = 0;
+    let params = {
+      TableName: process.env.DynamoDBTable,
+      Key: {
+        guid: key,
+      },
+      // remove the trailing ',' from the update expression added by the forEach loop
+      UpdateExpression: 'set ' + expression.slice(0, -1),
+      ExpressionAttributeValues: values
+    };
 
-        Object.keys(event).forEach((key) => {
-            i++;
-            expression += ' ' + key + ' = :' + i + ',';
-            values[':' + i] = event[key];
-        });
+    console.log(`UPDATE:: ${JSON.stringify(params, null, 2)}`);
+    await dynamo.update(params).promise();
 
-        let params = {
-            TableName: process.env.DynamoDBTable,
-            Key: {
-                guid: guid,
-            },
-            // remove the trailing ',' from the update expression added by the forEach loop
-            UpdateExpression: 'set ' + expression.slice(0, -1),
-            ExpressionAttributeValues: values
-        };
+    // Get updated data and reconst event data to return
+    event.guid = originalGuid;
+  } catch (err) {
+    await error.handler(event, err);
+    throw err;
+  }
 
-        console.log(`UPDATE:: ${JSON.stringify(params, null, 2)}`);
-        await dynamo.update(params).promise();
-
-        // Get updated data and reconst event data to return
-        event.guid = guid;
-    } catch (err) {
-        await error.handler(event, err);
-        throw err;
-    }
-
-    return event;
+  return event;
 };
