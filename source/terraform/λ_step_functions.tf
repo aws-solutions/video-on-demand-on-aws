@@ -63,7 +63,7 @@ data "aws_iam_policy_document" "λ_step_functions" {
     resources = [module.λ_error_handler.arn]
   }
   statement {
-    actions = ["s3:GetObject"]
+    actions   = ["s3:GetObject"]
     resources = ["${module.s3_source.s3_bucket_arn}/*"]
   }
 }
