@@ -15,63 +15,63 @@ const AWS = require('aws-sdk');
 const error = require('./lib/error.js');
 
 const NOT_APPLICABLE_PROPERTIES = [
-    'mp4Outputs',
-    'mp4Urls',
-    'hlsPlaylist',
-    'hlsUrl',
-    'dashPlaylist',
-    'dashUrl',
-    'mssPlaylist',
-    'mssUrl',
-    'cmafDashPlaylist',
-    'cmafDashUrl',
-    'cmafHlsPlaylist',
-    'cmafHlsUrl'
+  'mp4Outputs',
+  'mp4Urls',
+  'hlsPlaylist',
+  'hlsUrl',
+  'dashPlaylist',
+  'dashUrl',
+  'mssPlaylist',
+  'mssUrl',
+  'cmafDashPlaylist',
+  'cmafDashUrl',
+  'cmafHlsPlaylist',
+  'cmafHlsUrl'
 ];
 
 exports.handler = async (event) => {
-    console.log(`REQUEST:: ${JSON.stringify(event, null, 2)}`);
+  console.log(`REQUEST:: ${JSON.stringify(event, null, 2)}`);
 
-    const sns = new AWS.SNS({
-        region: process.env.AWS_REGION
-    });
+  const sns = new AWS.SNS({
+    region: process.env.AWS_REGION
+  });
 
-    let msg = {};
+  let msg = {};
 
-    try {
-        let subject = 'Workflow Status:: ' + event.workflowStatus + ':: ' + event.guid;
+  try {
+    let subject = `Workflow Status:: ${event.workflowStatus} :: ${event.guid} (${event.cmsId})`;
 
-        if (event.workflowStatus === 'Complete') {
-            msg = event;
-            delete msg.srcMediainfo;
-            delete msg.jobTemplate_1080p;
-            delete msg.jobTemplate_720p;
-            delete msg.encodingJob;
-            delete msg.encodingOutput;
+    if (event.workflowStatus === 'Complete') {
+      msg = event;
+      delete msg.srcMediainfo;
+      delete msg.jobTemplate_1080p;
+      delete msg.jobTemplate_720p;
+      delete msg.encodingJob;
+      delete msg.encodingOutput;
 
-        } else if (event.workflowStatus === 'Ingest') {
-            msg = {
-                status: event.workflowStatus,
-                guid: event.guid,
-                srcVideo: event.srcVideo
-            };
-        } else {
-            throw new Error('Workflow Status not defined.');
-        }
-
-        console.log(`SEND SNS:: ${JSON.stringify(event, null, 2)}`);
-
-        let params = {
-            Message: JSON.stringify(msg, null, 2),
-            Subject: subject,
-            TargetArn: process.env.SnsTopic
-        };
-
-        await sns.publish(params).promise();
-    } catch (err) {
-        await error.handler(event, err);
-        throw err;
+    } else if (event.workflowStatus === 'Ingest') {
+      msg = {
+        status: event.workflowStatus,
+        guid: event.cmsId || event.guid,
+        srcVideo: event.srcVideo
+      };
+    } else {
+      throw new Error('Workflow Status not defined.');
     }
 
-    return event;
+    console.log(`SEND SNS:: ${JSON.stringify(event, null, 2)}`);
+
+    let params = {
+      Message: JSON.stringify(msg, null, 2),
+      Subject: subject,
+      TargetArn: process.env.SnsTopic
+    };
+
+    await sns.publish(params).promise();
+  } catch (err) {
+    await error.handler(event, err);
+    throw err;
+  }
+
+  return event;
 };
