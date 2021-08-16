@@ -95,14 +95,14 @@ if (process.argv.length === 5) {
 
   switch (Mode) {
     case 'Create':
-      Create(EndPoint, StackName).then(
+      Create({EndPoint: EndPoint, StackName: StackName}).then(
         data => console.log("Create success", data)
       ).catch(
         error => console.error("Create error", error)
       );
       return;
     case 'Delete':
-      Delete(EndPoint, StackName).then(
+      Delete({EndPoint: EndPoint, StackName: StackName}).then(
         data => console.log("Delete success", data)
       ).catch(
         error => console.error("Delete error", error)
