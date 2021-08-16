@@ -40,12 +40,6 @@ data "aws_iam_policy_document" "λ_media_convert_sqs_publish" {
   statement {
     actions   = ["sqs:SendMessage"]
     resources = ["arn:aws:sqs:eu-central-1:806599846381:livingdocs-transcoding-events-production-queue.fifo"]
-
-    condition {
-      test     = "Bool"
-      variable = "aws:SecureTransport"
-      values   = ["true"]
-    }
   }
   statement {
     actions   = ["lambda:InvokeFunction"]
