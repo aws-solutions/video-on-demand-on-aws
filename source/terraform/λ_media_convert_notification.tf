@@ -1,11 +1,3 @@
-resource "aws_sqs_queue" "test" {
-  visibility_timeout_seconds        = 120
-  name                              = "${local.project}-test"
-  kms_data_key_reuse_period_seconds = 300
-  kms_master_key_id                 = "alias/aws/sqs"
-  tags                              = local.tags
-}
-
 module "λ_media_convert_sqs_publish" {
   source  = "moritzzimmer/lambda/aws"
   version = "5.14.0"
@@ -39,7 +31,7 @@ module "λ_media_convert_sqs_publish" {
     variables = {
       AWS_NODEJS_CONNECTION_REUSE_ENABLED : "1"
       ErrorHandler : module.λ_error_handler.arn
-      SqsQueue : aws_sqs_queue.test.url
+      SqsQueue : "https://sqs.eu-central-1.amazonaws.com/806599846381/livingdocs-transcoding-events-production-queue.fifo"
     }
   }
 }
@@ -47,7 +39,7 @@ module "λ_media_convert_sqs_publish" {
 data "aws_iam_policy_document" "λ_media_convert_sqs_publish" {
   statement {
     actions   = ["sqs:SendMessage"]
-    resources = [aws_sqs_queue.test.arn]
+    resources = ["arn:aws:sqs:eu-central-1:806599846381:livingdocs-transcoding-events-production-queue.fifo"]
 
     condition {
       test     = "Bool"
