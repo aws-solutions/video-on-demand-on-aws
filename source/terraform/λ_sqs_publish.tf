@@ -21,11 +21,24 @@ module "λ_sqs_publish" {
   timeout                            = 120
   tracing_config_mode                = "Active"
 
+  cloudwatch_event_rules = {
+    media_convert = {
+      event_pattern = jsonencode({
+        source = ["aws.mediaconvert"]
+        detail = {
+          userMetadata = {
+            workflow : [local.project]
+          }
+        }
+      })
+    }
+  }
+
   environment = {
     variables = {
       AWS_NODEJS_CONNECTION_REUSE_ENABLED : "1"
       ErrorHandler : module.λ_error_handler.arn
-      SqsQueue : aws_sqs_queue.notifications.url
+      SqsQueue : "https://sqs.eu-central-1.amazonaws.com/806599846381/livingdocs-transcoding-events-production-queue.fifo"
     }
   }
 }
@@ -33,12 +46,7 @@ module "λ_sqs_publish" {
 data "aws_iam_policy_document" "λ_sqs_publish" {
   statement {
     actions   = ["sqs:SendMessage"]
-    resources = [aws_sqs_queue.notifications.arn]
-    condition {
-      test     = "Bool"
-      variable = "aws:SecureTransport"
-      values   = ["true"]
-    }
+    resources = ["arn:aws:sqs:eu-central-1:806599846381:livingdocs-transcoding-events-production-queue.fifo"]
   }
   statement {
     actions   = ["lambda:InvokeFunction"]
