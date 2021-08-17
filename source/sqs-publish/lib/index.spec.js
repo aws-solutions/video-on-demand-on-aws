@@ -19,10 +19,25 @@ AWS.setSDK(path.resolve('./node_modules/aws-sdk'));
 const lambda = require('../index.js');
 
 describe('#SNS::', () => {
-    const _event = {
-        guid: '12345678',
-        startTime: 'now',
-        srcVideo: 'video.mp4',
+    const _mediaConvertEvent = {
+        "detail-type": "MediaConvert Job State Change",
+        "source": "aws.mediaconvert",
+        "detail": {
+            "timestamp": 1629203099186,
+            "jobId": "1629203005873-2s2878",
+            "status": "INPUT_INFORMATION",
+            "userMetadata": {
+                "guid": "fcc655dc-6a06-47a2-8bed-ae9b767d0845",
+                "cmsId": "foo",
+                "workflow": "buzzhub"
+            }
+        }
+    };
+
+    const _jobEvent = {
+        "encodeJobId": "1629203005873-2s2878",
+        "srcVideo": "foo.mp4",
+        "cmsId": "bar",
     };
 
     process.env.ErrorHandler = 'error_handler';
@@ -30,18 +45,25 @@ describe('#SNS::', () => {
 
     afterEach(() => AWS.restore('SQS'));
 
-    it('should return "success" on send SQS message', async () => {
+    it('should return "success" on send SQS message for MediaConvert event', async () => {
         AWS.mock('SQS', 'sendMessage', Promise.resolve());
 
-        const response = await lambda.handler(_event);
-        expect(response.srcVideo).to.equal('video.mp4');
+        const response = await lambda.handler(_mediaConvertEvent);
+        expect(response.detail.userMetadata.cmsId).to.equal('foo');
+    });
+
+    it('should return "success" on send SQS message for transcoding job event', async () => {
+        AWS.mock('SQS', 'sendMessage', Promise.resolve());
+
+        const response = await lambda.handler(_jobEvent);
+        expect(response.cmsId).to.equal('bar');
     });
 
     it('should return "SQS ERROR" when send SQS message fails', async () => {
         AWS.mock('SQS', 'sendMessage', Promise.reject('SQS ERROR'));
         AWS.mock('Lambda', 'invoke', Promise.resolve());
 
-        await lambda.handler(_event).catch(err => {
+        await lambda.handler(_mediaConvertEvent).catch(err => {
             expect(err).to.equal('SQS ERROR');
         });
     });

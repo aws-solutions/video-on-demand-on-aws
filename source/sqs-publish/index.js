@@ -26,9 +26,11 @@ exports.handler = async (event) => {
 
         console.log(`SEND SQS:: ${JSON.stringify(event, null, 2)}`);
 
+        let cmsId = event.hasOwnProperty("cmsId") ? event.cmsId : event.detail.userMetadata.cmsId
+
         let params = {
             MessageBody: JSON.stringify(event, null, 2),
-            MessageGroupId: event.detail.userMetadata.cmsId,
+            MessageGroupId: cmsId,
             QueueUrl: process.env.SqsQueue
         };
 
