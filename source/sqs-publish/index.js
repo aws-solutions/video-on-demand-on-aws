@@ -16,30 +16,31 @@ const error = require('./lib/error.js');
 
 
 exports.handler = async (event) => {
-    console.log(`REQUEST:: ${JSON.stringify(event, null, 2)}`);
+  console.log(`REQUEST:: ${JSON.stringify(event, null, 2)}`);
 
-    const sqs = new AWS.SQS({
-        region: process.env.AWS_REGION
-    });
+  const sqs = new AWS.SQS({
+    region: process.env.AWS_REGION
+  });
 
-    try {
+  try {
+    let cmsId = event.hasOwnProperty("cmsId") ? event.cmsId : event.detail.userMetadata.cmsId
 
-        console.log(`SEND SQS:: ${JSON.stringify(event, null, 2)}`);
+    console.log(`SEND SQS:: MessageGroupId: ${cmsId} ; queue = ${process.env.SqsQueue}`);
 
-        let cmsId = event.hasOwnProperty("cmsId") ? event.cmsId : event.detail.userMetadata.cmsId
+    let params = {
+      MessageBody: JSON.stringify(event),
+      MessageGroupId: cmsId,
+      QueueUrl: process.env.SqsQueue
+    };
 
-        let params = {
-            MessageBody: JSON.stringify(event, null, 2),
-            MessageGroupId: cmsId,
-            QueueUrl: process.env.SqsQueue
-        };
+    await sqs.sendMessage(params).promise()
+      .then(data => console.log("sqs:success", data))
+      .catch(err => console.log("sqs:error", err));
 
-        await sqs.sendMessage(params).promise();
+  } catch (err) {
+    await error.handler(event, err);
+    throw err;
+  }
 
-    } catch (err) {
-        await error.handler(event, err);
-        throw err;
-    }
-
-    return event;
+  return event;
 };
