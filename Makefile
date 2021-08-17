@@ -9,6 +9,8 @@ TF_BACKEND_CFG = -backend-config=bucket=terraform-state-$(ACCOUNT)-$(TF_VAR_regi
 	-backend-config=region=$(TF_VAR_region) \
 	-backend-config=key="regional/solutions/$(SERVICE)/terraform.tfstate"
 
+all :: build terraform
+
 clean ::
 	@rm -rf ./target
 
@@ -23,7 +25,15 @@ tf ::
 	terraform -chdir=source/terraform/ init -reconfigure -upgrade=true $(TF_BACKEND_CFG)
 	terraform -chdir=source/terraform/ $(MODE)
 
-all :: build terraform
+.PHONY: fmt
+fmt: ## Rewrites terraform files to canonical format
+	@echo "+ $@"
+	@terraform -chdir=source/terraform/ fmt -check=true
+
+.PHONY: validate
+validate: ## Validates the Terraform files
+	@echo "+ $@"
+	@terraform -chdir=source/terraform/ init -backend=false && terraform -chdir=source/terraform/ validate
 
 LAMBDA_NODE_VER=14
 CURR_NODE_VER=$(shell node -v)
@@ -34,6 +44,6 @@ else
 endif
 
 .PHONY: check-node-version
-check-node-version:
+check-node-version: ## Checks node version compatibility
 	@$(NODE_LAMBDA) || echo Build requires Node v$(LAMBDA_NODE_VER) \('nvm use $(LAMBDA_NODE_VER)'\)
 	@$(NODE_LAMBDA) && echo Building using Node v$(LAMBDA_NODE_VER)

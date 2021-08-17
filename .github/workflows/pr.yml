@@ -1,0 +1,23 @@
+name: pr
+
+on:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '14.x'
+          registry-url: 'https://npm.pkg.github.com'
+
+      - run: make test build
+
+      - uses: hashicorp/setup-terraform@v1.3.2
+        with:
+          terraform_version: ~1.0
+
+      - run: make fmt validate
