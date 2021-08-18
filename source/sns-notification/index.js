@@ -52,7 +52,9 @@ exports.handler = async (event) => {
     } else if (event.workflowStatus === 'Ingest') {
       msg = {
         status: event.workflowStatus,
-        guid: event.cmsId || event.guid,
+        guid: event.guid,
+        cmsId: event.cmsId || 'undefined',
+        cmsCommandId: event.cmsCommandId || 'undefined',
         srcVideo: event.srcVideo
       };
     } else {

@@ -66,7 +66,7 @@ exports.handler = async (event) => {
           if (metadata.hasOwnProperty("geo-restriction")) event.geoRestriction = metadata["geo-restriction"];
           if (metadata.hasOwnProperty("command-id")) event.cmsCommandId = metadata["command-id"];
         }
-        event.guid = uuidv4();
+        event.guid = event.cmsCommandId || uuidv4();
 
         // Identify file extension of s3 object::
         if (key.split('.').pop() === 'json') {
