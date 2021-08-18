@@ -11,101 +11,115 @@
  *  and limitations under the License.                                                                                *
  *********************************************************************************************************************/
 
-const expect = require('chai').expect;
+const chai = require('chai');
+const assertArrays = require('chai-arrays');
+chai.use(assertArrays);
+
+const expect = chai.expect;
 const path = require('path');
 const AWS = require('aws-sdk-mock');
 AWS.setSDK(path.resolve('./node_modules/aws-sdk'));
 
 const lambda = require('../index.js');
+const _events = require("./test-events.js");
 
 describe('#OUTPUT VALIDATE::', () => {
-    const _events = require('./test-events.js');
-    const _error = {
-        detail: {
-            jobId: '43d7kt',
-            status: 'COMPLETE',
-            userMetadata: {
-                workflow: 'voodoo',
-                guid: '9ccbbd94-e39c-4d9b-8f89-85fa1fc81fb4'
-            },
-            outputGroupDetails: []
-        }
-    };
-
-    const data = {
-        Item: {
-            guid: '1234',
-            cloudFront: 'cloudfront',
-            destBucket: 'vod-destination',
-            frameCapture: false
-        }
-    };
-
-    const img_data = {
-        Item: {
-            guid: '1234',
-            cloudFront: 'cloudfront',
-            destBucket: 'vod-destination',
-            frameCapture: true
-        }
-    };
-
-    const imgList = {
-        Contents: [
-            {
-                Key: "12345/thumbnails/dude3.000.jpg",
-
-                }
-        ]
+  const _events = require('./test-events.js');
+  const _error = {
+    detail: {
+      jobId: '43d7kt',
+      status: 'COMPLETE',
+      userMetadata: {
+        workflow: 'voodoo',
+        guid: '9ccbbd94-e39c-4d9b-8f89-85fa1fc81fb4'
+      },
+      outputGroupDetails: []
     }
+  };
 
-    process.env.ErrorHandler = 'error_handler';
+  const data = {
+    Item: {
+      guid: '1234',
+      cloudFront: 'cloudfront',
+      destBucket: 'vod-destination',
+      frameCapture: false
+    }
+  };
 
-    afterEach(() => AWS.restore('DynamoDB.DocumentClient'));
+  const img_data = {
+    Item: {
+      guid: '1234',
+      cloudFront: 'cloudfront',
+      destBucket: 'vod-destination',
+      srcVideo: 'directory/file.mp4',
+      frameCapture: true
+    }
+  };
 
-    it('should return "SUCCESS" on parsing CMAF MSS output', async () => {
-        AWS.mock('DynamoDB.DocumentClient', 'get', Promise.resolve(data));
+  const s3_list_response = {
+    Contents: [
+      {Key: "12345/thumbnails/dude3.000.jpg"},
+      {Key: "12345/thumbnails/dude3.001.jpg"}
+    ]
+  }
 
-        const response = await lambda.handler(_events.cmafMss);
-        expect(response.mssPlaylist).to.equal('s3://vod-destination/12345/mss/big_bunny.ism');
-        expect(response.mssUrl).to.equal('https://cloudfront/12345/mss/big_bunny.ism');
-        expect(response.cmafDashPlaylist).to.equal('s3://vod-destination/12345/cmaf/big_bunny.mpd');
-        expect(response.cmafDashUrl).to.equal('https://cloudfront/12345/cmaf/big_bunny.mpd');
+  process.env.ErrorHandler = 'error_handler';
+
+  afterEach(() => AWS.restore('DynamoDB.DocumentClient'));
+  afterEach(() => AWS.restore('S3'));
+
+  it('should return "SUCCESS" on parsing CMAF MSS output', async () => {
+    AWS.mock('DynamoDB.DocumentClient', 'get', Promise.resolve(data));
+
+    const response = await lambda.handler(_events.cmafMss);
+    expect(response.mssPlaylist).to.equal('s3://vod-destination/12345/mss/big_bunny.ism');
+    expect(response.mssUrl).to.equal('https://cloudfront/12345/mss/big_bunny.ism');
+    expect(response.cmafDashPlaylist).to.equal('s3://vod-destination/12345/cmaf/big_bunny.mpd');
+    expect(response.cmafDashUrl).to.equal('https://cloudfront/12345/cmaf/big_bunny.mpd');
+  });
+
+  it('should return "SUCCESS" on parsing HLS DASH output', async () => {
+    AWS.mock('DynamoDB.DocumentClient', 'get', Promise.resolve(data));
+
+    const response = await lambda.handler(_events.hlsDash);
+    expect(response.hlsPlaylist).to.equal('s3://vod-destination/12345/hls/dude.m3u8');
+    expect(response.hlsUrl).to.equal('https://cloudfront/12345/hls/dude.m3u8');
+    expect(response.dashPlaylist).to.equal('s3://vod-destination/12345/dash/dude.mpd');
+    expect(response.dashUrl).to.equal('https://cloudfront/12345/dash/dude.mpd');
+  });
+
+  it('should return "SUCCESS" on parsing MP4 output', async () => {
+    AWS.mock('DynamoDB.DocumentClient', 'get', Promise.resolve(data));
+
+    const response = await lambda.handler(_events.mp4);
+    expect(response.mp4Outputs[0]).to.equal('s3://vod-destination/12345/mp4/dude_3.0Mbps.mp4');
+    expect(response.mp4Urls[0]).to.equal('https://cloudfront/12345/mp4/dude_3.0Mbps.mp4');
+  });
+
+  it('should return "DB ERROR" when db get fails', async () => {
+    AWS.mock('DynamoDB.DocumentClient', 'get', Promise.reject('DB ERROR'));
+    AWS.mock('Lambda', 'invoke', Promise.resolve());
+
+    await lambda.handler(_events.cmafMss).catch(err => {
+      expect(err).to.equal('DB ERROR');
     });
+  });
 
-    it('should return "SUCCESS" on parsing HLS DASH output', async () => {
-        AWS.mock('DynamoDB.DocumentClient', 'get', Promise.resolve(data));
+  it('should return "ERROR" when output parse fails', async () => {
+    AWS.mock('DynamoDB.DocumentClient', 'get', Promise.resolve(data));
 
-        const response = await lambda.handler(_events.hlsDash);
-        expect(response.hlsPlaylist).to.equal('s3://vod-destination/12345/hls/dude.m3u8');
-        expect(response.hlsUrl).to.equal('https://cloudfront/12345/hls/dude.m3u8');
-        expect(response.dashPlaylist).to.equal('s3://vod-destination/12345/dash/dude.mpd');
-        expect(response.dashUrl).to.equal('https://cloudfront/12345/dash/dude.mpd');
+    await lambda.handler(_error).catch(err => {
+      expect(err.toString()).to.equal('Could not parse MediaConvert Output');
     });
+  });
 
-    it('should return "SUCCESS" on parsing MP4 output', async () => {
-        AWS.mock('DynamoDB.DocumentClient', 'get', Promise.resolve(data));
+  it('should return frame capture data', async () => {
+    AWS.mock('DynamoDB.DocumentClient', 'get', Promise.resolve(img_data));
+    AWS.mock('S3', 'listObjects', Promise.resolve(s3_list_response));
 
-        const response = await lambda.handler(_events.mp4);
-        expect(response.mp4Outputs[0]).to.equal('s3://vod-destination/12345/mp4/dude_3.0Mbps.mp4');
-        expect(response.mp4Urls[0]).to.equal('https://cloudfront/12345/mp4/dude_3.0Mbps.mp4');
-    });
-
-    it('should return "DB ERROR" when db get fails', async () => {
-        AWS.mock('DynamoDB.DocumentClient', 'get', Promise.reject('DB ERROR'));
-        AWS.mock('Lambda', 'invoke', Promise.resolve());
-
-        await lambda.handler(_events.cmafMss).catch(err => {
-            expect(err).to.equal('DB ERROR');
-        });
-    });
-
-    it('should return "ERROR" when output parse fails', async () => {
-        AWS.mock('DynamoDB.DocumentClient', 'get', Promise.resolve(data));
-
-        await lambda.handler(_error).catch(err => {
-            expect(err.toString()).to.equal('Could not parse MediaConvert Output');
-        });
-    });
+    const response = await lambda.handler(_events.mp4);
+    expect(response.thumbNailsUrls).to.be.containing('https://cloudfront/12345/thumbnails/dude3.001.jpg');
+    expect(response.thumbNails).to.be.containing('s3://vod-destination/12345/thumbnails/dude3.001.jpg');
+  });
 });
 

@@ -64,6 +64,7 @@ exports.handler = async (event) => {
           console.log("metadata for item", metadata)
           if (metadata.hasOwnProperty("cms-id")) event.cmsId = metadata["cms-id"];
           if (metadata.hasOwnProperty("geo-restriction")) event.geoRestriction = metadata["geo-restriction"];
+          if (metadata.hasOwnProperty("command-id")) event.cmsCommandId = metadata["command-id"];
         }
         event.guid = uuidv4();
 
@@ -88,7 +89,8 @@ exports.handler = async (event) => {
           stateMachineArn: process.env.ProcessWorkflow,
           input: JSON.stringify({
             guid: event.guid,
-            cmsId: event.cmsId || 'undefined'
+            cmsId: event.cmsId || 'undefined',
+            cmsCommandId: event.cmsCommandId || 'undefined'
           }),
           name: event.guid
         };

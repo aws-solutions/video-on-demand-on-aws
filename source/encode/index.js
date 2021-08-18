@@ -145,6 +145,7 @@ exports.handler = async (event) => {
       UserMetadata: {
         guid: event.guid,
         cmsId: event.cmsId || 'undefined',
+        cmsCommandId: event.cmsCommandId || 'undefined',
         workflow: event.workflowName
       },
       Settings: {

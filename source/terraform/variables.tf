@@ -9,7 +9,7 @@ variable "accelerated_transcoding" {
 }
 
 variable "frame_capture" {
-  default     = false
+  default     = true
   type        = bool
   description = "If enabled, frame capture is added to the job submitted to MediaConvert."
 }

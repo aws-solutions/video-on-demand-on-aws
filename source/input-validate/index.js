@@ -42,7 +42,8 @@ exports.handler = async (event) => {
       enableSns: JSON.parse(process.env.EnableSns),
       enableSqs: JSON.parse(process.env.EnableSqs),
       geoRestriction: event.geoRestriction,
-      cmsId: event.cmsId
+      cmsId: event.cmsId,
+      cmsCommandId: event.cmsCommandId
     };
 
     switch (event.workflowTrigger) {

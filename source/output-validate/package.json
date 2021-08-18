@@ -11,16 +11,16 @@
     "test": "mocha lib/*.spec.js"
   },
   "dependencies": {
+    "chai-arrays": "2.2.0",
     "moment": "^2.24.0",
     "uuid": "^3.4.0"
   },
   "devDependencies": {
     "aws-sdk": "^2.609.0",
     "aws-sdk-mock": "^5.0.0",
-    "chai": "^4.2.0",
+    "chai": "4.3.4",
     "mocha": "^7.0.0",
-    "sinon": "^8.1.1",
-    "sinon-chai": "^3.4.0"
+    "sinon": "^8.1.1"
   },
   "private": true,
   "author": {
