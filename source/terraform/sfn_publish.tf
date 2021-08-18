@@ -1,7 +1,19 @@
 resource "aws_sfn_state_machine" "publish" {
+  depends_on = [aws_cloudwatch_log_group.sfn_logs]
+
   name     = "${local.project}-publish"
   role_arn = aws_iam_role.step_function_service_role.arn
   tags     = local.tags
+
+  logging_configuration {
+    include_execution_data = true
+    log_destination        = "${aws_cloudwatch_log_group.sfn_logs.arn}:*"
+    level                  = "ALL"
+  }
+
+  tracing_configuration {
+    enabled = true
+  }
 
   definition = jsonencode({
     "StartAt" : "Validate Encoding Outputs",

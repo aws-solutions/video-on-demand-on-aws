@@ -24,11 +24,11 @@
 # misc
 **/npm-debug.log
 **/testem.log
-# **/package-lock.json
 **/.vscode/settings.json
 *~
 ~*
 .idea/
+.terraform/
 
 # System Files
 **/.DS_Store

@@ -38,9 +38,21 @@ data "aws_iam_policy_document" "media_transcode_role" {
 }
 
 resource "aws_sfn_state_machine" "process" {
+  depends_on = [aws_cloudwatch_log_group.sfn_logs]
+
   name     = "${local.project}-process"
   role_arn = aws_iam_role.step_function_service_role.arn
   tags     = local.tags
+
+  logging_configuration {
+    include_execution_data = true
+    log_destination        = "${aws_cloudwatch_log_group.sfn_logs.arn}:*"
+    level                  = "ALL"
+  }
+
+  tracing_configuration {
+    enabled = true
+  }
 
   definition = jsonencode({
     "Comment" : "Process StateMachine to create MediaConvert Encoding Jobs",
