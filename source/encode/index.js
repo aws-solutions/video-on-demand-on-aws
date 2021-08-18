@@ -238,6 +238,14 @@ exports.handler = async (event) => {
       job.Settings.Inputs[0].TimecodeSource = "ZEROBASED"
     }
 
+    job.Tags = {
+      "managed_by": "terraform",
+      "map-migrated": "d-server-00fvusu7ux3q9a",
+      "service": "buzzhub",
+      "source": "https://github.com/stroeer/video-on-demand-on-aws",
+      "App": "Video"
+    };
+
     let data = await mediaconvert.createJob(job).promise();
     event.encodingJob = job;
     event.encodeJobId = data.Job.Id;
