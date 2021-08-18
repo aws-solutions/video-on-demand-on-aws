@@ -171,6 +171,3 @@ resource "null_resource" "mediaconvert_templates" {
     command = "node ../custom-resource/index.js ${self.triggers.endpoint} Delete ${self.triggers.project}"
   }
 }
-
-# todo (mana|mozi): STATUS_UPDATE events to update progress within the CMS
-# also available: PROGRESSING, INPUT_INFORMATION

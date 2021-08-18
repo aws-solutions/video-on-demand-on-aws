@@ -632,5 +632,12 @@
         "Mode": "PREFERRED"
     },
     "StatusUpdateInterval": "SECONDS_10",
+    "Tags": {
+        "managed_by": "terraform",
+        "map-migrated": "d-server-00fvusu7ux3q9a",
+        "service": "buzzhub",
+        "source": "https://github.com/stroeer/video-on-demand-on-aws",
+        "App": "Video"
+    },
     "Priority": 0
 }
