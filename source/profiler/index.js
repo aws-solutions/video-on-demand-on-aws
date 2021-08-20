@@ -72,16 +72,21 @@ exports.handler = async (event) => {
             event.frameCaptureWidth = ratios[encodeProfile];
         }
 
+
+        event.noAudioTrackPresent = (mediaInfo.audio || []).length === 0;
+
         // Update:: added support to pass in a custom encoding Template instead of using the
         // solution defaults
         if (!event.jobTemplate) {
             // Match the jobTemplate to the encoding Profile.
             const jobTemplates = {
                 '1080': event.jobTemplate_1080p,
-                '720': event.jobTemplate_720p
+                '1080_no_audio': event.jobTemplate_1080p_no_audio,
+                '720': event.jobTemplate_720p,
+                '720_no_audio': event.jobTemplate_720p_no_audio
             };
 
-            event.jobTemplate = jobTemplates[encodeProfile];
+            event.jobTemplate = jobTemplates[`${encodeProfile}${event.noAudioTrackPresent ? '_no_audio' : ''}`];
             console.log(`Chosen template:: ${event.jobTemplate}`);
 
             event.isCustomTemplate = false;

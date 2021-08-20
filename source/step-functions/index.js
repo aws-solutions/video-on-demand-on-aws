@@ -67,6 +67,28 @@ exports.handler = async (event) => {
           if (metadata.hasOwnProperty("command-id")) event.cmsCommandId = metadata["command-id"];
         }
         event.guid = event.cmsCommandId || uuidv4();
+        if (event.cmsCommandId) {
+          // we're using the commandId here if possible,
+          // but this may not be unique, so check if this run already exists (prevent error `ExecutionAlreadyExists`)
+          let i = 0;
+          while (true) {
+            i += 1;
+            if (i > 10) {
+              event.guid = uuidv4();
+              break;
+            }
+            try {
+              const executionArn = `${process.env.IngestWorkflow}:${event.guid}`.replace(':stateMachine:', ':execution:');
+              const data = await stepfunctions.describeExecution({executionArn: executionArn}).promise();
+              console.log(`invalid guid found ${event.guid} : execution already exists with state ${data.status}.`);
+              event.guid = `${event.cmsCommandId}__rerun_${i}`
+            } catch (e) {
+              console.log(`valid guid found ${event.guid}`);
+              break;
+            }
+          }
+        }
+
 
         // Identify file extension of s3 object::
         if (key.split('.').pop() === 'json') {

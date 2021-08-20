@@ -59,6 +59,12 @@ data "aws_iam_policy_document" "λ_step_functions" {
     ]
   }
   statement {
+    actions = ["states:DescribeExecution"]
+    resources = [
+      "arn:aws:states:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:stateMachine:${local.project}-ingest:*"
+    ]
+  }
+  statement {
     actions   = ["lambda:InvokeFunction"]
     resources = [module.λ_error_handler.arn]
   }

@@ -176,6 +176,9 @@ exports.handler = async (event) => {
         OutputGroups: []
       }
     };
+    if (event.noAudioTrackPresent) {
+      delete job.Settings.Inputs[0].AudioSelectors;
+    }
 
     const mp4 = getMp4Group(outputPath);
     const hls = getHlsGroup(outputPath);

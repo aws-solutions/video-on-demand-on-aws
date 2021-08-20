@@ -32,7 +32,9 @@ module "λ_input_validate" {
       FrameCapture : var.frame_capture
       ArchiveSource : var.glacier
       MediaConvert_Template_1080p : "${local.project}_Ott_1080p_Avc_Aac_16x9_qvbr_no_preset"
+      MediaConvert_Template_1080p_no_audio : "${local.project}_Ott_1080p_Avc_16x9_qvbr_no_preset"
       MediaConvert_Template_720p : "${local.project}_Ott_720p_Avc_Aac_16x9_qvbr_no_preset"
+      MediaConvert_Template_720p_no_audio : "${local.project}_Ott_720p_Avc_16x9_qvbr_no_preset"
       CloudFront : "d1q9f0uk9ts7gc.cloudfront.net"
       EnableMediaPackage : false
       InputRotate : "DEGREE_0"

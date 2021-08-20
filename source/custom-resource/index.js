@@ -22,8 +22,16 @@ const qvbrTemplatesNoPreset = [
     file: './templates/1080p_avc_aac_16x9_qvbr_no_preset.json'
   },
   {
+    name: '_Ott_1080p_Avc_16x9_qvbr_no_preset',
+    file: './templates/1080p_avc_16x9_qvbr_no_preset.json'
+  },
+  {
     name: '_Ott_720p_Avc_Aac_16x9_qvbr_no_preset',
     file: './templates/720p_avc_aac_16x9_qvbr_no_preset.json'
+  },
+  {
+    name: '_Ott_720p_Avc_16x9_qvbr_no_preset',
+    file: './templates/720p_avc_16x9_qvbr_no_preset.json'
   }
 ];
 
