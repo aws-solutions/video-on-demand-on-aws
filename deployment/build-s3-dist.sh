@@ -12,7 +12,7 @@ set -eu
 template_dir=$PWD
 
 # Get reference for all important folders
-build_dist_dir="$template_dir/target/regional-s3-assets"
+build_dist_dir="$template_dir/target/package"
 source_dir="$template_dir/source"
 
 rm -rf build_dist_dir || true
@@ -40,7 +40,8 @@ for folder in */ ; do
     cd "$folder"
 
     function_name=${PWD##*/}
-    zip_path="$build_dist_dir/$function_name.zip"
+    zip_path="$build_dist_dir/$function_name/package.zip"
+    mkdir -p "$build_dist_dir/$function_name"
 
     echo "Creating deployment package for $function_name at $zip_path"
 
