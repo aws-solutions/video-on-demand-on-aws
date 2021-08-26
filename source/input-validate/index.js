@@ -31,8 +31,6 @@ exports.handler = async (event) => {
       workflowStatus: 'Ingest',
       workflowName: process.env.WorkflowName,
       srcBucket: process.env.Source,
-      destBucket: process.env.Destination,
-      cloudFront: process.env.CloudFront,
       frameCapture: JSON.parse(process.env.FrameCapture),
       archiveSource: process.env.ArchiveSource,
       jobTemplate_1080p: process.env.MediaConvert_Template_1080p,

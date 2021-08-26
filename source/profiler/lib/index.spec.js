@@ -19,55 +19,81 @@ AWS.setSDK(path.resolve('./node_modules/aws-sdk'));
 const lambda = require('../index.js');
 
 describe('#PROFILER::', () => {
-    process.env.ErrorHandler = 'error_handler';
+  process.env.ErrorHandler = 'error_handler';
 
-    const _event = {
-        guid: '12345678'
+  const _event = () => {
+    return {guid: '12345678'};
+  };
+
+  const _tmpl_event = () => {
+    return {
+      guid: '12345678',
+      jobTemplate: 'customTemplate'
     };
+  };
 
-    const _tmpl_event = {
-        guid: '12345678',
-        jobTemplate: 'customTemplate'
-    };
+  const data = {
+    Item: {
+      guid: '12345678',
+      srcMediainfo: '{ "video": [{ "height": 720, "width": 1280 }], "audio": ["yep"] }',
+      jobTemplate_1080p: 'tmpl2',
+      jobTemplate_1080p_no_audio: 'tmpl2_no_audio',
+      jobTemplate_720p: 'tmpl3',
+      jobTemplate_720p_no_audio: 'tmpl3_no_audio',
+      frameCapture: true
+    }
+  };
 
-    const data = {
-        Item: {
-            guid: '12345678',
-            srcMediainfo: '{ "video": [{ "height": 720, "width": 1280 }] }',
-            jobTemplate_1080p: 'tmpl2',
-            jobTemplate_720p: 'tmpl3',
-            frameCapture: true
-        }
-    };
+  const data_no_audio = {
+    Item: {
+      guid: '12345678',
+      srcMediainfo: '{ "video": [{ "height": 720, "width": 1280 }] }',
+      jobTemplate_1080p: 'tmpl2',
+      jobTemplate_1080p_no_audio: 'tmpl2_no_audio',
+      jobTemplate_720p: 'tmpl3',
+      jobTemplate_720p_no_audio: 'tmpl3_no_audio',
+      frameCapture: true
+    }
+  };
 
-    afterEach(() => AWS.restore('DynamoDB.DocumentClient'));
+  afterEach(() => AWS.restore('DynamoDB.DocumentClient'));
 
-    it('should return "SUCCESS" on profile set', async () => {
-        AWS.mock('DynamoDB.DocumentClient', 'get', Promise.resolve(data));
+  it('should return "SUCCESS" on profile set', async () => {
+    AWS.mock('DynamoDB.DocumentClient', 'get', Promise.resolve(data));
 
-        const response = await lambda.handler(_event);
-        expect(response.jobTemplate).to.equal('tmpl3');
-        expect(response.frameCaptureHeight).to.equal(720);
-        expect(response.frameCaptureWidth).to.equal(1280);
-        expect(response.isCustomTemplate).to.be.false;
+    const response = await lambda.handler(_event());
+    expect(response.jobTemplate).to.equal('tmpl3');
+    expect(response.frameCaptureHeight).to.equal(720);
+    expect(response.frameCaptureWidth).to.equal(1280);
+    expect(response.isCustomTemplate).to.be.false;
+  });
+
+  it('should pick no audio template if audio is missing', async () => {
+    AWS.mock('DynamoDB.DocumentClient', 'get', Promise.resolve(data_no_audio));
+
+    const response = await lambda.handler(_event());
+    expect(response.jobTemplate).to.equal('tmpl3_no_audio');
+    expect(response.frameCaptureHeight).to.equal(720);
+    expect(response.frameCaptureWidth).to.equal(1280);
+    expect(response.isCustomTemplate).to.be.false;
+  });
+
+  it('should return "SUCCESS" using a custom template', async () => {
+    AWS.mock('DynamoDB.DocumentClient', 'get', Promise.resolve(data));
+
+    const response = await lambda.handler(_tmpl_event());
+    expect(response.jobTemplate).to.equal('customTemplate');
+    expect(response.frameCaptureHeight).to.equal(720);
+    expect(response.frameCaptureWidth).to.equal(1280);
+    expect(response.isCustomTemplate).to.be.true;
+  });
+
+  it('should return "DB ERROR" when db get fails', async () => {
+    AWS.mock('DynamoDB.DocumentClient', 'get', Promise.reject('DB ERROR'));
+    AWS.mock('Lambda', 'invoke', Promise.resolve());
+
+    await lambda.handler(_event).catch(err => {
+      expect(err).to.equal('DB ERROR');
     });
-
-    it('should return "SUCCESS" using a custom template', async () => {
-        AWS.mock('DynamoDB.DocumentClient', 'get', Promise.resolve(data));
-
-        const response = await lambda.handler(_tmpl_event);
-        expect(response.jobTemplate).to.equal('customTemplate');
-        expect(response.frameCaptureHeight).to.equal(720);
-        expect(response.frameCaptureWidth).to.equal(1280);
-        expect(response.isCustomTemplate).to.be.true;
-    });
-
-    it('should return "DB ERROR" when db get fails', async () => {
-        AWS.mock('DynamoDB.DocumentClient', 'get', Promise.reject('DB ERROR'));
-        AWS.mock('Lambda', 'invoke', Promise.resolve());
-
-        await lambda.handler(_event).catch(err => {
-            expect(err).to.equal('DB ERROR');
-        });
-    });
+  });
 });

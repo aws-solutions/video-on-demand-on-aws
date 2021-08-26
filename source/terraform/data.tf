@@ -1,7 +1,7 @@
 locals {
   project            = "buzzhub"
   environment        = "production"
-  lambda_package_dir = "../../target/regional-s3-assets"
+  lambda_package_dir = "../../target"
   s3_prefix          = "package"
   tags = {
     managed_by   = "terraform"

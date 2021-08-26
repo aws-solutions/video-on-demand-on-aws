@@ -24,7 +24,11 @@ module "λ_output_validate" {
   environment = {
     variables = {
       AWS_NODEJS_CONNECTION_REUSE_ENABLED : "1"
+      Destination : module.s3_destination.s3_bucket_id
+      DestinationRestricted : module.s3_destination_for_restricted_videos.s3_bucket_id
       DynamoDBTable : aws_dynamodb_table.this.name
+      CloudFront :  "videos.t-online.de"
+      CloudFrontRestricted : "de.videos.t-online.de"
       ErrorHandler : aws_lambda_alias.λ_error_handler.arn
       EndPoint : data.external.mediaconvert_endpoint.result.Url
     }
@@ -38,7 +42,10 @@ data "aws_iam_policy_document" "λ_output_validate" {
   }
   statement {
     actions   = ["s3:ListBucket"]
-    resources = [module.s3_destination.s3_bucket_arn]
+    resources = [
+      module.s3_destination.s3_bucket_arn,
+      module.s3_destination_for_restricted_videos.s3_bucket_arn
+    ]
   }
   statement {
     actions   = ["dynamodb:GetItem"]
@@ -70,8 +77,8 @@ resource "aws_iam_role_policy_attachment" "λ_output_validate" {
 resource "aws_s3_bucket_object" "λ_output_validate" {
   bucket = aws_s3_bucket.s3_λ_source.bucket
   key    = local.output_validate_s3_key
-  source = "${local.lambda_package_dir}/${local.output_validate_function_name}.zip"
-  etag   = filemd5("${local.lambda_package_dir}/${local.output_validate_function_name}.zip")
+  source = "${local.lambda_package_dir}/${local.output_validate_s3_key}"
+  etag   = filemd5("${local.lambda_package_dir}/${local.output_validate_s3_key}")
 
   lifecycle {
     ignore_changes = [etag, version_id]

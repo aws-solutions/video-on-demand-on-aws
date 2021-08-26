@@ -61,8 +61,8 @@ resource "aws_iam_role_policy_attachment" "λ_profiler" {
 resource "aws_s3_bucket_object" "λ_profiler" {
   bucket = aws_s3_bucket.s3_λ_source.bucket
   key    = local.profiler_s3_key
-  source = "${local.lambda_package_dir}/${local.profiler_function_name}.zip"
-  etag   = filemd5("${local.lambda_package_dir}/${local.profiler_function_name}.zip")
+  source = "${local.lambda_package_dir}/${local.profiler_s3_key}"
+  etag   = filemd5("${local.lambda_package_dir}/${local.profiler_s3_key}")
 
   lifecycle {
     ignore_changes = [etag, version_id]

@@ -45,6 +45,9 @@ exports.handler = async (event) => {
     data.workflowStatus = 'Complete';
     data.endTime = moment().utc().toISOString();
 
+    const isGeoRestricted = data.geoRestriction || false
+    const cloudFront = isGeoRestricted ? process.env.CloudFrontRestricted : process.env.CloudFront
+
     // Parse MediaConvert Output and generate CloudFront URLS.
     event.detail.outputGroupDetails.forEach(output => {
       console.log(`${output.type} found in outputs`);
@@ -52,13 +55,13 @@ exports.handler = async (event) => {
       switch (output.type) {
         case 'HLS_GROUP':
           data.hlsPlaylist = output.playlistFilePaths[0];
-          data.hlsUrl = `https://${data.cloudFront}/${buildUrl(data.hlsPlaylist)}`;
+          data.hlsUrl = `https://${cloudFront}/${buildUrl(data.hlsPlaylist)}`;
 
           break;
 
         case 'DASH_ISO_GROUP':
           data.dashPlaylist = output.playlistFilePaths[0];
-          data.dashUrl = `https://${data.cloudFront}/${buildUrl(data.dashPlaylist)}`;
+          data.dashUrl = `https://${cloudFront}/${buildUrl(data.dashPlaylist)}`;
 
           break;
 
@@ -69,7 +72,7 @@ exports.handler = async (event) => {
 
             if (file.outputFilePaths) {
               files.push(file.outputFilePaths[0]);
-              urls.push(`https://${data.cloudFront}/${buildUrl(file.outputFilePaths[0])}`);
+              urls.push(`https://${cloudFront}/${buildUrl(file.outputFilePaths[0])}`);
             }
           });
 
@@ -82,16 +85,16 @@ exports.handler = async (event) => {
 
         case 'MS_SMOOTH_GROUP':
           data.mssPlaylist = output.playlistFilePaths[0];
-          data.mssUrl = `https://${data.cloudFront}/${buildUrl(data.mssPlaylist)}`;
+          data.mssUrl = `https://${cloudFront}/${buildUrl(data.mssPlaylist)}`;
 
           break;
 
         case 'CMAF_GROUP':
           data.cmafDashPlaylist = output.playlistFilePaths[0];
-          data.cmafDashUrl = `https://${data.cloudFront}/${buildUrl(data.cmafDashPlaylist)}`;
+          data.cmafDashUrl = `https://${cloudFront}/${buildUrl(data.cmafDashPlaylist)}`;
 
           data.cmafHlsPlaylist = output.playlistFilePaths[1];
-          data.cmafHlsUrl = `https://${data.cloudFront}/${buildUrl(data.cmafHlsPlaylist)}`;
+          data.cmafHlsUrl = `https://${cloudFront}/${buildUrl(data.cmafHlsPlaylist)}`;
 
           break;
 
@@ -111,9 +114,10 @@ exports.handler = async (event) => {
 
       const prefix = data.srcVideo.substring(0, data.srcVideo.lastIndexOf("/"))
         + (data.hasOwnProperty('cmsId') ? '' : '/' + data.guid);
+      const bucket = isGeoRestricted ? process.env.DestinationRestricted : process.env.Destination;
 
       params = {
-        Bucket: data.destBucket,
+        Bucket: bucket,
         Prefix: `${prefix}/thumbnails/`,
       };
 
@@ -121,8 +125,8 @@ exports.handler = async (event) => {
 
       if (thumbNails.Contents.length !== 0) {
         let lastImg = thumbNails.Contents.pop();
-        data.thumbNails = [...data.thumbNails, `s3://${data.destBucket}/${lastImg.Key}`];
-        data.thumbNailsUrls = [...data.thumbNailsUrls, `https://${data.cloudFront}/${lastImg.Key}`];
+        data.thumbNails = [...data.thumbNails, `s3://${bucket}/${lastImg.Key}`];
+        data.thumbNailsUrls = [...data.thumbNailsUrls, `https://${cloudFront}/${lastImg.Key}`];
       } else {
         throw new Error('MediaConvert Thumbnails not found in S3');
       }

@@ -74,8 +74,8 @@ resource "aws_iam_role_policy_attachment" "λ_sqs_publish" {
 resource "aws_s3_bucket_object" "λ_sqs_publish" {
   bucket = aws_s3_bucket.s3_λ_source.bucket
   key    = local.sqs_publish_s3_key
-  source = "${local.lambda_package_dir}/${local.sqs_publish_function_name}.zip"
-  etag   = filemd5("${local.lambda_package_dir}/${local.sqs_publish_function_name}.zip")
+  source = "${local.lambda_package_dir}/${local.sqs_publish_s3_key}"
+  etag   = filemd5("${local.lambda_package_dir}/${local.sqs_publish_s3_key}")
 
   lifecycle {
     ignore_changes = [etag, version_id]

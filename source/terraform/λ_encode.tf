@@ -31,6 +31,8 @@ module "λ_encode" {
       AWS_NODEJS_CONNECTION_REUSE_ENABLED : "1"
       MediaConvertRole : aws_iam_role.media_transcode_role.arn
       EndPoint : data.external.mediaconvert_endpoint.result.Url
+      Destination : module.s3_destination.s3_bucket_id
+      DestinationRestricted : module.s3_destination_for_restricted_videos.s3_bucket_id
       ErrorHandler : aws_lambda_alias.λ_error_handler.arn
     }
   }
@@ -71,8 +73,8 @@ resource "aws_iam_role_policy_attachment" "λ_encode" {
 resource "aws_s3_bucket_object" "λ_encode" {
   bucket = aws_s3_bucket.s3_λ_source.bucket
   key    = local.encode_s3_key
-  source = "${local.lambda_package_dir}/${local.encode_function_name}.zip"
-  etag   = filemd5("${local.lambda_package_dir}/${local.encode_function_name}.zip")
+  source = "${local.lambda_package_dir}/${local.encode_s3_key}"
+  etag   = filemd5("${local.lambda_package_dir}/${local.encode_s3_key}")
 
   lifecycle {
     ignore_changes = [etag, version_id]

@@ -66,8 +66,8 @@ resource "aws_iam_role_policy_attachment" "λ_sns_notification" {
 resource "aws_s3_bucket_object" "λ_sns_notification" {
   bucket = aws_s3_bucket.s3_λ_source.bucket
   key    = local.sns_notification_s3_key
-  source = "${local.lambda_package_dir}/${local.sns_notification_function_name}.zip"
-  etag   = filemd5("${local.lambda_package_dir}/${local.sns_notification_function_name}.zip")
+  source = "${local.lambda_package_dir}/${local.sns_notification_s3_key}"
+  etag   = filemd5("${local.lambda_package_dir}/${local.sns_notification_s3_key}")
 
   lifecycle {
     ignore_changes = [etag, version_id]

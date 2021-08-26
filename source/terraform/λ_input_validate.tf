@@ -27,7 +27,6 @@ module "λ_input_validate" {
       ErrorHandler : aws_lambda_alias.λ_error_handler.arn
       WorkflowName : local.project
       Source : module.s3_source.s3_bucket_id
-      Destination : module.s3_destination.s3_bucket_id
       AcceleratedTranscoding : var.accelerated_transcoding
       FrameCapture : var.frame_capture
       ArchiveSource : var.glacier
@@ -35,7 +34,6 @@ module "λ_input_validate" {
       MediaConvert_Template_1080p_no_audio : "${local.project}_Ott_1080p_Avc_16x9_qvbr_no_preset"
       MediaConvert_Template_720p : "${local.project}_Ott_720p_Avc_Aac_16x9_qvbr_no_preset"
       MediaConvert_Template_720p_no_audio : "${local.project}_Ott_720p_Avc_16x9_qvbr_no_preset"
-      CloudFront : "d1q9f0uk9ts7gc.cloudfront.net"
       EnableMediaPackage : false
       InputRotate : "DEGREE_0"
       EnableSns : true
@@ -75,8 +73,8 @@ resource "aws_iam_role_policy_attachment" "λ_input_validate" {
 resource "aws_s3_bucket_object" "λ_input_validate" {
   bucket = aws_s3_bucket.s3_λ_source.bucket
   key    = local.input_validate_s3_key
-  source = "${local.lambda_package_dir}/${local.input_validate_function_name}.zip"
-  etag   = filemd5("${local.lambda_package_dir}/${local.input_validate_function_name}.zip")
+  source = "${local.lambda_package_dir}/${local.input_validate_s3_key}"
+  etag   = filemd5("${local.lambda_package_dir}/${local.input_validate_s3_key}")
 
   lifecycle {
     ignore_changes = [etag, version_id]

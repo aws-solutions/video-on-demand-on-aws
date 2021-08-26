@@ -14,7 +14,8 @@ resource "aws_iam_role" "media_transcode_role" {
           Effect = "Allow"
           Resource = [
             "${module.s3_source.s3_bucket_arn}/*",
-            "${module.s3_destination.s3_bucket_arn}/*"
+            "${module.s3_destination.s3_bucket_arn}/*",
+            "${module.s3_destination_for_restricted_videos.s3_bucket_arn}/*"
           ]
         },
         {
