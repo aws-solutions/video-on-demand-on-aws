@@ -1,21 +1,21 @@
-resource "aws_s3_bucket_object" "λ_input_validate" {
-  bucket = module.s3_λ_source.s3_bucket_id
-  key    = "input-validate/package.zip"
-  source = "${local.lambda_package_dir}/input-validate.zip"
-  etag   = filemd5("${local.lambda_package_dir}/input-validate.zip")
+locals {
+  input_validate_function_name = "input-validate"
+  input_validate_s3_key        = "${local.s3_prefix}/${local.input_validate_function_name}/package.zip"
 }
 
 module "λ_input_validate" {
   source  = "moritzzimmer/lambda/aws"
-  version = "5.14.0"
+  version = "5.15.1"
 
   cloudwatch_lambda_insights_enabled = true
-  function_name                      = "${local.project}-input-validation"
+  function_name                      = "${local.project}-${local.input_validate_function_name}"
   description                        = "Creates a unique identifier (GUID) and executes the Ingest StateMachine"
   handler                            = "index.handler"
+  ignore_external_function_updates   = true
+  publish                            = true
   runtime                            = "nodejs14.x"
-  s3_bucket                          = module.s3_λ_source.s3_bucket_id
-  s3_key                             = aws_s3_bucket_object.λ_input_validate.key
+  s3_bucket                          = aws_s3_bucket.s3_λ_source.bucket
+  s3_key                             = local.input_validate_s3_key
   s3_object_version                  = aws_s3_bucket_object.λ_input_validate.version_id
   tags                               = local.tags
   timeout                            = 120
@@ -24,7 +24,7 @@ module "λ_input_validate" {
   environment = {
     variables = {
       AWS_NODEJS_CONNECTION_REUSE_ENABLED : "1"
-      ErrorHandler : module.λ_error_handler.arn
+      ErrorHandler : aws_lambda_alias.λ_error_handler.arn
       WorkflowName : local.project
       Source : module.s3_source.s3_bucket_id
       Destination : module.s3_destination.s3_bucket_id
@@ -51,17 +51,55 @@ data "aws_iam_policy_document" "λ_input_validate" {
   }
   statement {
     actions   = ["lambda:InvokeFunction"]
-    resources = [module.λ_error_handler.arn]
+    resources = [aws_lambda_alias.λ_error_handler.arn]
   }
 }
 
 resource "aws_iam_policy" "λ_input_validate" {
   description = "${local.project} input validation"
-  name        = "${local.project}-input-validate-${data.aws_region.current.name}"
+  name        = "${local.project}-${local.input_validate_function_name}-${data.aws_region.current.name}"
   policy      = data.aws_iam_policy_document.λ_input_validate.json
 }
 
 resource "aws_iam_role_policy_attachment" "λ_input_validate" {
   role       = module.λ_input_validate.role_name
   policy_arn = aws_iam_policy.λ_input_validate.arn
+}
+
+# ---------------------------------------------------------------------------------------------------------------------
+# Deployment resources
+# ---------------------------------------------------------------------------------------------------------------------
+
+// this resource is only used for the initial `terraform apply` - all further
+// deployments are running on CodePipeline
+resource "aws_s3_bucket_object" "λ_input_validate" {
+  bucket = aws_s3_bucket.s3_λ_source.bucket
+  key    = local.input_validate_s3_key
+  source = "${local.lambda_package_dir}/${local.input_validate_function_name}.zip"
+  etag   = filemd5("${local.lambda_package_dir}/${local.input_validate_function_name}.zip")
+
+  lifecycle {
+    ignore_changes = [etag, version_id]
+  }
+}
+
+resource "aws_lambda_alias" "λ_input_validate" {
+  function_name    = module.λ_input_validate.function_name
+  function_version = module.λ_input_validate.version
+  name             = local.environment
+
+  lifecycle {
+    ignore_changes = [function_version]
+  }
+}
+
+module "λ_input_validate_deployment" {
+  source  = "moritzzimmer/lambda/aws//modules/deployment"
+  version = "5.15.1"
+
+  alias_name                        = aws_lambda_alias.λ_input_validate.name
+  codestar_notifications_target_arn = data.aws_sns_topic.codestar_notifications.arn
+  function_name                     = module.λ_input_validate.function_name
+  s3_bucket                         = aws_s3_bucket.s3_λ_source.bucket
+  s3_key                            = local.input_validate_s3_key
 }

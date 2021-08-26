@@ -60,7 +60,7 @@ resource "aws_sfn_state_machine" "process" {
     "States" : {
       "Profiler" : {
         "Type" : "Task",
-        "Resource" : module.λ_profiler.arn,
+        "Resource" : aws_lambda_alias.λ_profiler.arn,
         "Next" : "Encoding Profile Check"
       },
       "Encoding Profile Check" : {
@@ -152,12 +152,12 @@ resource "aws_sfn_state_machine" "process" {
       },
       "Encode Job Submit" : {
         "Type" : "Task",
-        "Resource" : module.λ_encode.arn,
+        "Resource" : aws_lambda_alias.λ_encode.arn,
         "Next" : "DynamoDB Update"
       },
       "DynamoDB Update" : {
         "Type" : "Task",
-        "Resource" : module.λ_dynamodb_update.arn,
+        "Resource" : aws_lambda_alias.λ_dynamodb_update.arn,
         "End" : true
       }
     }
@@ -166,8 +166,8 @@ resource "aws_sfn_state_machine" "process" {
 
 resource "null_resource" "mediaconvert_templates" {
   triggers = {
-    endpoint           = data.external.mediaconvert_endpoint.result.Url
-    project            = local.project
+    endpoint = data.external.mediaconvert_endpoint.result.Url
+    project  = local.project
     // arbitrary triggers to force a replacement for this resource if something changes
     index_js           = filemd5("../custom-resource/index.js")
     tmpl_720           = filemd5("../custom-resource/templates/720p_avc_aac_16x9_qvbr_no_preset.json")

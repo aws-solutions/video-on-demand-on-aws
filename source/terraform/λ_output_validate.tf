@@ -1,21 +1,21 @@
-resource "aws_s3_bucket_object" "λ_output_validate" {
-  bucket = module.s3_λ_source.s3_bucket_id
-  key    = "output-validate/package.zip"
-  source = "${local.lambda_package_dir}/output-validate.zip"
-  etag   = filemd5("${local.lambda_package_dir}/output-validate.zip")
+locals {
+  output_validate_function_name = "output-validate"
+  output_validate_s3_key        = "${local.s3_prefix}/${local.output_validate_function_name}/package.zip"
 }
 
 module "λ_output_validate" {
   source  = "moritzzimmer/lambda/aws"
-  version = "5.14.0"
+  version = "5.15.1"
 
   cloudwatch_lambda_insights_enabled = true
-  function_name                      = "${local.project}-output-validation"
+  function_name                      = "${local.project}-${local.output_validate_function_name}"
   description                        = "Parses MediaConvert job output"
   handler                            = "index.handler"
+  ignore_external_function_updates   = true
+  publish                            = true
   runtime                            = "nodejs14.x"
-  s3_bucket                          = module.s3_λ_source.s3_bucket_id
-  s3_key                             = aws_s3_bucket_object.λ_output_validate.key
+  s3_bucket                          = aws_s3_bucket.s3_λ_source.bucket
+  s3_key                             = local.output_validate_s3_key
   s3_object_version                  = aws_s3_bucket_object.λ_output_validate.version_id
   tags                               = local.tags
   timeout                            = 120
@@ -25,7 +25,7 @@ module "λ_output_validate" {
     variables = {
       AWS_NODEJS_CONNECTION_REUSE_ENABLED : "1"
       DynamoDBTable : aws_dynamodb_table.this.name
-      ErrorHandler : module.λ_error_handler.arn
+      ErrorHandler : aws_lambda_alias.λ_error_handler.arn
       EndPoint : data.external.mediaconvert_endpoint.result.Url
     }
   }
@@ -46,17 +46,55 @@ data "aws_iam_policy_document" "λ_output_validate" {
   }
   statement {
     actions   = ["lambda:InvokeFunction"]
-    resources = [module.λ_error_handler.arn]
+    resources = [aws_lambda_alias.λ_error_handler.arn]
   }
 }
 
 resource "aws_iam_policy" "λ_output_validate" {
   description = "${local.project} output validation"
-  name        = "${local.project}-output-validate-${data.aws_region.current.name}"
+  name        = "${local.project}-${local.output_validate_function_name}-${data.aws_region.current.name}"
   policy      = data.aws_iam_policy_document.λ_output_validate.json
 }
 
 resource "aws_iam_role_policy_attachment" "λ_output_validate" {
   role       = module.λ_output_validate.role_name
   policy_arn = aws_iam_policy.λ_output_validate.arn
+}
+
+# ---------------------------------------------------------------------------------------------------------------------
+# Deployment resources
+# ---------------------------------------------------------------------------------------------------------------------
+
+// this resource is only used for the initial `terraform apply` - all further
+// deployments are running on CodePipeline
+resource "aws_s3_bucket_object" "λ_output_validate" {
+  bucket = aws_s3_bucket.s3_λ_source.bucket
+  key    = local.output_validate_s3_key
+  source = "${local.lambda_package_dir}/${local.output_validate_function_name}.zip"
+  etag   = filemd5("${local.lambda_package_dir}/${local.output_validate_function_name}.zip")
+
+  lifecycle {
+    ignore_changes = [etag, version_id]
+  }
+}
+
+resource "aws_lambda_alias" "λ_output_validate" {
+  function_name    = module.λ_output_validate.function_name
+  function_version = module.λ_output_validate.version
+  name             = local.environment
+
+  lifecycle {
+    ignore_changes = [function_version]
+  }
+}
+
+module "λ_output_validate_deployment" {
+  source  = "moritzzimmer/lambda/aws//modules/deployment"
+  version = "5.15.1"
+
+  alias_name                        = aws_lambda_alias.λ_output_validate.name
+  codestar_notifications_target_arn = data.aws_sns_topic.codestar_notifications.arn
+  function_name                     = module.λ_output_validate.function_name
+  s3_bucket                         = aws_s3_bucket.s3_λ_source.bucket
+  s3_key                            = local.output_validate_s3_key
 }

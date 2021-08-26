@@ -20,7 +20,7 @@ resource "aws_sfn_state_machine" "publish" {
     "States" : {
       "Validate Encoding Outputs" : {
         "Type" : "Task",
-        "Resource" : module.λ_output_validate.arn,
+        "Resource" : aws_lambda_alias.λ_output_validate.arn,
         "Next" : "Archive Source Choice"
       },
       "Archive Source Choice" : {
@@ -41,17 +41,17 @@ resource "aws_sfn_state_machine" "publish" {
       },
       "Archive" : {
         "Type" : "Task",
-        "Resource" : module.λ_archive_source.arn,
+        "Resource" : aws_lambda_alias.λ_archive_source.arn,
         "Next" : "DynamoDB Update"
       },
       "Deep Archive" : {
         "Type" : "Task",
-        "Resource" : module.λ_archive_source.arn,
+        "Resource" : aws_lambda_alias.λ_archive_source.arn,
         "Next" : "DynamoDB Update"
       },
       "DynamoDB Update" : {
         "Type" : "Task",
-        "Resource" : module.λ_dynamodb_update.arn,
+        "Resource" : aws_lambda_alias.λ_dynamodb_update.arn,
         "Next" : "SQS Choice"
       },
       "SQS Choice" : {
@@ -67,7 +67,7 @@ resource "aws_sfn_state_machine" "publish" {
       },
       "SQS Send Message" : {
         "Type" : "Task",
-        "Resource" : module.λ_sqs_publish.arn,
+        "Resource" : aws_lambda_alias.λ_sqs_publish.arn,
         "Next" : "SNS Choice"
       },
       "SNS Choice" : {
@@ -83,7 +83,7 @@ resource "aws_sfn_state_machine" "publish" {
       },
       "SNS Notification" : {
         "Type" : "Task",
-        "Resource" : module.λ_sns_notification.arn,
+        "Resource" : aws_lambda_alias.λ_sns_notification.arn,
         "Next" : "Complete"
       },
       "Complete" : {
