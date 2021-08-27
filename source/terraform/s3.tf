@@ -107,7 +107,28 @@ module "s3_destination" {
   }
 }
 
-// we need a certain redirect for videos.t-online.de:
+module "s3_destination_for_restricted_videos" {
+  source  = "terraform-aws-modules/s3-bucket/aws"
+  version = "~> 2.0"
+
+  acl           = "private"
+  bucket        = "${local.project}-transcoded-restricted-videos-${data.aws_caller_identity.current.account_id}-${data.aws_region.current.name}"
+  force_destroy = true
+  tags          = local.tags
+
+  # S3 bucket-level Public Access Block configuration
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+
+  versioning = {
+    enabled = false
+  }
+}
+#####################################################
+# we need a certain redirect for videos.t-online.de:
+#####################################################
 locals {
   video_redirect = <<EOF
 <html lang="de">
@@ -127,27 +148,19 @@ resource "aws_s3_bucket_object" "redirect_videos" {
   bucket = module.s3_destination.s3_bucket_id
   key    = "index.html"
   content = local.video_redirect
+  cache_control = "public, max-age=3600"
+  content_type = "text/html; charset=UTF-8"
+  content_encoding = "UTF-8"
   etag = md5(local.video_redirect)
 }
-
-module "s3_destination_for_restricted_videos" {
-  source  = "terraform-aws-modules/s3-bucket/aws"
-  version = "~> 2.0"
-
-  acl           = "private"
-  bucket        = "${local.project}-transcoded-restricted-videos-${data.aws_caller_identity.current.account_id}-${data.aws_region.current.name}"
-  force_destroy = true
-  tags          = local.tags
-
-  # S3 bucket-level Public Access Block configuration
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
-
-  versioning = {
-    enabled = false
-  }
+resource "aws_s3_bucket_object" "redirect_videos_restricted" {
+  bucket = module.s3_destination_for_restricted_videos.s3_bucket_id
+  key    = "index.html"
+  content = local.video_redirect
+  content_type = "text/html; charset=UTF-8"
+  cache_control = "public, max-age=3600"
+  content_encoding = "UTF-8"
+  etag = md5(local.video_redirect)
 }
 
 resource "aws_s3_bucket" "s3_λ_source" {
