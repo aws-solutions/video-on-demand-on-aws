@@ -107,6 +107,29 @@ module "s3_destination" {
   }
 }
 
+// we need a certain redirect for videos.t-online.de:
+locals {
+  video_redirect = <<EOF
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="refresh" content="3;url=https://www.t-online.de/tv/">
+    <title>videos.t-online.de</title>
+</head>
+<body>
+<a href="https://www.t-online.de/tv/">Falls Sie nicht automatisch weitergeleitet werden, klicken sie bitte hier.</a>
+<script>window.location.replace("https://www.t-online.de/tv/");</script>
+</body>
+</html>
+EOF
+}
+resource "aws_s3_bucket_object" "redirect_videos" {
+  bucket = module.s3_destination.s3_bucket_id
+  key    = "index.html"
+  content = local.video_redirect
+  etag = md5(local.video_redirect)
+}
+
 module "s3_destination_for_restricted_videos" {
   source  = "terraform-aws-modules/s3-bucket/aws"
   version = "~> 2.0"
