@@ -1,6 +1,7 @@
 locals {
   dynamodb_update_function_name = "dynamo"
   dynamodb_update_s3_key        = "${local.s3_prefix}/${local.dynamodb_update_function_name}/package.zip"
+  dynamodb_update_package       = "${local.lambda_package_dir}/${local.dynamodb_update_s3_key}"
 }
 
 module "λ_dynamodb_update" {
@@ -61,8 +62,8 @@ resource "aws_iam_role_policy_attachment" "λ_dynamodb_update" {
 resource "aws_s3_bucket_object" "λ_dynamodb_update" {
   bucket = aws_s3_bucket.s3_λ_source.bucket
   key    = local.dynamodb_update_s3_key
-  source = "${local.lambda_package_dir}/${local.dynamodb_update_s3_key}"
-  etag   = filemd5("${local.lambda_package_dir}/${local.dynamodb_update_s3_key}")
+  source = fileexists(local.dynamodb_update_package) ? local.dynamodb_update_package : null
+  etag   = fileexists(local.dynamodb_update_package) ? filemd5(local.dynamodb_update_package) : null
 
   lifecycle {
     ignore_changes = [etag, version_id]

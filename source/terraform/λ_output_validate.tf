@@ -1,6 +1,7 @@
 locals {
   output_validate_function_name = "output-validate"
   output_validate_s3_key        = "${local.s3_prefix}/${local.output_validate_function_name}/package.zip"
+  output_validate_package       = "${local.lambda_package_dir}/${local.output_validate_s3_key}"
 }
 
 module "λ_output_validate" {
@@ -27,7 +28,7 @@ module "λ_output_validate" {
       Destination : module.s3_destination.s3_bucket_id
       DestinationRestricted : module.s3_destination_for_restricted_videos.s3_bucket_id
       DynamoDBTable : aws_dynamodb_table.this.name
-      CloudFront :  "videos.t-online.de"
+      CloudFront : "videos.t-online.de"
       CloudFrontRestricted : "de.videos.t-online.de"
       ErrorHandler : aws_lambda_alias.λ_error_handler.arn
       EndPoint : data.external.mediaconvert_endpoint.result.Url
@@ -41,7 +42,7 @@ data "aws_iam_policy_document" "λ_output_validate" {
     resources = ["${module.s3_source.s3_bucket_arn}/*"]
   }
   statement {
-    actions   = ["s3:ListBucket"]
+    actions = ["s3:ListBucket"]
     resources = [
       module.s3_destination.s3_bucket_arn,
       module.s3_destination_for_restricted_videos.s3_bucket_arn
@@ -77,8 +78,8 @@ resource "aws_iam_role_policy_attachment" "λ_output_validate" {
 resource "aws_s3_bucket_object" "λ_output_validate" {
   bucket = aws_s3_bucket.s3_λ_source.bucket
   key    = local.output_validate_s3_key
-  source = "${local.lambda_package_dir}/${local.output_validate_s3_key}"
-  etag   = filemd5("${local.lambda_package_dir}/${local.output_validate_s3_key}")
+  source = fileexists(local.output_validate_package) ? local.output_validate_package : null
+  etag   = fileexists(local.output_validate_package) ? filemd5(local.output_validate_package) : null
 
   lifecycle {
     ignore_changes = [etag, version_id]

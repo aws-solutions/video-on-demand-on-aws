@@ -1,6 +1,7 @@
 locals {
   step_functions_function_name = "step-functions"
   step_functions_s3_key        = "${local.s3_prefix}/${local.step_functions_function_name}/package.zip"
+  step_functions_package       = "${local.lambda_package_dir}/${local.step_functions_s3_key}"
 }
 
 module "λ_step_functions" {
@@ -94,8 +95,8 @@ resource "aws_iam_role_policy_attachment" "λ_step_functions" {
 resource "aws_s3_bucket_object" "λ_step_functions" {
   bucket = aws_s3_bucket.s3_λ_source.bucket
   key    = local.step_functions_s3_key
-  source = "${local.lambda_package_dir}/${local.step_functions_s3_key}"
-  etag   = filemd5("${local.lambda_package_dir}/${local.step_functions_s3_key}")
+  source = fileexists(local.step_functions_package) ? local.step_functions_package : null
+  etag   = fileexists(local.step_functions_package) ? filemd5(local.step_functions_package) : null
 
   lifecycle {
     ignore_changes = [etag, version_id]

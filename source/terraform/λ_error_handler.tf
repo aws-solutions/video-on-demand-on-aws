@@ -1,6 +1,7 @@
 locals {
   error_handler_function_name = "error-handler"
   error_handler_s3_key        = "${local.s3_prefix}/${local.error_handler_function_name}/package.zip"
+  error_handler_package       = "${local.lambda_package_dir}/${local.error_handler_s3_key}"
 }
 
 module "λ_error_handler" {
@@ -83,8 +84,8 @@ resource "aws_iam_role_policy_attachment" "λ_error_handler" {
 resource "aws_s3_bucket_object" "λ_error_handler" {
   bucket = aws_s3_bucket.s3_λ_source.bucket
   key    = local.error_handler_s3_key
-  source = "${local.lambda_package_dir}/${local.error_handler_s3_key}"
-  etag   = filemd5("${local.lambda_package_dir}/${local.error_handler_s3_key}")
+  source = fileexists(local.error_handler_package) ? local.error_handler_package : null
+  etag   = fileexists(local.error_handler_package) ? filemd5(local.error_handler_package) : null
 
   lifecycle {
     ignore_changes = [etag, version_id]

@@ -1,6 +1,7 @@
 locals {
   media_info_function_name = "mediainfo"
-  media_info_source_s3_key = "${local.s3_prefix}/${local.media_info_function_name}/package.zip"
+  media_info_s3_key        = "${local.s3_prefix}/${local.media_info_function_name}/package.zip"
+  media_info_package       = "${local.lambda_package_dir}/${local.media_info_s3_key}"
 }
 
 module "λ_media_info" {
@@ -15,7 +16,7 @@ module "λ_media_info" {
   publish                            = true
   runtime                            = "python3.7"
   s3_bucket                          = aws_s3_bucket.s3_λ_source.bucket
-  s3_key                             = local.media_info_source_s3_key
+  s3_key                             = local.media_info_s3_key
   s3_object_version                  = aws_s3_bucket_object.λ_media_info.version_id
   timeout                            = 120
   tags                               = local.tags
@@ -58,9 +59,9 @@ resource "aws_iam_role_policy_attachment" "λ_media_info" {
 // deployments are running on CodePipeline
 resource "aws_s3_bucket_object" "λ_media_info" {
   bucket = aws_s3_bucket.s3_λ_source.bucket
-  key    = local.media_info_source_s3_key
-  source = "${local.lambda_package_dir}/${local.media_info_source_s3_key}"
-  etag   = filemd5("${local.lambda_package_dir}/${local.media_info_source_s3_key}")
+  key    = local.media_info_s3_key
+  source = fileexists(local.media_info_package) ? local.media_info_package : null
+  etag   = fileexists(local.media_info_package) ? filemd5(local.media_info_package) : null
 
   lifecycle {
     ignore_changes = [etag, version_id]
@@ -85,5 +86,5 @@ module "λ_media_info_deployment" {
   codestar_notifications_target_arn = data.aws_sns_topic.codestar_notifications.arn
   function_name                     = module.λ_media_info.function_name
   s3_bucket                         = aws_s3_bucket.s3_λ_source.bucket
-  s3_key                            = local.media_info_source_s3_key
+  s3_key                            = local.media_info_s3_key
 }

@@ -1,6 +1,7 @@
 locals {
   archive_source_function_name = "archive-source"
   archive_source_s3_key        = "${local.s3_prefix}/${local.archive_source_function_name}/package.zip"
+  archive_source_package       = "${local.lambda_package_dir}/${local.archive_source_s3_key}"
 }
 
 module "λ_archive_source" {
@@ -60,8 +61,8 @@ resource "aws_iam_role_policy_attachment" "λ_archive_source" {
 resource "aws_s3_bucket_object" "λ_archive_source" {
   bucket = aws_s3_bucket.s3_λ_source.bucket
   key    = local.archive_source_s3_key
-  source = "${local.lambda_package_dir}/${local.archive_source_s3_key}"
-  etag   = filemd5("${local.lambda_package_dir}/${local.archive_source_s3_key}")
+  source = fileexists(local.archive_source_package) ? local.archive_source_package : null
+  etag   = fileexists(local.archive_source_package) ? filemd5(local.archive_source_package) : null
 
   lifecycle {
     ignore_changes = [etag, version_id]

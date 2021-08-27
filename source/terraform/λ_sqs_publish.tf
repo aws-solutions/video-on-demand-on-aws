@@ -1,6 +1,7 @@
 locals {
   sqs_publish_function_name = "sqs-publish"
   sqs_publish_s3_key        = "${local.s3_prefix}/${local.sqs_publish_function_name}/package.zip"
+  sqs_publish_package       = "${local.lambda_package_dir}/${local.sqs_publish_s3_key}"
 }
 
 module "λ_sqs_publish" {
@@ -74,8 +75,8 @@ resource "aws_iam_role_policy_attachment" "λ_sqs_publish" {
 resource "aws_s3_bucket_object" "λ_sqs_publish" {
   bucket = aws_s3_bucket.s3_λ_source.bucket
   key    = local.sqs_publish_s3_key
-  source = "${local.lambda_package_dir}/${local.sqs_publish_s3_key}"
-  etag   = filemd5("${local.lambda_package_dir}/${local.sqs_publish_s3_key}")
+  source = fileexists(local.sqs_publish_package) ? local.sqs_publish_package : null
+  etag   = fileexists(local.sqs_publish_package) ? filemd5(local.sqs_publish_package) : null
 
   lifecycle {
     ignore_changes = [etag, version_id]

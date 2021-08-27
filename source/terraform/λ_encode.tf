@@ -1,8 +1,8 @@
 locals {
   encode_function_name = "encode"
   encode_s3_key        = "${local.s3_prefix}/${local.encode_function_name}/package.zip"
+  encode_package       = "${local.lambda_package_dir}/${local.encode_s3_key}"
 }
-
 
 data "external" "mediaconvert_endpoint" {
   program = ["aws", "--query", "Endpoints[0]", "mediaconvert", "describe-endpoints", "--region", var.region]
@@ -73,8 +73,8 @@ resource "aws_iam_role_policy_attachment" "λ_encode" {
 resource "aws_s3_bucket_object" "λ_encode" {
   bucket = aws_s3_bucket.s3_λ_source.bucket
   key    = local.encode_s3_key
-  source = "${local.lambda_package_dir}/${local.encode_s3_key}"
-  etag   = filemd5("${local.lambda_package_dir}/${local.encode_s3_key}")
+  source = fileexists(local.encode_package) ? local.encode_package : null
+  etag   = fileexists(local.encode_package) ? filemd5(local.encode_package) : null
 
   lifecycle {
     ignore_changes = [etag, version_id]

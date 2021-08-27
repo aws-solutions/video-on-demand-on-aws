@@ -1,6 +1,7 @@
 locals {
   sns_notification_function_name = "sns-notification"
   sns_notification_s3_key        = "${local.s3_prefix}/${local.sns_notification_function_name}/package.zip"
+  sns_notification_package       = "${local.lambda_package_dir}/${local.sns_notification_s3_key}"
 }
 
 module "λ_sns_notification" {
@@ -66,8 +67,8 @@ resource "aws_iam_role_policy_attachment" "λ_sns_notification" {
 resource "aws_s3_bucket_object" "λ_sns_notification" {
   bucket = aws_s3_bucket.s3_λ_source.bucket
   key    = local.sns_notification_s3_key
-  source = "${local.lambda_package_dir}/${local.sns_notification_s3_key}"
-  etag   = filemd5("${local.lambda_package_dir}/${local.sns_notification_s3_key}")
+  source = fileexists(local.sns_notification_package) ? local.sns_notification_package : null
+  etag   = fileexists(local.sns_notification_package) ? filemd5(local.sns_notification_package) : null
 
   lifecycle {
     ignore_changes = [etag, version_id]

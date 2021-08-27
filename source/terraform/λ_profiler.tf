@@ -1,6 +1,7 @@
 locals {
   profiler_function_name = "profiler"
   profiler_s3_key        = "${local.s3_prefix}/${local.profiler_function_name}/package.zip"
+  profiler_package       = "${local.lambda_package_dir}/${local.profiler_s3_key}"
 }
 
 module "λ_profiler" {
@@ -61,8 +62,8 @@ resource "aws_iam_role_policy_attachment" "λ_profiler" {
 resource "aws_s3_bucket_object" "λ_profiler" {
   bucket = aws_s3_bucket.s3_λ_source.bucket
   key    = local.profiler_s3_key
-  source = "${local.lambda_package_dir}/${local.profiler_s3_key}"
-  etag   = filemd5("${local.lambda_package_dir}/${local.profiler_s3_key}")
+  source = fileexists(local.profiler_package) ? local.profiler_package : null
+  etag   = fileexists(local.profiler_package) ? filemd5(local.profiler_package) : null
 
   lifecycle {
     ignore_changes = [etag, version_id]

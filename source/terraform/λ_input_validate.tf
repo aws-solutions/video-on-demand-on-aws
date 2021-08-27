@@ -1,6 +1,7 @@
 locals {
   input_validate_function_name = "input-validate"
   input_validate_s3_key        = "${local.s3_prefix}/${local.input_validate_function_name}/package.zip"
+  input_validate_package       = "${local.lambda_package_dir}/${local.input_validate_s3_key}"
 }
 
 module "λ_input_validate" {
@@ -73,8 +74,8 @@ resource "aws_iam_role_policy_attachment" "λ_input_validate" {
 resource "aws_s3_bucket_object" "λ_input_validate" {
   bucket = aws_s3_bucket.s3_λ_source.bucket
   key    = local.input_validate_s3_key
-  source = "${local.lambda_package_dir}/${local.input_validate_s3_key}"
-  etag   = filemd5("${local.lambda_package_dir}/${local.input_validate_s3_key}")
+  source = fileexists(local.input_validate_package) ? local.input_validate_package : null
+  etag   = fileexists(local.input_validate_package) ? filemd5(local.input_validate_package) : null
 
   lifecycle {
     ignore_changes = [etag, version_id]
