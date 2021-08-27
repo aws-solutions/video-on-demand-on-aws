@@ -130,7 +130,7 @@ exports.handler = async (event) => {
   try {
     const inputPath = `s3://${event.srcBucket}/${event.srcVideo}`;
     const srcPath = event.srcVideo.substring(0, event.srcVideo.lastIndexOf("/"));
-    const bucket = event.geoRestriction ? process.env.DestinationRestricted : process.env.Destination;
+    const bucket = ('DE' === event.geoRestriction) ? process.env.DestinationRestricted : process.env.Destination;
     let outputPath;
     if (event.hasOwnProperty('cmsId')) {
       outputPath = `s3://${bucket}/${srcPath}`;

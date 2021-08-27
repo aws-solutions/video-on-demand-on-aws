@@ -45,7 +45,7 @@ exports.handler = async (event) => {
     data.workflowStatus = 'Complete';
     data.endTime = moment().utc().toISOString();
 
-    const isGeoRestricted = data.geoRestriction || false
+    const isGeoRestricted = ('DE' === data.geoRestriction) || false
     const cloudFront = isGeoRestricted ? process.env.CloudFrontRestricted : process.env.CloudFront
 
     // Parse MediaConvert Output and generate CloudFront URLS.
