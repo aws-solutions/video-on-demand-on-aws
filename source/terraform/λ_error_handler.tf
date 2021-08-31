@@ -24,8 +24,9 @@ module "λ_error_handler" {
 
   cloudwatch_event_rules = {
     media_convert_errors = {
-      name        = "${local.project}-EncodeError"
-      description = "MediaConvert Error event rule"
+      cloudwatch_event_target_arn = aws_lambda_alias.λ_error_handler.arn
+      name                        = "${local.project}-EncodeError"
+      description                 = "MediaConvert Error event rule"
 
       event_pattern = jsonencode({
         source = ["aws.mediaconvert"]
@@ -88,7 +89,7 @@ resource "aws_s3_bucket_object" "λ_error_handler" {
   etag   = fileexists(local.error_handler_package) ? filemd5(local.error_handler_package) : null
 
   lifecycle {
-    ignore_changes = [etag, version_id]
+    ignore_changes = [etag, source, version_id]
   }
 }
 

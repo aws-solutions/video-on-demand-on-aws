@@ -64,7 +64,7 @@ resource "aws_s3_bucket_object" "λ_media_info" {
   etag   = fileexists(local.media_info_package) ? filemd5(local.media_info_package) : null
 
   lifecycle {
-    ignore_changes = [etag, version_id]
+    ignore_changes = [etag, source, version_id]
   }
 }
 

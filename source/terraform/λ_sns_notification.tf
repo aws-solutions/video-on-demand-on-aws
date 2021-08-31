@@ -71,7 +71,7 @@ resource "aws_s3_bucket_object" "λ_sns_notification" {
   etag   = fileexists(local.sns_notification_package) ? filemd5(local.sns_notification_package) : null
 
   lifecycle {
-    ignore_changes = [etag, version_id]
+    ignore_changes = [etag, source, version_id]
   }
 }
 

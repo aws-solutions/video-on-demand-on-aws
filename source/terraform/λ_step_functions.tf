@@ -24,8 +24,9 @@ module "λ_step_functions" {
 
   cloudwatch_event_rules = {
     media_convert_completed = {
-      description = "MediaConvert Completed event rule"
-      name        = "${local.project}-EncodeComplete"
+      cloudwatch_event_target_arn = aws_lambda_alias.λ_step_functions.arn
+      description                 = "MediaConvert Completed event rule"
+      name                        = "${local.project}-EncodeComplete"
 
       event_pattern = jsonencode({
         source = ["aws.mediaconvert"]
@@ -99,7 +100,7 @@ resource "aws_s3_bucket_object" "λ_step_functions" {
   etag   = fileexists(local.step_functions_package) ? filemd5(local.step_functions_package) : null
 
   lifecycle {
-    ignore_changes = [etag, version_id]
+    ignore_changes = [etag, source, version_id]
   }
 }
 

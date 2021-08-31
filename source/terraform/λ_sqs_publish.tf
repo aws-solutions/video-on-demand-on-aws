@@ -24,6 +24,8 @@ module "λ_sqs_publish" {
 
   cloudwatch_event_rules = {
     media_convert = {
+      cloudwatch_event_target_arn = aws_lambda_alias.λ_sqs_publish.arn
+
       event_pattern = jsonencode({
         source = ["aws.mediaconvert"]
         detail = {
@@ -79,7 +81,7 @@ resource "aws_s3_bucket_object" "λ_sqs_publish" {
   etag   = fileexists(local.sqs_publish_package) ? filemd5(local.sqs_publish_package) : null
 
   lifecycle {
-    ignore_changes = [etag, version_id]
+    ignore_changes = [etag, source, version_id]
   }
 }
 

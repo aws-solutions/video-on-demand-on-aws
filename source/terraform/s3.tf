@@ -145,22 +145,22 @@ locals {
 EOF
 }
 resource "aws_s3_bucket_object" "redirect_videos" {
-  bucket = module.s3_destination.s3_bucket_id
-  key    = "index.html"
-  content = local.video_redirect
-  cache_control = "public, max-age=3600"
-  content_type = "text/html; charset=UTF-8"
+  bucket           = module.s3_destination.s3_bucket_id
+  key              = "index.html"
+  content          = local.video_redirect
+  cache_control    = "public, max-age=3600"
+  content_type     = "text/html; charset=UTF-8"
   content_encoding = "UTF-8"
-  etag = md5(local.video_redirect)
+  etag             = md5(local.video_redirect)
 }
 resource "aws_s3_bucket_object" "redirect_videos_restricted" {
-  bucket = module.s3_destination_for_restricted_videos.s3_bucket_id
-  key    = "index.html"
-  content = local.video_redirect
-  content_type = "text/html; charset=UTF-8"
-  cache_control = "public, max-age=3600"
+  bucket           = module.s3_destination_for_restricted_videos.s3_bucket_id
+  key              = "index.html"
+  content          = local.video_redirect
+  content_type     = "text/html; charset=UTF-8"
+  cache_control    = "public, max-age=3600"
   content_encoding = "UTF-8"
-  etag = md5(local.video_redirect)
+  etag             = md5(local.video_redirect)
 }
 
 resource "aws_s3_bucket" "s3_λ_source" {

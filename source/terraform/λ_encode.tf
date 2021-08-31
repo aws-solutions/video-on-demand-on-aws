@@ -77,7 +77,7 @@ resource "aws_s3_bucket_object" "λ_encode" {
   etag   = fileexists(local.encode_package) ? filemd5(local.encode_package) : null
 
   lifecycle {
-    ignore_changes = [etag, version_id]
+    ignore_changes = [etag, source, version_id]
   }
 }
 

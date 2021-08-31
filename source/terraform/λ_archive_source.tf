@@ -65,7 +65,7 @@ resource "aws_s3_bucket_object" "λ_archive_source" {
   etag   = fileexists(local.archive_source_package) ? filemd5(local.archive_source_package) : null
 
   lifecycle {
-    ignore_changes = [etag, version_id]
+    ignore_changes = [etag, source, version_id]
   }
 }
 
