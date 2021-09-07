@@ -18,6 +18,11 @@ resource "aws_dynamodb_table" "this" {
     type = "S"
   }
 
+  attribute {
+    name = "ttl"
+    type = "N"
+  }
+
   global_secondary_index {
     name            = "srcBucket-startTime-index"
     hash_key        = "srcBucket"
@@ -25,6 +30,11 @@ resource "aws_dynamodb_table" "this" {
     projection_type = "ALL"
   }
 
-  tags = local.tags
+  global_secondary_index {
+    name            = "scheduled-events"
+    hash_key        = "guid"
+    range_key       = "ttl"
+    projection_type = "KEYS_ONLY"
+  }
 }
 
