@@ -1,7 +1,6 @@
 resource "aws_iam_role" "media_transcode_role" {
   assume_role_policy = data.aws_iam_policy_document.media_transcode_role.json
   name               = "${local.project}-media-transcode-role"
-  tags               = local.tags
 
   inline_policy {
     name = "${local.project}-media-transcode-policy"
@@ -43,7 +42,6 @@ resource "aws_sfn_state_machine" "process" {
 
   name     = "${local.project}-process"
   role_arn = aws_iam_role.step_function_service_role.arn
-  tags     = local.tags
 
   logging_configuration {
     include_execution_data = true

@@ -18,7 +18,6 @@ module "λ_archive_source" {
   s3_bucket                          = aws_s3_bucket.s3_λ_source.bucket
   s3_key                             = local.archive_source_s3_key
   s3_object_version                  = aws_s3_bucket_object.λ_archive_source.version_id
-  tags                               = local.tags
   timeout                            = 120
   tracing_config_mode                = "Active"
 

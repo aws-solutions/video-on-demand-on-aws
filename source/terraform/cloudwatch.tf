@@ -5,7 +5,6 @@ data "aws_lambda_function" "log_streaming" {
 resource "aws_cloudwatch_log_group" "sfn_logs" {
   name              = "/aws/sfn/${local.project}"
   retention_in_days = 1
-  tags              = local.tags
 }
 
 resource "aws_lambda_permission" "log_streaming_lambda" {

@@ -19,7 +19,6 @@ module "λ_media_info" {
   s3_key                             = local.media_info_s3_key
   s3_object_version                  = aws_s3_bucket_object.λ_media_info.version_id
   timeout                            = 120
-  tags                               = local.tags
   tracing_config_mode                = "Active"
 
   environment = {

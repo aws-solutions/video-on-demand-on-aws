@@ -18,7 +18,6 @@ module "λ_error_handler" {
   s3_bucket                          = aws_s3_bucket.s3_λ_source.bucket
   s3_key                             = local.error_handler_s3_key
   s3_object_version                  = aws_s3_bucket_object.λ_error_handler.version_id
-  tags                               = local.tags
   timeout                            = 120
   tracing_config_mode                = "Active"
 

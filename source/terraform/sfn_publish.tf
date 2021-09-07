@@ -3,7 +3,6 @@ resource "aws_sfn_state_machine" "publish" {
 
   name     = "${local.project}-publish"
   role_arn = aws_iam_role.step_function_service_role.arn
-  tags     = local.tags
 
   logging_configuration {
     include_execution_data = true

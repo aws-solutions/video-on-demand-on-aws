@@ -1,7 +1,6 @@
 resource "aws_sns_topic" "notifications" {
   kms_master_key_id = "alias/aws/sns"
   name              = "${local.project}-notifications"
-  tags              = local.tags
 }
 
 resource "aws_sns_topic_subscription" "admin_debug" {
@@ -21,7 +20,6 @@ resource "aws_sqs_queue" "notifications" {
   name                              = "${local.project}-notfications"
   kms_data_key_reuse_period_seconds = 300
   kms_master_key_id                 = "alias/aws/sqs"
-  tags                              = local.tags
 
   redrive_policy = jsonencode({
     deadLetterTargetArn = aws_sqs_queue.notifications_dlq.arn
@@ -34,5 +32,4 @@ resource "aws_sqs_queue" "notifications_dlq" {
   name                              = "${local.project}-notfications-dlq"
   kms_data_key_reuse_period_seconds = 300
   kms_master_key_id                 = "alias/aws/sqs"
-  tags                              = local.tags
 }

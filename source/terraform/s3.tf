@@ -5,7 +5,6 @@ module "s3_source" {
   acl           = "private"
   bucket        = "${local.project}-master-videos-${data.aws_caller_identity.current.account_id}-${data.aws_region.current.name}"
   force_destroy = true
-  tags          = local.tags
 
   # S3 bucket-level Public Access Block configuration
   block_public_acls       = true
@@ -94,7 +93,6 @@ module "s3_destination" {
   acl           = "private"
   bucket        = "${local.project}-transcoded-videos-${data.aws_caller_identity.current.account_id}-${data.aws_region.current.name}"
   force_destroy = true
-  tags          = local.tags
 
   # S3 bucket-level Public Access Block configuration
   block_public_acls       = true
@@ -114,7 +112,6 @@ module "s3_destination_for_restricted_videos" {
   acl           = "private"
   bucket        = "${local.project}-transcoded-restricted-videos-${data.aws_caller_identity.current.account_id}-${data.aws_region.current.name}"
   force_destroy = true
-  tags          = local.tags
 
   # S3 bucket-level Public Access Block configuration
   block_public_acls       = true
@@ -167,7 +164,6 @@ resource "aws_s3_bucket" "s3_λ_source" {
   acl           = "private"
   bucket        = "${local.project}-lambda-sources-${data.aws_caller_identity.current.account_id}-${data.aws_region.current.name}"
   force_destroy = true
-  tags          = local.tags
 
   versioning {
     enabled = true
