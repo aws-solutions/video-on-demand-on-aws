@@ -31,12 +31,11 @@ exports.handler = async (event) => {
     delete event.guid;
     let expression = '';
     let values = {};
-    let i = 0;
 
-    Object.keys(event).forEach((key) => {
-      i++;
-      expression += ' ' + key + ' = :' + i + ',';
-      values[':' + i] = event[key];
+    Object.keys(event).forEach((key, index) => {
+      // ttl is a reserved keyword
+      expression += ' ' + (key !== 'ttl' ? key : `#${key}`) + ' = :' + index + ',';
+      values[':' + index] = event[key];
     });
 
     let params = {
@@ -48,6 +47,10 @@ exports.handler = async (event) => {
       UpdateExpression: 'set ' + expression.slice(0, -1),
       ExpressionAttributeValues: values
     };
+
+    if (event.hasOwnProperty('ttl')) {
+      params['ExpressionAttributeNames'] = {'#ttl': 'ttl'};
+    }
 
     console.log(`UPDATE:: ${JSON.stringify(params, null, 2)}`);
     await dynamo.update(params).promise();
