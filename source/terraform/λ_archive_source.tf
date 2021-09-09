@@ -31,8 +31,17 @@ module "λ_archive_source" {
 
 data "aws_iam_policy_document" "λ_archive_source" {
   statement {
-    actions   = ["s3:PutObjectTagging"]
+    sid       = "TagArchiveAndAccessCacheHeaders"
+    actions   = ["s3:PutObjectTagging", "s3:getObject"]
     resources = ["${module.s3_source.s3_bucket_arn}/*"]
+  }
+  statement {
+    sid       = "UpdateCacheHeaders"
+    actions   = ["s3:PutObject*"]
+    resources = [
+      "${module.s3_destination.s3_bucket_arn}/*",
+      "${module.s3_destination_for_restricted_videos.s3_bucket_arn}/*"
+    ]
   }
   statement {
     actions   = ["lambda:InvokeFunction"]
