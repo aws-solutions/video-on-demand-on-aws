@@ -38,11 +38,23 @@ module "λ_output_validate" {
 data "aws_iam_policy_document" "λ_output_validate" {
   statement {
     actions   = ["s3:GetObject"]
-    resources = ["${module.s3_source.s3_bucket_arn}/*"]
+    resources = [
+      "${module.s3_source.s3_bucket_arn}/*",
+      "${module.s3_destination.s3_bucket_arn}/*",
+      "${module.s3_destination_for_restricted_videos.s3_bucket_arn}/*"
+    ]
   }
   statement {
-    actions = ["s3:ListBucket"]
+    actions   = ["s3:PutObject"]
     resources = [
+      "${module.s3_destination.s3_bucket_arn}/*",
+      "${module.s3_destination_for_restricted_videos.s3_bucket_arn}/*"
+    ]
+  }
+  statement {
+    actions   = ["s3:ListBucket"]
+    resources = [
+      //      module.s3_source.s3_bucket_arn,
       module.s3_destination.s3_bucket_arn,
       module.s3_destination_for_restricted_videos.s3_bucket_arn
     ]
