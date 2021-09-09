@@ -14,8 +14,18 @@
 const AWS = require('aws-sdk');
 const error = require('./lib/error.js');
 const moment = require('moment');
+const path = require('path');
 
 const buildUrl = (originalValue) => originalValue.slice(5).split('/').splice(1).join('/');
+
+async function* listAllKeys(s3, params) {
+  params = {...params};
+  do {
+    const data = await s3.listObjectsV2(params).promise();
+    params.ContinuationToken = data.NextContinuationToken;
+    yield data;
+  } while (params.ContinuationToken);
+}
 
 exports.handler = async (event) => {
   console.log(`REQUEST:: ${JSON.stringify(event, null, 2)}`);
@@ -24,20 +34,22 @@ exports.handler = async (event) => {
     region: process.env.AWS_REGION
   });
 
-  const s3 = new AWS.S3();
+  const s3 = new AWS.S3({
+    region: process.env.AWS_REGION
+  });
 
   let data = {};
 
   try {
     // Get Config from DynamoDB (data required for the workflow)
-    let params = {
+    const ddbParams = {
       TableName: process.env.DynamoDBTable,
       Key: {
         guid: event.detail.userMetadata.cmsId || event.detail.userMetadata.guid,
       }
     };
 
-    data = await dynamo.get(params).promise();
+    data = await dynamo.get(ddbParams).promise();
     data = data.Item;
 
     data.encodingOutput = event;
@@ -107,21 +119,21 @@ exports.handler = async (event) => {
      * feature: if frame capture and accelerated are both enabled the thumbnails are not listed in the CloudWatch
      * output. adding a function to get the last image from the list of images.
      */
+    const prefix = data.srcVideo.substring(0, data.srcVideo.lastIndexOf("/"))
+      + (data.hasOwnProperty('cmsId') ? '' : '/' + data.guid);
+    const bucket = isGeoRestricted ? process.env.DestinationRestricted : process.env.Destination;
+
     if (data.frameCapture) {
 
       data.thumbNails = [];
       data.thumbNailsUrls = [];
 
-      const prefix = data.srcVideo.substring(0, data.srcVideo.lastIndexOf("/"))
-        + (data.hasOwnProperty('cmsId') ? '' : '/' + data.guid);
-      const bucket = isGeoRestricted ? process.env.DestinationRestricted : process.env.Destination;
-
-      params = {
+      const params = {
         Bucket: bucket,
         Prefix: `${prefix}/thumbnails/`,
       };
 
-      let thumbNails = await s3.listObjects(params).promise();
+      let thumbNails = await s3.listObjectsV2(params).promise();
 
       if (thumbNails.Contents.length !== 0) {
         let lastImg = thumbNails.Contents.pop();
@@ -130,7 +142,54 @@ exports.handler = async (event) => {
       } else {
         throw new Error('MediaConvert Thumbnails not found in S3');
       }
+    }
 
+    /*
+     * copy s3 metadata, cache control and/or expires from the original file to all generated files.
+     */
+    const headParams = {
+      Bucket: data.srcBucket,
+      Key: data.srcVideo,
+    };
+    const master = await s3.headObject(headParams).promise();
+
+    const listParams = {
+      Bucket: bucket,
+      Prefix: `${prefix}/`,
+    };
+    // find all generated files: *.m3u8, *.ts and *.jpg
+    for await (const listItem of listAllKeys(s3, listParams)) {
+      const result = await Promise.all(listItem.Contents.map(async item => {
+        let contentType;
+        switch (path.extname(item.Key).substring(1)) {
+          case 'm3u8':
+            contentType = 'application/vnd.apple.mpegurl';
+            break
+          case 'ts':
+            contentType = 'video/MP2T';
+            break
+          case 'jpg':
+            contentType = 'image/jpeg';
+            break
+          default:
+            contentType = 'application/octet-stream';
+        }
+        const copyParams = {
+          Bucket: bucket,
+          CopySource: `${bucket}/${item.Key}`,
+          Key: item.Key,
+          MetadataDirective: "REPLACE",
+          Metadata: {...master.Metadata},
+          ContentType: contentType
+        };
+        if (master.hasOwnProperty('CacheControl')) {
+          copyParams['CacheControl'] = master.CacheControl;
+        } else if (master.hasOwnProperty('Expires')) {
+          copyParams['Expires'] = master.Expires;
+        }
+
+        return await s3.copyObject(copyParams).promise();
+      }));
     }
 
   } catch (err) {

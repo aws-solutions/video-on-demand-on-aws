@@ -65,6 +65,7 @@ exports.handler = async (event) => {
           if (metadata.hasOwnProperty("cms-id")) event.cmsId = metadata["cms-id"];
           if (metadata.hasOwnProperty("geo-restriction")) event.geoRestriction = metadata["geo-restriction"];
           if (metadata.hasOwnProperty("command-id")) event.cmsCommandId = metadata["command-id"];
+          if (metadata.hasOwnProperty("ttl")) event.ttl = parseInt(metadata["ttl"], 10);
         }
         event.guid = event.cmsCommandId || uuidv4();
         if (event.cmsCommandId) {
