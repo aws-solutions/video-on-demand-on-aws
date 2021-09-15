@@ -10,7 +10,7 @@ data "external" "mediaconvert_endpoint" {
 
 module "λ_encode" {
   source  = "moritzzimmer/lambda/aws"
-  version = "5.15.1"
+  version = "5.16.0"
 
   cloudwatch_lambda_insights_enabled = true
   function_name                      = "${local.project}-${local.encode_function_name}"
@@ -76,7 +76,7 @@ resource "aws_s3_bucket_object" "λ_encode" {
   etag   = fileexists(local.encode_package) ? filemd5(local.encode_package) : null
 
   lifecycle {
-    ignore_changes = [etag, source, version_id]
+    ignore_changes = [etag, source, version_id, tags_all]
   }
 }
 
@@ -92,11 +92,12 @@ resource "aws_lambda_alias" "λ_encode" {
 
 module "λ_encode_deployment" {
   source  = "moritzzimmer/lambda/aws//modules/deployment"
-  version = "5.15.1"
+  version = "5.16.0"
 
   alias_name                        = aws_lambda_alias.λ_encode.name
   codestar_notifications_target_arn = data.aws_sns_topic.codestar_notifications.arn
   function_name                     = module.λ_encode.function_name
+  codepipeline_artifact_store_bucket = aws_s3_bucket.s3_λ_source.bucket
   s3_bucket                         = aws_s3_bucket.s3_λ_source.bucket
   s3_key                            = local.encode_s3_key
 }

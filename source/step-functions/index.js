@@ -46,7 +46,7 @@ exports.handler = async (event) => {
       console.error("Could not execute s3:headObject", e);
     }
     return undefined;
-  }
+  };
 
   let response;
   let params;
@@ -57,15 +57,25 @@ exports.handler = async (event) => {
         // Ingest workflow triggered by s3 event::
         // if event originated from CMS, take its id, otherwise generate a uuid
         const key = decodeURIComponent(event.Records[0].s3.object.key.replace(/\+/g, " "));
-        const bucket = event.Records[0].s3.bucket.name
-
-        const metadata = await s3metadata(bucket, key)
-        if (metadata) {
-          console.log("metadata for item", metadata)
-          if (metadata.hasOwnProperty("cms-id")) event.cmsId = metadata["cms-id"];
-          if (metadata.hasOwnProperty("geo-restriction")) event.geoRestriction = metadata["geo-restriction"];
-          if (metadata.hasOwnProperty("command-id")) event.cmsCommandId = metadata["command-id"];
-          if (metadata.hasOwnProperty("ttl")) event.ttl = parseInt(metadata["ttl"], 10);
+        const bucket = event.Records[0].s3.bucket.name;
+        if (event.Records[0].eventName.startsWith('ObjectCreated:')) {
+          event.doPurge = false;
+          const metadata = await s3metadata(bucket, key);
+          if (metadata) {
+            console.log("metadata for item", metadata);
+            if (metadata.hasOwnProperty("cms-id")) event.cmsId = metadata["cms-id"];
+            if (metadata.hasOwnProperty("geo-restriction")) event.geoRestriction = metadata["geo-restriction"];
+            if (metadata.hasOwnProperty("command-id")) event.cmsCommandId = metadata["command-id"];
+            if (metadata.hasOwnProperty("ttl")) event.ttl = parseInt(metadata["ttl"], 10);
+          }
+        } else {
+          // ObjectRemoved:DeleteMarkerCreated
+          event.doPurge = true;
+          console.log(`marking ${bucket}/${key} for purging since eventName=${event.Records[0].eventName}`);
+          const match = key.match(/^20\d{2}\/\d{2}\/(?<media_id>[\w-]+)\//);
+          if (match && match.groups.media_id) {
+            event.cmsId = match.groups.media_id;
+          }
         }
         event.guid = event.cmsCommandId || uuidv4();
         if (event.cmsCommandId) {
@@ -74,7 +84,7 @@ exports.handler = async (event) => {
           let i = 0;
           while (true) {
             i += 1;
-            if (i > 10) {
+            if (i > 30) {
               event.guid = uuidv4();
               break;
             }
@@ -82,14 +92,17 @@ exports.handler = async (event) => {
               const executionArn = `${process.env.IngestWorkflow}:${event.guid}`.replace(':stateMachine:', ':execution:');
               const data = await stepfunctions.describeExecution({executionArn: executionArn}).promise();
               console.log(`invalid guid found ${event.guid} : execution already exists with state ${data.status}.`);
-              event.guid = `${event.cmsCommandId}__rerun_${i}`
+              event.guid = `${event.cmsCommandId}__rerun_${i}`;
             } catch (e) {
-              console.log(`valid guid found ${event.guid}`);
-              break;
+              if (e.code === 'ExecutionDoesNotExist') {
+                console.log(`valid guid found ${event.guid}`);
+                break;
+              } else {
+                console.error("Something went wrong while searching for an available id.", e);
+              }
             }
           }
         }
-
 
         // Identify file extension of s3 object::
         if (key.split('.').pop() === 'json') {

@@ -1,22 +1,24 @@
 {
-  "name": "vod-media-package-asset",
+  "name": "vod-purge",
   "version": "1.0.0",
   "engines": {
     "node": ">=12"
   },
-  "description": "ingest function for video on demand",
+  "description": "purge helper",
   "main": "index.js",
   "scripts": {
     "pretest": "npm i --quiet",
     "test": "mocha lib/*.spec.js"
   },
+  "dependencies": {},
   "devDependencies": {
     "aws-sdk": "^2.609.0",
     "aws-sdk-mock": "^5.0.0",
-    "chai": "^4.2.0",
+    "chai": "4.3.4",
+    "chai-arrays": "2.2.0",
+    "chai-spies": "^1.0.0",
     "mocha": "^7.0.0",
-    "sinon": "^8.1.1",
-    "sinon-chai": "^3.4.0"
+    "sinon": "^8.1.1"
   },
   "private": true,
   "author": {

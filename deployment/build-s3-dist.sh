@@ -22,14 +22,19 @@ echo "--------------------------------------------------------------------------
 echo "Download mediainfo binary for AWS Lambda"
 echo "------------------------------------------------------------------------------"
 # https://mediaarea.net/en/MediaInfo/Download/Lambda
-cd $source_dir/mediainfo/
-rm -rf bin/*
-MI_VERSION="21.03"
-curl -O https://mediaarea.net/download/binary/mediainfo/${MI_VERSION}/MediaInfo_CLI_${MI_VERSION}_Lambda.zip
-unzip MediaInfo_CLI_${MI_VERSION}_Lambda.zip
-mv LICENSE bin/
-chmod +x ./bin/mediainfo
-rm -r MediaInfo_CLI_${MI_VERSION}_Lambda.zip
+if [ ! -f "$source_dir/mediainfo/bin/mediainfo" ]
+then
+  cd $source_dir/mediainfo/
+  rm -rf bin/*
+  MI_VERSION="21.03"
+  curl -O https://mediaarea.net/download/binary/mediainfo/${MI_VERSION}/MediaInfo_CLI_${MI_VERSION}_Lambda.zip
+  unzip MediaInfo_CLI_${MI_VERSION}_Lambda.zip
+  mv LICENSE bin/
+  chmod +x ./bin/mediainfo
+  rm -r MediaInfo_CLI_${MI_VERSION}_Lambda.zip
+else
+  echo "$source_dir/mediainfo/bin/mediainfo exists, skipping download"
+fi
 
 cd $source_dir/
 echo "------------------------------------------------------------------------------"
@@ -37,7 +42,16 @@ echo "Lambda Functions"
 echo "------------------------------------------------------------------------------"
 
 for folder in */ ; do
+#    case $folder in
+#    'step-functions/'|'input-validate/')
+#        ;;
+#    *)
+#      echo skipping $folder;
+#      continue
+#      ;;
+#    esac
     cd "$folder"
+
 
     function_name=${PWD##*/}
     zip_path="$build_dist_dir/$function_name/package.zip"

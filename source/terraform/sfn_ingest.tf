@@ -20,7 +20,28 @@ resource "aws_sfn_state_machine" "ingest" {
       "Input Validate" : {
         "Type" : "Task",
         "Resource" : aws_lambda_alias.λ_input_validate.arn,
-        "Next" : "Mediainfo"
+        "Next" : "Cleanup Choice"
+      },
+      "Cleanup Choice" : {
+        "Type" : "Choice",
+        "Choices" : [
+          {
+            Variable : "$.doPurge",
+            BooleanEquals : true,
+            Next : "Purge"
+          }
+        ],
+        "Default" : "Mediainfo"
+      },
+      "Purge" : {
+        "Type" : "Task",
+        "Resource" : aws_lambda_alias.λ_purge.arn,
+        Next: "Broadcast Dependencies"
+      },
+      "Broadcast Dependencies" : {
+        "Type" : "Task",
+        "Resource" : aws_lambda_alias.λ_broadcast.arn,
+        "End" : true
       },
       "Mediainfo" : {
         "Type" : "Task",

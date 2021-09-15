@@ -11,7 +11,12 @@
  *  and limitations under the License.                                                                                *
  *********************************************************************************************************************/
 
-const expect = require('chai').expect;
+const chai = require('chai');
+const spies = require('chai-spies');
+chai.use(spies);
+const spy = chai.spy;
+const expect = chai.expect;
+
 const path = require('path');
 const AWS = require('aws-sdk-mock');
 AWS.setSDK(path.resolve('./node_modules/aws-sdk'));
@@ -27,12 +32,13 @@ describe('#STEP FUNCTIONS::', () => {
 
   const _ingest = {
     Records: [{
+      eventName: 's3:ObjectCreated:Put',
       s3: {
         bucket: {
           name: "bucket_name"
         },
         object: {
-          key: 'big_bunny.mp4',
+          key: '2021/09/fake-media-id/big_bunny.mp4',
         }
       }
     }]
@@ -135,6 +141,35 @@ describe('#STEP FUNCTIONS::', () => {
 
       const response = await lambda.handler(_ingest);
       expect(response).to.equal('success');
+    });
+
+    it("marks deleted objects for purging", async () => {
+      const doStep = (params, callback) => {
+        callback(null, data);
+      }
+      const spyStep = spy(doStep);
+      AWS.mock('StepFunctions', 'startExecution', spyStep);
+
+      const fixture = {..._ingest}
+      fixture.Records[0].eventName = 'ObjectRemoved:Delete';
+      const response = await lambda.handler(fixture);
+
+      expect(response).to.equal('success');
+      expect(spyStep).to.have.been.called.with({
+        "input": JSON.stringify({
+            "Records": [{
+              "eventName": "ObjectRemoved:Delete",
+              "s3": {"bucket": {"name": "bucket_name"}, "object": {"key": "2021/09/fake-media-id/big_bunny.mp4"}}
+            }],
+            "cmsCommandId": "fake-media-id",
+            "doPurge": true,
+            "guid": 'fake-media-id',
+            "workflowTrigger": "Video"
+          }
+        ),
+        "name": 'fake-media-id',
+        "stateMachineArn": "INGEST"
+      });
     });
   })
 });

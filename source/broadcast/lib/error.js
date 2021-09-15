@@ -14,32 +14,32 @@
 const AWS = require('aws-sdk');
 
 let errHandler = async (event, _err) => {
-    const lambda = new AWS.Lambda({
-        region: process.env.AWS_REGION
-    });
+  const lambda = new AWS.Lambda({
+    region: process.env.AWS_REGION
+  });
 
-    try {
-        let payload = {
-            'guid': event.guid,
-            'event': event,
-            'function': process.env.AWS_LAMBDA_FUNCTION_NAME,
-            'error': _err.toString()
-        };
+  try {
+    let payload = {
+      'guid': event.guid,
+      'event': event,
+      'function': process.env.AWS_LAMBDA_FUNCTION_NAME,
+      'error': _err.toString()
+    };
 
-        let params = {
-            FunctionName: process.env.ErrorHandler,
-            Payload: JSON.stringify(payload, null, 2)
-        };
+    let params = {
+      FunctionName: process.env.ErrorHandler,
+      Payload: JSON.stringify(payload, null, 2)
+    };
+    console.error(_err);
 
-        await lambda.invoke(params).promise();
-    } catch (err) {
-        console.log(err);
-        throw err;
-    }
-
+    await lambda.invoke(params).promise();
     return 'success';
+  } catch (err) {
+    console.log(err);
+    throw err;
+  }
 };
 
 module.exports = {
-    handler: errHandler
+  handler: errHandler
 };

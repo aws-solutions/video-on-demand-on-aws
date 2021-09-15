@@ -51,6 +51,11 @@ resource "aws_sfn_state_machine" "publish" {
       "DynamoDB Update" : {
         "Type" : "Task",
         "Resource" : aws_lambda_alias.λ_dynamodb_update.arn,
+        "Next" : "Broadcast Dependencies"
+      },
+      "Broadcast Dependencies" : {
+        "Type" : "Task",
+        "Resource" : aws_lambda_alias.λ_broadcast.arn,
         "Next" : "SQS Choice"
       },
       "SQS Choice" : {

@@ -6,7 +6,7 @@ locals {
 
 module "λ_sqs_publish" {
   source  = "moritzzimmer/lambda/aws"
-  version = "5.15.1"
+  version = "5.16.0"
 
   cloudwatch_lambda_insights_enabled = true
   function_name                      = "${local.project}-${local.sqs_publish_function_name}"
@@ -80,7 +80,7 @@ resource "aws_s3_bucket_object" "λ_sqs_publish" {
   etag   = fileexists(local.sqs_publish_package) ? filemd5(local.sqs_publish_package) : null
 
   lifecycle {
-    ignore_changes = [etag, source, version_id]
+    ignore_changes = [etag, source, version_id, tags_all]
   }
 }
 
@@ -96,11 +96,12 @@ resource "aws_lambda_alias" "λ_sqs_publish" {
 
 module "λ_sqs_publish_deployment" {
   source  = "moritzzimmer/lambda/aws//modules/deployment"
-  version = "5.15.1"
+  version = "5.16.0"
 
   alias_name                        = aws_lambda_alias.λ_sqs_publish.name
   codestar_notifications_target_arn = data.aws_sns_topic.codestar_notifications.arn
   function_name                     = module.λ_sqs_publish.function_name
+  codepipeline_artifact_store_bucket = aws_s3_bucket.s3_λ_source.bucket
   s3_bucket                         = aws_s3_bucket.s3_λ_source.bucket
   s3_key                            = local.sqs_publish_s3_key
 }

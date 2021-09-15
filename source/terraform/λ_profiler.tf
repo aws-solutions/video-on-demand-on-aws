@@ -6,7 +6,7 @@ locals {
 
 module "λ_profiler" {
   source  = "moritzzimmer/lambda/aws"
-  version = "5.15.1"
+  version = "5.16.0"
 
   cloudwatch_lambda_insights_enabled = true
   function_name                      = "${local.project}-${local.profiler_function_name}"
@@ -65,7 +65,7 @@ resource "aws_s3_bucket_object" "λ_profiler" {
   etag   = fileexists(local.profiler_package) ? filemd5(local.profiler_package) : null
 
   lifecycle {
-    ignore_changes = [etag, source, version_id]
+    ignore_changes = [etag, source, version_id, tags_all]
   }
 }
 
@@ -81,11 +81,12 @@ resource "aws_lambda_alias" "λ_profiler" {
 
 module "λ_profiler_deployment" {
   source  = "moritzzimmer/lambda/aws//modules/deployment"
-  version = "5.15.1"
+  version = "5.16.0"
 
   alias_name                        = aws_lambda_alias.λ_profiler.name
   codestar_notifications_target_arn = data.aws_sns_topic.codestar_notifications.arn
   function_name                     = module.λ_profiler.function_name
+  codepipeline_artifact_store_bucket = aws_s3_bucket.s3_λ_source.bucket
   s3_bucket                         = aws_s3_bucket.s3_λ_source.bucket
   s3_key                            = local.profiler_s3_key
 }

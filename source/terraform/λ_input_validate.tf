@@ -6,7 +6,7 @@ locals {
 
 module "λ_input_validate" {
   source  = "moritzzimmer/lambda/aws"
-  version = "5.15.1"
+  version = "5.16.0"
 
   cloudwatch_lambda_insights_enabled = true
   function_name                      = "${local.project}-${local.input_validate_function_name}"
@@ -26,7 +26,6 @@ module "λ_input_validate" {
       AWS_NODEJS_CONNECTION_REUSE_ENABLED : "1"
       ErrorHandler : aws_lambda_alias.λ_error_handler.arn
       WorkflowName : local.project
-      Source : module.s3_source.s3_bucket_id
       AcceleratedTranscoding : var.accelerated_transcoding
       FrameCapture : var.frame_capture
       ArchiveSource : var.glacier
@@ -77,7 +76,7 @@ resource "aws_s3_bucket_object" "λ_input_validate" {
   etag   = fileexists(local.input_validate_package) ? filemd5(local.input_validate_package) : null
 
   lifecycle {
-    ignore_changes = [etag, source, version_id]
+    ignore_changes = [etag, source, version_id, tags_all]
   }
 }
 
@@ -93,11 +92,12 @@ resource "aws_lambda_alias" "λ_input_validate" {
 
 module "λ_input_validate_deployment" {
   source  = "moritzzimmer/lambda/aws//modules/deployment"
-  version = "5.15.1"
+  version = "5.16.0"
 
   alias_name                        = aws_lambda_alias.λ_input_validate.name
   codestar_notifications_target_arn = data.aws_sns_topic.codestar_notifications.arn
   function_name                     = module.λ_input_validate.function_name
+  codepipeline_artifact_store_bucket = aws_s3_bucket.s3_λ_source.bucket
   s3_bucket                         = aws_s3_bucket.s3_λ_source.bucket
   s3_key                            = local.input_validate_s3_key
 }

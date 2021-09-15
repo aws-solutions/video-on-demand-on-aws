@@ -6,7 +6,7 @@ locals {
 
 module "λ_archive_source" {
   source  = "moritzzimmer/lambda/aws"
-  version = "5.15.1"
+  version = "5.16.0"
 
   cloudwatch_lambda_insights_enabled = true
   function_name                      = "${local.project}-${local.archive_source_function_name}"
@@ -16,10 +16,11 @@ module "λ_archive_source" {
   publish                            = true
   runtime                            = "nodejs14.x"
   s3_bucket                          = aws_s3_bucket.s3_λ_source.bucket
-  s3_key                             = local.archive_source_s3_key
-  s3_object_version                  = aws_s3_bucket_object.λ_archive_source.version_id
-  timeout                            = 120
-  tracing_config_mode                = "Active"
+
+  s3_key              = local.archive_source_s3_key
+  s3_object_version   = aws_s3_bucket_object.λ_archive_source.version_id
+  timeout             = 120
+  tracing_config_mode = "Active"
 
   environment = {
     variables = {
@@ -73,7 +74,7 @@ resource "aws_s3_bucket_object" "λ_archive_source" {
   etag   = fileexists(local.archive_source_package) ? filemd5(local.archive_source_package) : null
 
   lifecycle {
-    ignore_changes = [etag, source, version_id]
+    ignore_changes = [etag, source, version_id, tags_all]
   }
 }
 
@@ -89,11 +90,12 @@ resource "aws_lambda_alias" "λ_archive_source" {
 
 module "λ_archive_source_deployment" {
   source  = "moritzzimmer/lambda/aws//modules/deployment"
-  version = "5.15.1"
+  version = "5.16.0"
 
-  alias_name                        = aws_lambda_alias.λ_archive_source.name
-  codestar_notifications_target_arn = data.aws_sns_topic.codestar_notifications.arn
-  function_name                     = module.λ_archive_source.function_name
-  s3_bucket                         = aws_s3_bucket.s3_λ_source.bucket
-  s3_key                            = local.archive_source_s3_key
+  alias_name                         = aws_lambda_alias.λ_archive_source.name
+  codestar_notifications_target_arn  = data.aws_sns_topic.codestar_notifications.arn
+  function_name                      = module.λ_archive_source.function_name
+  codepipeline_artifact_store_bucket = aws_s3_bucket.s3_λ_source.bucket
+  s3_bucket                          = aws_s3_bucket.s3_λ_source.bucket
+  s3_key                             = local.archive_source_s3_key
 }

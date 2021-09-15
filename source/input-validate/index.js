@@ -23,14 +23,13 @@ exports.handler = async (event) => {
 
   try {
     // Default configuration for the workflow is built using the enviroment variables.
-    // Any parameter in config can be overwriten using a metadata file.
+    // Any parameter in config can be overwritten using a metadata file.
     data = {
       guid: event.guid,
       startTime: moment().utc().toISOString(),
       workflowTrigger: event.workflowTrigger,
       workflowStatus: 'Ingest',
       workflowName: process.env.WorkflowName,
-      srcBucket: process.env.Source,
       frameCapture: JSON.parse(process.env.FrameCapture),
       archiveSource: process.env.ArchiveSource,
       jobTemplate_1080p: process.env.MediaConvert_Template_1080p,
@@ -41,17 +40,19 @@ exports.handler = async (event) => {
       acceleratedTranscoding: process.env.AcceleratedTranscoding,
       enableSns: JSON.parse(process.env.EnableSns),
       enableSqs: JSON.parse(process.env.EnableSqs),
+      doPurge: event.doPurge,
       geoRestriction: event.geoRestriction,
       cmsId: event.cmsId,
       cmsCommandId: event.cmsCommandId,
       ttl: event.ttl
     };
 
+    const key = decodeURIComponent(event.Records[0].s3.object.key.replace(/\+/g, " "));
+    data.srcBucket = event.Records[0].s3.bucket.name;
+
     switch (event.workflowTrigger) {
       case 'Metadata':
         console.log('Validating Metadata file::');
-
-        const key = decodeURIComponent(event.Records[0].s3.object.key.replace(/\+/g, " "));
         data.srcMetadataFile = key;
 
         // Download json metadata file from s3
@@ -75,7 +76,7 @@ exports.handler = async (event) => {
         break;
 
       case 'Video':
-        data.srcVideo = decodeURIComponent(event.Records[0].s3.object.key.replace(/\+/g, " "));
+        data.srcVideo = key;
         break;
 
       default:

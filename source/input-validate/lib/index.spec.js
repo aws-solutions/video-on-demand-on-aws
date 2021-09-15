@@ -22,7 +22,6 @@ describe('#INPUT VALIDATE::', () => {
     process.env.ErrorHandler = 'error_handler';
     process.env.FrameCapture = 'true';
     process.env.ArchiveSource = 'true';
-    process.env.Source = 'source_bucket';
     process.env.InputRotate = 'DEGREE_0';
     process.env.AcceleratedTranscoding = 'DISABLED'
     process.env.EnableSns = 'true';
@@ -33,6 +32,9 @@ describe('#INPUT VALIDATE::', () => {
         guid: '1234-1223232-212121',
         Records: [{
             s3: {
+                bucket: {
+                    name: 'source_bucket'
+                },
                 object: {
                     key: 'video.mp4'
                 }
@@ -45,6 +47,9 @@ describe('#INPUT VALIDATE::', () => {
         guid: '1234-1223232-212121',
         Records: [{
             s3: {
+                bucket: {
+                    name: 'source_bucket'
+                },
                 object: {
                     key: 'metadata.json'
                 }

@@ -51,35 +51,35 @@ module "s3_source_notifications" {
     mpg = {
       function_arn  = aws_lambda_alias.λ_step_functions.arn
       function_name = module.λ_step_functions.function_name
-      events        = ["s3:ObjectCreated:*"]
+      events        = ["s3:ObjectCreated:*", "s3:ObjectRemoved:*"]
       filter_suffix = ".mpg"
       qualifier     = aws_lambda_alias.λ_step_functions.name
     }
     mp4 = {
       function_arn  = aws_lambda_alias.λ_step_functions.arn
       function_name = module.λ_step_functions.function_name
-      events        = ["s3:ObjectCreated:*"]
+      events        = ["s3:ObjectCreated:*", "s3:ObjectRemoved:*"]
       filter_suffix = ".mp4"
       qualifier     = aws_lambda_alias.λ_step_functions.name
     }
     m4v = {
       function_arn  = aws_lambda_alias.λ_step_functions.arn
       function_name = module.λ_step_functions.function_name
-      events        = ["s3:ObjectCreated:*"]
+      events        = ["s3:ObjectCreated:*", "s3:ObjectRemoved:*"]
       filter_suffix = ".m4v"
       qualifier     = aws_lambda_alias.λ_step_functions.name
     }
     mov = {
       function_arn  = aws_lambda_alias.λ_step_functions.arn
       function_name = module.λ_step_functions.function_name
-      events        = ["s3:ObjectCreated:*"]
+      events        = ["s3:ObjectCreated:*", "s3:ObjectRemoved:*"]
       filter_suffix = ".mov"
       qualifier     = aws_lambda_alias.λ_step_functions.name
     }
     m2ts = {
       function_arn  = aws_lambda_alias.λ_step_functions.arn
       function_name = module.λ_step_functions.function_name
-      events        = ["s3:ObjectCreated:*"]
+      events        = ["s3:ObjectCreated:*", "s3:ObjectRemoved:*"]
       filter_suffix = ".m2ts"
       qualifier     = aws_lambda_alias.λ_step_functions.name
     }

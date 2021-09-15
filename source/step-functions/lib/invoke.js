@@ -2,6 +2,7 @@ const lambda = require("../index")
 
 
 describe('#INVOKE::', () => {
+  process.env.AWS_REGION = 'eu-west-1';
   process.env.IngestWorkflow = 'arn:aws:states:eu-west-1:053041861227:stateMachine:buzzhub-ingest';
   process.env.ProcessWorkflow = 'arn:aws:states:eu-west-1:053041861227:stateMachine:buzzhub-process';
   process.env.PublishWorkflow = 'arn:aws:states:eu-west-1:053041861227:stateMachine:buzzhub-publish';
@@ -13,17 +14,17 @@ describe('#INVOKE::', () => {
           "eventVersion": "2.1",
           "eventSource": "aws:s3",
           "awsRegion": "eu-west-1",
-          "eventTime": "2021-08-20T08:06:45.083Z",
+          "eventTime": "2021-09-14T14:16:13.453Z",
           "eventName": "ObjectCreated:Copy",
           "userIdentity": {
             "principalId": "AWS:AROAQYWMKSJVWY7QFQAZ2:peruggia-sub"
           },
           "requestParameters": {
-            "sourceIPAddress": "34.244.149.253"
+            "sourceIPAddress": "54.154.128.7"
           },
           "responseElements": {
-            "x-amz-request-id": "CQYG45TSWCZ2E1ZW",
-            "x-amz-id-2": "0a3jXCLYmfnQ3ZJz/EbXaBUcy6WNsCObT7N3ZFWB0ZJZ2ThN3JWWCCntHInvUdJ3q6PrCa7O4FfnojJUnF/EEQZtwjxzYA7i"
+            "x-amz-request-id": "XQXRMDCN9GZ3NWN2",
+            "x-amz-id-2": "ID5tZU5BEBMHEOqrGLsfS61TQuCJ4/uQM7yWWR/5nHia/wx3O2lqZ2pgQ/HjMgNXskQhyxkQOJqKvUIFChQJ7ztr3vTPq4Yr"
           },
           "s3": {
             "s3SchemaVersion": "1.0",
@@ -36,10 +37,10 @@ describe('#INVOKE::', () => {
               "arn": "arn:aws:s3:::buzzhub-master-videos-053041861227-eu-west-1"
             },
             "object": {
-              "key": "2021/08/5DErjF6Lm1se/bunny-tastic.mp4",
-              "size": 9983542,
-              "eTag": "188ef8474c4ec85dfe38d5abf304183e",
-              "sequencer": "00611F6295D946FD73"
+              "key": "2021/09/HkpKWVxdF-k3/sozialdemokraten-gewinnen-norwegische-parlamentswahl.mp4",
+              "size": 62967683,
+              "eTag": "c5600de05af79ad4172a1c76f0b4542f",
+              "sequencer": "006140AEA2365517B3"
             }
           }
         }
