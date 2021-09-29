@@ -1,15 +1,26 @@
-import { Stack, StackProps } from 'aws-cdk-lib';
+import {
+  aws_cognito as cognito,
+  aws_lambda as lambda,
+  Stack,
+  StackProps,
+} from 'aws-cdk-lib';
+import { AppSyncs } from './appsyncs';
 import { Construct } from 'constructs';
+import { CertificateManagers } from './certificate-managers';
 import { ContextVariables } from './_context-variables';
 import { CloudFronts } from './cloudfronts';
 import { CloudfrontOriginAccessIdentities } from './cloudfront-origin-access-identities';
+import { Cognitos } from './cognitos';
 import { DynamoDbTables } from './dynamodb-tables';
 import { EventPatterns } from './event-patterns';
 import { IamRoles } from './iam-roles';
 import { KmsKeys } from './kms-keys';
 import { LambdaFunctions } from './lambda-functions';
 import { LambdaPermissions } from './lambda-permissions';
+import { Outputs } from './outputs';
+import { PolicyDocuments } from './policy-documents';
 import { PolicyStatements } from './policy-statements';
+import { Route53s } from './route53s';
 import { Rules } from './rules';
 import { S3Buckets } from './s3-buckets';
 import { SnsTopics } from './sns-topics';
@@ -19,8 +30,8 @@ import { StepFunctionsChoices } from './step-functions-choices';
 import { StepFunctionsPasses } from './step-functions-passes';
 import { StepFunctionsTasks } from './step-functions-tasks';
 import { CustomResources } from './custom-resources';
-import { Outputs } from './outputs';
-import { PolicyDocuments } from './policy-documents';
+import { UserPoolGroups } from './user-pool-groups';
+import { Wafs } from './wafs';
 
 export class AwsVodCdkStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
@@ -76,8 +87,27 @@ export class AwsVodCdkStack extends Stack {
       stackName: stackName,
     });
 
+    const route53s = new Route53s(this, 'Route53s', {
+      cloudFrontDomainBase: contextVariables.cloudFrontDomainBase,
+      hostedZoneId: contextVariables.hostedZoneId,
+    });
+
+    const certificateManagers = new CertificateManagers(
+      this,
+      'CertificateManagers',
+      {
+        authenticationDomain: contextVariables.authenticationDomain,
+        authenticationSubDomain: contextVariables.authenticationSubDomain,
+        cloudFrontDomainBase: contextVariables.cloudFrontDomainBase,
+        hostedZoneId: contextVariables.hostedZoneId,
+        route53s: route53s,
+        videosDomain: contextVariables.videosDomain,
+      }
+    );
+
     const cloudFronts = new CloudFronts(this, 'CloudFronts', {
-      cloudFrontDomain: contextVariables.cloudFrontDomain,
+      certificateManagers: certificateManagers,
+      videosDomain: contextVariables.videosDomain,
       cloudfrontOriginAccessIdentities: cloudfrontOriginAccessIdentities,
       hostedZoneId: contextVariables.hostedZoneId,
       region: region,
@@ -104,7 +134,20 @@ export class AwsVodCdkStack extends Stack {
       stackName: stackName,
     });
 
+    const cognitos = new Cognitos(this, 'Cognitos', {
+      authenticationDomain: contextVariables.authenticationDomain,
+      authenticationSubDomain: contextVariables.authenticationSubDomain,
+      certificateManagers: certificateManagers,
+      cloudFrontDomainBase: contextVariables.cloudFrontDomainBase,
+      hostedZoneId: contextVariables.hostedZoneId,
+      prependDomainWithStackStage: contextVariables.prependDomainWithStackStage,
+      route53s: route53s,
+      stackName: stackName,
+      stackStage: contextVariables.stackStage,
+    });
+
     const iamRoles = new IamRoles(this, 'IamRoles', {
+      cognitos: cognitos,
       policyDocuments: policyDocuments,
       policyStatements: policyStatements,
       stackName: stackName,
@@ -158,6 +201,21 @@ export class AwsVodCdkStack extends Stack {
       stackName: stackName,
     });
 
+    // Cognitos was here
+
+    const appsyncs = new AppSyncs(this, 'AppSyncs', {
+      cognitos: cognitos,
+      dynamoDbTables: dynamoDbTables,
+      iamRoles: iamRoles,
+      region: region,
+      stackName: stackName,
+    });
+
+    const wafs = new Wafs(this, 'Wafs', {
+      appsyncs: appsyncs,
+      stackName: stackName,
+    });
+
     const stepFunctionsChoices = new StepFunctionsChoices(
       this,
       'StepFunctionsChoices',
@@ -190,6 +248,29 @@ export class AwsVodCdkStack extends Stack {
       stepFunctionsPasses: stepFunctionsPasses,
       stepFunctionsTasks: stepFunctionsTasks,
     });
+
+    const userPoolGroups = new UserPoolGroups(this, 'UserPoolGroups', {
+      cognitos: cognitos,
+      iamRoles: iamRoles,
+    });
+
+    // Add cognito Post Confirmation Trigger
+    cognitos.userPool.addTrigger(
+      cognito.UserPoolOperation.POST_CONFIRMATION,
+      lambdaFunctions.cognitoPostConfirmationTrigger
+    );
+
+    // Add UserPool to PolicyStatements as resources
+    // This must be done here to prevent circular dependency issues
+    policyStatements.cognitoPostConfirmationTrigger.addResources(
+      `${cognitos.userPool.userPoolArn}`
+    );
+
+    // Add GraphQL to PolicyStatements as resources
+    // This must be done here to prevent circular dependency issues
+    policyStatements.appSyncRoleReadOnly.addResources(
+      `${appsyncs.videoApi.attrArn}/*`
+    );
 
     // Add IamRoles to PolicyStatements as resources
     // This must be done here to prevent circular dependency issues

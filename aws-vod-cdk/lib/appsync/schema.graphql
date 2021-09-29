@@ -1,0 +1,112 @@
+type Video {
+  guid: String!
+  title: String
+  description: String
+  instructor: String
+  tags: [String]
+  durationInSeconds: Float
+  hlsUrl: String
+  posterImageUrl: String
+}
+
+enum VideoSortDirection {
+  ASC
+  DESC
+}
+
+type VideoConnection {
+  items: [Video]
+  nextToken: String
+}
+
+input TableStringFilterInput {
+  any: [String]
+  ne: String
+  eq: String
+  le: String
+  lt: String
+  ge: String
+  gt: String
+  contains: String
+  notContains: String
+  between: [String]
+  beginsWith: String
+}
+
+input TableIDFilterInput {
+  any: [ID]
+  ne: ID
+  eq: ID
+  le: ID
+  lt: ID
+  ge: ID
+  gt: ID
+  contains: ID
+  notContains: ID
+  between: [ID]
+  beginsWith: ID
+}
+
+input TableIntFilterInput {
+  any: [Int!]!
+  ne: Int
+  eq: Int
+  le: Int
+  lt: Int
+  ge: Int
+  gt: Int
+  contains: Int
+  notContains: Int
+  between: [Int]
+}
+
+input TableFloatFilterInput {
+  any: [Float]
+  ne: Float
+  eq: Float
+  le: Float
+  lt: Float
+  ge: Float
+  gt: Float
+  contains: Float
+  notContains: Float
+  between: [Float]
+}
+
+input TableBooleanFilterInput {
+  ne: Boolean
+  eq: Boolean
+}
+
+input TableVideoFilterInput {
+  guid: TableStringFilterInput
+  instructor: TableStringFilterInput
+  tags: TableStringFilterInput
+  durationInSeconds: TableFloatFilterInput
+}
+
+type Query {
+  getVideo(guid: String!): Video
+  getVideos(
+    filter: TableVideoFilterInput
+    limit: Int
+    nextToken: String
+  ): VideoConnection
+}
+
+input DeleteVideoInput {
+  guid: String!
+}
+
+input UpdateVideoInput {
+  guid: String!
+  title: String
+  description: String
+  instructor: String
+  tags: [String]
+}
+
+type Mutation {
+  updateVideo(input: UpdateVideoInput!): Video
+  deleteVideo(input: DeleteVideoInput!): Video
+}

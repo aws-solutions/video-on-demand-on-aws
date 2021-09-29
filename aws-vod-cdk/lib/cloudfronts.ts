@@ -1,15 +1,15 @@
 import { Construct } from 'constructs';
 import {
-  aws_certificatemanager as acm,
   aws_cloudfront as cloudFront,
   aws_cloudfront_origins as origins,
-  aws_route53 as route53,
 } from 'aws-cdk-lib';
 import { S3Buckets } from './s3-buckets';
+import { CertificateManagers } from './certificate-managers';
 import { CloudfrontOriginAccessIdentities } from './cloudfront-origin-access-identities';
 
 export interface CloudFrontsProps {
-  cloudFrontDomain: string;
+  certificateManagers: CertificateManagers;
+  videosDomain: string | undefined;
   cloudfrontOriginAccessIdentities: CloudfrontOriginAccessIdentities;
   hostedZoneId: string;
   region: string;
@@ -19,8 +19,6 @@ export interface CloudFrontsProps {
 
 export class CloudFronts extends Construct {
   public readonly distribution: cloudFront.Distribution;
-  public readonly certificate: acm.DnsValidatedCertificate;
-  public readonly hostedZone: route53.IHostedZone;
 
   constructor(scope: Construct, id: string, props: CloudFrontsProps) {
     super(scope, id);
@@ -30,32 +28,10 @@ export class CloudFronts extends Construct {
       props.hostedZoneId &&
       props.hostedZoneId !== '';
 
-    const cloudFrontDomainCheck =
-      props.cloudFrontDomain !== undefined &&
-      props.cloudFrontDomain &&
-      props.cloudFrontDomain !== '';
-
-    // Only create the following if all of the required information
-    // for a domain name has been provided
-    if (hostedZoneCheck && cloudFrontDomainCheck) {
-      this.hostedZone = route53.HostedZone.fromHostedZoneAttributes(
-        this,
-        'ExternalHostedZone',
-        {
-          hostedZoneId: props.hostedZoneId,
-          zoneName: props.cloudFrontDomain,
-        }
-      );
-
-      this.certificate = new acm.DnsValidatedCertificate(
-        this,
-        `${props.cloudFrontDomain}-DnsValidatedCertificate`,
-        {
-          domainName: `${props.cloudFrontDomain}`,
-          hostedZone: this.hostedZone,
-        }
-      );
-    }
+    const videosDomainCheck =
+      props.videosDomain !== undefined &&
+      props.videosDomain &&
+      props.videosDomain !== '';
 
     this.distribution = new cloudFront.Distribution(
       this,
@@ -63,13 +39,13 @@ export class CloudFronts extends Construct {
       {
         // Only create a domain name if all of the pieces are required
         domainNames:
-          hostedZoneCheck && cloudFrontDomainCheck
-            ? [`${props.cloudFrontDomain}`]
+          hostedZoneCheck && videosDomainCheck
+            ? [`${props.videosDomain}`]
             : undefined,
         certificate:
           // Only add the certificate if required
-          hostedZoneCheck && cloudFrontDomainCheck
-            ? this.certificate
+          hostedZoneCheck && videosDomainCheck
+            ? props.certificateManagers.cloudFrontCertificate
             : undefined,
         defaultBehavior: {
           origin: new origins.S3Origin(props.s3Buckets.destination, {

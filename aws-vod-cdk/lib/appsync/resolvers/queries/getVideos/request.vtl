@@ -1,0 +1,73 @@
+{
+    "version" : "2017-02-28",
+    "operation" : "Scan",
+#set( $expNames  = {} )
+#set( $expValues = {} )
+#set( $expression = "" )
+#if($context.args.filter)
+    #foreach( $filter in $ctx.args.filter.keySet() )
+        #set( $index = 0 )
+        #set( $value = $ctx.args.filter.get($filter) )
+        #if( $filter == "tags" )
+            #if( $value.any.size() > 0 )
+                #if( $expression.length() > 0 )
+                    #set( $expression = "${expression} AND " )
+                #end
+                $!{expNames.put("#tags", "tags")}
+                #set( $expression = "${expression}(" )
+                #foreach( $entry in $value.any )
+                    #set( $index = $index + 1 )
+                    #if( $entry )
+                        #set( $expression = "${expression}contains(#tags, :tag_${index})" ) 
+                        #if ( $foreach.hasNext )
+                            #set( $expression = "${expression} OR " ) 
+                        #end
+                    #end
+                    $!{expValues.put(":tag_${index}", { "S" : "${entry}" })}
+                #end
+                #set( $expression = "${expression})" )
+            #end
+        #end
+        #if( $filter == "instructors" )
+            #if( $value.any.size() > 0 )
+                #if( $expression.length() > 0 )
+                    #set( $expression = "${expression} AND " )
+                #end
+                $!{expNames.put("#instructors", "instructors")}
+                #set( $expression = "${expression}(" )
+                #foreach( $entry in $value.any )
+                    #set( $index = $index + 1 )
+                    #if( $entry )
+                        #set( $expression = "${expression}eq(#instructors, :instructor_${index})" ) 
+                        #if ( $foreach.hasNext )
+                            #set( $expression = "${expression} OR " ) 
+                        #end
+                    #end
+                    $!{expValues.put(":instructor_${index}", { "S" : "${entry}" })}
+                #end
+                #set( $expression = "${expression})" )
+            #end
+        #end
+        #if( $filter == "durationInSeconds" )
+            #if( $value.between.size() > 0 )
+                #if( $expression.length() > 0 )
+                    #set( $expression = "${expression} AND " )
+                #end
+                $!{expNames.put("#durationInSeconds", "durationInSeconds")}
+                #set( $expression = "${expression}(" )
+                #set( $expression = "${expression}#durationInSeconds BETWEEN :lowDuration AND :highDuration" ) 
+                $!{expValues.put(":lowDuration", { "N" : "${value.between[0]}" })}
+                $!{expValues.put(":highDuration", { "N" : "${value.between[1]}" })}
+                #set( $expression = "${expression})" )
+            #end
+        #end
+    #end
+    "filter" : {
+        "expression" : "${expression}",
+        "expressionNames" : $utils.toJson($expNames),
+        "expressionValues" : $utils.toJson($expValues)
+    },
+#end
+  "limit": $util.defaultIfNull(${ctx.args.limit}, 20),
+  "nextToken": $util.toJson($util.defaultIfNullOrBlank($ctx.args.nextToken, null))
+}

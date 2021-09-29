@@ -32,3 +32,6 @@
 # System Files
 **/.DS_Store
 **/.vscode
+
+# Key Files
+*.p8

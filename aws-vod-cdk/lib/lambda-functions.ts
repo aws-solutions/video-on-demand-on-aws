@@ -30,6 +30,7 @@ export interface LambdaFunctionsProps {
 
 export class LambdaFunctions extends Construct {
   public readonly archiveSource: lambda.Function;
+  public readonly cognitoPostConfirmationTrigger: lambda.Function;
   public readonly customResource: lambda.Function;
   public readonly dynamoDbUpdate: lambda.Function;
   public readonly errorHandler: lambda.Function;
@@ -81,6 +82,27 @@ export class LambdaFunctions extends Construct {
       },
       role: props.iamRoles.archiveSource,
     });
+
+    this.cognitoPostConfirmationTrigger = new lambda.Function(
+      this,
+      'CognitoPostConfirmationTrigger',
+      {
+        functionName: `${props.stackName}-CognitoPostConfirmationTrigger`,
+        description:
+          "Used to place all confirmed users into the 'AppSyncReadOnly' UserPool group",
+        handler: 'index.handler',
+        code: new lambda.AssetCode(
+          '../source/cognito-triggers/post-confirmation'
+        ),
+        runtime: lambda.Runtime.NODEJS_12_X,
+        timeout: Duration.seconds(180),
+        environment: {
+          AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
+          ErrorHandler: this.errorHandler.functionArn,
+        },
+        role: props.iamRoles.cognitoPostConfirmationTrigger,
+      }
+    );
 
     this.customResource = new lambda.Function(this, 'CustomResourceFunction', {
       functionName: `${props.stackName}-CustomResourceLambdaFunction`,

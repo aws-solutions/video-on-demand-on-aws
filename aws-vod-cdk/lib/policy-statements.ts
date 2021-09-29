@@ -24,10 +24,17 @@ export interface PolicyStatementsProps {
 }
 
 export class PolicyStatements extends Construct {
+  // AppSyncRole Policy Statements
+  public readonly appSyncRoleDynamoDb: iam.PolicyStatement;
+  public readonly appSyncRoleReadOnly: iam.PolicyStatement;
+
   // ArchiveSourceRole Policy Statements
   public readonly archiveSourceRoleLambda: iam.PolicyStatement;
   public readonly archiveSourceRoleLogs: iam.PolicyStatement;
   public readonly archiveSourceRoleS3: iam.PolicyStatement;
+
+  // CognitoPostConfirmationTrigger Policy Statement
+  public readonly cognitoPostConfirmationTrigger: iam.PolicyStatement;
 
   // CustomResourceRole Policy Statements
   public readonly customResourceRoleCloudFront: iam.PolicyStatement;
@@ -117,6 +124,23 @@ export class PolicyStatements extends Construct {
   constructor(scope: Construct, id: string, props: PolicyStatementsProps) {
     super(scope, id);
 
+    this.appSyncRoleDynamoDb = new iam.PolicyStatement({
+      actions: [
+        'dynamodb:PutItem',
+        'dynamodb:QueryItem',
+        'dynamodb:GetItem',
+        'dynamodb:Scan',
+        'dynamodb:Query',
+      ],
+      resources: [
+        `arn:${props.partition}:dynamodb:${props.region}:${props.account}:table/${props.dynamoDbTables.videoInfo.tableName}`,
+      ],
+    });
+
+    this.appSyncRoleReadOnly = new iam.PolicyStatement({
+      actions: ['appsync:GraphQL'],
+    });
+
     this.archiveSourceRoleLambda = new iam.PolicyStatement({
       actions: ['lambda:InvokeFunction'],
       resources: [
@@ -138,6 +162,10 @@ export class PolicyStatements extends Construct {
     this.archiveSourceRoleS3 = new iam.PolicyStatement({
       actions: ['s3:PutObjectTagging'],
       resources: [props.s3Buckets.source.bucketArn],
+    });
+
+    this.cognitoPostConfirmationTrigger = new iam.PolicyStatement({
+      actions: ['cognito-idp:AdminAddUserToGroup'],
     });
 
     this.customResourceRoleCloudFront = new iam.PolicyStatement({

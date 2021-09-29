@@ -1,16 +1,21 @@
 import { Construct } from 'constructs';
 import { Stack, aws_iam as iam } from 'aws-cdk-lib';
+import { Cognitos } from './cognitos';
 import { PolicyStatements } from './policy-statements';
 import { PolicyDocuments } from './policy-documents';
 
 export interface IamRolesProps {
+  cognitos: Cognitos;
   policyDocuments: PolicyDocuments;
   policyStatements: PolicyStatements;
   stackName: string;
 }
 
 export class IamRoles extends Construct {
+  public readonly appSync: iam.Role;
+  public readonly appSyncReadOnly: iam.Role;
   public readonly archiveSource: iam.Role;
+  public readonly cognitoPostConfirmationTrigger: iam.Role;
   public readonly customResource: iam.Role;
   public readonly dynamoDbUpdate: iam.Role;
   public readonly encode: iam.Role;
@@ -30,6 +35,33 @@ export class IamRoles extends Construct {
   constructor(scope: Construct, id: string, props: IamRolesProps) {
     super(scope, id);
 
+    this.appSync = new iam.Role(this, 'AppSyncRole', {
+      roleName: `${props.stackName}-AppSyncRole`,
+      assumedBy: new iam.ServicePrincipal('appsync.amazonaws.com'),
+      inlinePolicies: {
+        [`${props.stackName}-AppSyncRolePolicyDocument`]:
+          props.policyDocuments.appSync,
+      },
+    });
+
+    this.appSyncReadOnly = new iam.Role(this, 'AppSyncReadOnly', {
+      roleName: `${props.stackName}-AppSyncReadOnlyRole`,
+      assumedBy: new iam.WebIdentityPrincipal(
+        'cognito-identity.amazonaws.com'
+      ).withConditions({
+        StringEquals: {
+          'cognito-identity.amazonaws.com:aud': props.cognitos.identityPool.ref,
+        },
+        'ForAnyValue:StringLike': {
+          'cognito-identity.amazonaws.com:amr': 'unauthenticated',
+        },
+      }),
+      inlinePolicies: {
+        [`${props.stackName}-AppSyncReadOnlyRolePolicyDocument`]:
+          props.policyDocuments.appsyncReadOnly,
+      },
+    });
+
     this.archiveSource = new iam.Role(this, 'ArchiveSourceRole', {
       roleName: `${props.stackName}-ArchiveSourceRole`,
       assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
@@ -38,6 +70,30 @@ export class IamRoles extends Construct {
           props.policyDocuments.archiveSource,
       },
     });
+
+    this.cognitoPostConfirmationTrigger = new iam.Role(
+      this,
+      'CognitoPostConfirmationTrigger',
+      {
+        roleName: `${props.stackName}-CognitoPostConfirmationTriggerRole`,
+        assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
+        // Cannot directly attach an inline policy document here due to circular dependency
+        // TODO: Monitor https://github.com/aws/aws-cdk/issues/7016 for closure
+        // inlinePolicies: {
+        //   [`${props.stackName}-CognitoPostConfirmationTriggerRolePolicyDocument`]:
+        //     props.policyDocuments.cognitoPostConfirmationTrigger,
+        // },
+      }
+    );
+
+    // Alternative implementation of policy attachment
+    this.cognitoPostConfirmationTrigger.attachInlinePolicy(
+      new iam.Policy(
+        this,
+        `${props.stackName}-CognitoPostConfirmationTriggerRolePolicy`,
+        { statements: [props.policyStatements.cognitoPostConfirmationTrigger] }
+      )
+    );
 
     this.customResource = new iam.Role(this, 'CustomResourceRole', {
       roleName: `${props.stackName}-CustomResourceRole`,

@@ -8,7 +8,10 @@ export interface PolicyDocumentsProps {
 }
 
 export class PolicyDocuments extends Construct {
+  public readonly appSync: iam.PolicyDocument;
+  public readonly appsyncReadOnly: iam.PolicyDocument;
   public readonly archiveSource: iam.PolicyDocument;
+  public readonly cognitoPostConfirmationTrigger: iam.PolicyDocument;
   public readonly customResource: iam.PolicyDocument;
   public readonly destinationBucket: iam.PolicyDocument;
   public readonly dynamoDbUpdate: iam.PolicyDocument;
@@ -29,12 +32,24 @@ export class PolicyDocuments extends Construct {
   constructor(scope: Construct, id: string, props: PolicyDocumentsProps) {
     super(scope, id);
 
+    this.appSync = new iam.PolicyDocument({
+      statements: [props.policyStatements.appSyncRoleDynamoDb],
+    });
+
+    this.appsyncReadOnly = new iam.PolicyDocument({
+      statements: [props.policyStatements.appSyncRoleReadOnly],
+    });
+
     this.archiveSource = new iam.PolicyDocument({
       statements: [
         props.policyStatements.archiveSourceRoleLambda,
         props.policyStatements.archiveSourceRoleLogs,
         props.policyStatements.archiveSourceRoleS3,
       ],
+    });
+
+    this.cognitoPostConfirmationTrigger = new iam.PolicyDocument({
+      statements: [props.policyStatements.cognitoPostConfirmationTrigger],
     });
 
     this.customResource = new iam.PolicyDocument({

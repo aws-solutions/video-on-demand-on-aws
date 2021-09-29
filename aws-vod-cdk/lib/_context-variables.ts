@@ -20,7 +20,9 @@ const convertToBool = (value: string | boolean | Number | null | undefined) => {
 export class ContextVariables {
   public readonly acceleratedTranscoding: string;
   public readonly adminEmail: string;
-  public readonly cloudFrontDomain: string;
+  public readonly authenticationSubDomain: string | undefined;
+  public readonly authenticationDomain: string | undefined;
+  public readonly cloudFrontDomainBase: string | undefined;
   public readonly enableMediaPackage: boolean;
   public readonly enableSns: boolean;
   public readonly enableSqs: boolean;
@@ -29,9 +31,17 @@ export class ContextVariables {
   public readonly hostedZoneId: string;
   public readonly prependDomainWithStackStage: boolean;
   public readonly sendAnonymousMetrics: boolean;
+  public readonly stackStage: string;
+  public readonly videosSubDomain: string | undefined;
+  public readonly videosDomain: string | undefined;
   public readonly workflowTrigger: string;
 
   constructor(stack: Stack) {
+    this.stackStage =
+      stack.node.tryGetContext('stackStage') !== undefined
+        ? stack.node.tryGetContext('stackStage')
+        : undefined;
+
     this.acceleratedTranscoding =
       stack.node.tryGetContext('acceleratedTranscoding') ?? 'PREFERRED';
 
@@ -71,14 +81,39 @@ export class ContextVariables {
     this.prependDomainWithStackStage =
       stack.node.tryGetContext('prependDomainWithStackStage') ?? false;
 
-    this.cloudFrontDomain =
-      stack.node.tryGetContext('cloudFrontDomain') !== undefined
-        ? !this.prependDomainWithStackStage &&
-          stack.node.tryGetContext('stackStage') !== undefined
-          ? stack.node.tryGetContext('cloudFrontDomain')
-          : `${stack.node
-              .tryGetContext('stackStage')
-              .toLowerCase()}.${stack.node.tryGetContext('cloudFrontDomain')}`
+    this.cloudFrontDomainBase =
+      stack.node.tryGetContext('cloudFrontDomainBase') !== undefined
+        ? stack.node.tryGetContext('cloudFrontDomainBase')
+        : undefined;
+
+    this.authenticationSubDomain =
+      stack.node.tryGetContext('authenticationSubDomain') !== undefined
+        ? stack.node.tryGetContext('authenticationSubDomain')
+        : undefined;
+
+    this.authenticationDomain =
+      (this.cloudFrontDomainBase !== undefined &&
+        this.authenticationSubDomain) !== undefined
+        ? this.prependDomainWithStackStage && this.stackStage !== undefined
+          ? `${this.stackStage.toLowerCase()}.${this.authenticationSubDomain}.${
+              this.cloudFrontDomainBase
+            }`
+          : `${this.authenticationSubDomain}.${this.cloudFrontDomainBase}`
+        : undefined;
+
+    this.videosSubDomain =
+      stack.node.tryGetContext('videosSubDomain') !== undefined
+        ? stack.node.tryGetContext('videosSubDomain')
+        : undefined;
+
+    this.videosDomain =
+      (this.cloudFrontDomainBase !== undefined && this.videosSubDomain) !==
+      undefined
+        ? this.prependDomainWithStackStage && this.stackStage !== undefined
+          ? `${this.stackStage.toLowerCase()}.${this.videosSubDomain}.${
+              this.cloudFrontDomainBase
+            }`
+          : `${this.videosSubDomain}.${this.cloudFrontDomainBase}`
         : undefined;
 
     this.enableMediaPackage =

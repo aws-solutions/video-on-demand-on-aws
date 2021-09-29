@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import 'source-map-support/register';
 import { App } from 'aws-cdk-lib';
-import { AwsVodCdkStack } from '../lib/aws-vod-cdk-stack';
+import { AwsVodCdkStack } from '../lib/_aws-vod-cdk-stack';
 
 const app = new App();
 
@@ -15,8 +15,14 @@ const stackName =
     ? `${app.node.tryGetContext('stackName')}`
     : 'AwsVodCdkStack';
 
+const stackVersion =
+  app.node.tryGetContext('stackVersion') !== undefined
+    ? `${app.node.tryGetContext('stackVersion')}`
+    : 'AwsVodCdkStack';
+
 new AwsVodCdkStack(app, stackName, {
   stackName: `${stackStage}${stackName}`,
+  description: `(SO0021) - Video On Demand workflow with AWS Step Functions, MediaConvert, MediaPackage, S3, CloudFront and DynamoDB. Version ${stackVersion}`,
   /* If you don't specify 'env', this stack will be environment-agnostic.
    * Account/Region-dependent features and context lookups will not work,
    * but a single synthesized template can be deployed anywhere. */

@@ -1,0 +1,18 @@
+{
+  "name": "post-confirmation",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.83",
+    "@types/node": "^16.9.1",
+    "aws-lambda": "^1.0.6",
+    "aws-sdk": "^2.986.0",
+    "typescript": "^4.4.2"
+  }
+}
