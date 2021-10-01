@@ -230,6 +230,13 @@ aws s3 cp ./regional-s3-assets/ s3://my-bucket-us-east-1/video-on-demand-on-aws/
 - [Live to VOD with Machine Learning](https://github.com/aws-samples/aws-elemental-instant-video-highlights)
 - [Demo SPEKE Reference Server](https://github.com/awslabs/speke-reference-server)
 
+
+
+This solution collects anonymous operational metrics to help AWS improve the
+quality of features of the solution. For more information, including how to disable
+this capability, please see the [implementation guide](https://docs.aws.amazon.com/solutions/latest/video-on-demand/appendix-h.html).
+
+
 ***
 
 Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
