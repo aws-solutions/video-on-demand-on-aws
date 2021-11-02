@@ -14,7 +14,7 @@ module "λ_broadcast" {
 
   cloudwatch_lambda_insights_enabled = true
   function_name                      = "${local.project}-${local.broadcast_function_name}"
-  description                        = "Cleanup after items have been deleted."
+  description                        = "update articles that depend on the video being processed."
   handler                            = "index.handler"
   ignore_external_function_updates   = true
   publish                            = true

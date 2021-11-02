@@ -38,7 +38,7 @@ describe('#STEP FUNCTIONS::', () => {
           name: "bucket_name"
         },
         object: {
-          key: '2021/09/fake-media-id/big_bunny.mp4',
+          key: '2021/09/fake-media-id/big_bunny.mp4'
         }
       }
     }]
@@ -146,11 +146,11 @@ describe('#STEP FUNCTIONS::', () => {
     it("marks deleted objects for purging", async () => {
       const doStep = (params, callback) => {
         callback(null, data);
-      }
+      };
       const spyStep = spy(doStep);
       AWS.mock('StepFunctions', 'startExecution', spyStep);
 
-      const fixture = {..._ingest}
+      const fixture = {..._ingest};
       fixture.Records[0].eventName = 'ObjectRemoved:Delete';
       const response = await lambda.handler(fixture);
 
@@ -161,15 +161,16 @@ describe('#STEP FUNCTIONS::', () => {
               "eventName": "ObjectRemoved:Delete",
               "s3": {"bucket": {"name": "bucket_name"}, "object": {"key": "2021/09/fake-media-id/big_bunny.mp4"}}
             }],
-            "cmsCommandId": "fake-media-id",
             "doPurge": true,
-            "guid": 'fake-media-id',
-            "workflowTrigger": "Video"
+          "cmsId": "fake-media-id",
+          "guid": 'fake-media-id',
+          "cmsCommandId": "fake-media-id",
+          "workflowTrigger": "Video"
           }
         ),
         "name": 'fake-media-id',
         "stateMachineArn": "INGEST"
       });
     });
-  })
+  });
 });

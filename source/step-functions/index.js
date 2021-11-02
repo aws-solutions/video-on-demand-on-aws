@@ -13,10 +13,12 @@
 
 const AWS = require('aws-sdk');
 const uuidv4 = require('uuid/v4');
-const error = require('./lib/error.js');
+const error = require('./lib/error/error');
+const logger = require('./lib/logger');
 
 exports.handler = async (event) => {
-  console.log(`REQUEST:: ${JSON.stringify(event, null, 2)}`);
+  logger.registerEvent(event);
+  logger.debug("REQUEST", event);
 
   const stepfunctions = new AWS.StepFunctions({
     region: process.env.AWS_REGION
@@ -33,7 +35,7 @@ exports.handler = async (event) => {
         Key: key
       };
       const s3_response = await s3.headObject(params).promise().catch((err) => {
-        console.error(`s3.headObject(${JSON.stringify(params)}) failed.`, err);
+        logger.error(`s3.headObject(${JSON.stringify(params)}) failed.`, err);
         return Promise.resolve({});
       });
 
@@ -43,7 +45,7 @@ exports.handler = async (event) => {
         return false;
       }
     } catch (e) {
-      console.error("Could not execute s3:headObject", e);
+      logger.error("Could not execute s3:headObject", e);
     }
     return undefined;
   };
@@ -62,45 +64,48 @@ exports.handler = async (event) => {
           event.doPurge = false;
           const metadata = await s3metadata(bucket, key);
           if (metadata) {
-            console.log("metadata for item", metadata);
+            logger.debug("metadata for item", metadata);
             if (metadata.hasOwnProperty("cms-id")) event.cmsId = metadata["cms-id"];
             if (metadata.hasOwnProperty("geo-restriction")) event.geoRestriction = metadata["geo-restriction"];
             if (metadata.hasOwnProperty("command-id")) event.cmsCommandId = metadata["command-id"];
             if (metadata.hasOwnProperty("ttl")) event.ttl = parseInt(metadata["ttl"], 10);
           }
+
+          event.guid = event.cmsCommandId || uuidv4();
+          if (event.cmsCommandId) {
+            // we're using the commandId here if possible,
+            // but this may not be unique, so check if this run already exists (prevent error `ExecutionAlreadyExists`)
+            let i = 0;
+            while (true) {
+              i += 1;
+              if (i > 30) {
+                event.guid = uuidv4();
+                break;
+              }
+              try {
+                const executionArn = `${process.env.IngestWorkflow}:${event.guid}`.replace(':stateMachine:', ':execution:');
+                const data = await stepfunctions.describeExecution({executionArn: executionArn}).promise();
+                logger.trace(`invalid guid found ${event.guid} : execution already exists with state ${data.status}.`);
+                event.guid = `${event.cmsCommandId}__rerun_${i}`;
+              } catch (e) {
+                if (e.code === 'ExecutionDoesNotExist') {
+                  logger.trace(`valid guid found ${event.guid}`);
+                  break;
+                } else {
+                  logger.error("Something went wrong while searching for an available id.", e);
+                }
+              }
+            }
+          }
         } else {
           // ObjectRemoved:DeleteMarkerCreated
           event.doPurge = true;
-          console.log(`marking ${bucket}/${key} for purging since eventName=${event.Records[0].eventName}`);
+          logger.info(`marking ${bucket}/${key} for purging since eventName=${event.Records[0].eventName}`);
           const match = key.match(/^20\d{2}\/\d{2}\/(?<media_id>[\w-]+)\//);
           if (match && match.groups.media_id) {
             event.cmsId = match.groups.media_id;
-          }
-        }
-        event.guid = event.cmsCommandId || uuidv4();
-        if (event.cmsCommandId) {
-          // we're using the commandId here if possible,
-          // but this may not be unique, so check if this run already exists (prevent error `ExecutionAlreadyExists`)
-          let i = 0;
-          while (true) {
-            i += 1;
-            if (i > 30) {
-              event.guid = uuidv4();
-              break;
-            }
-            try {
-              const executionArn = `${process.env.IngestWorkflow}:${event.guid}`.replace(':stateMachine:', ':execution:');
-              const data = await stepfunctions.describeExecution({executionArn: executionArn}).promise();
-              console.log(`invalid guid found ${event.guid} : execution already exists with state ${data.status}.`);
-              event.guid = `${event.cmsCommandId}__rerun_${i}`;
-            } catch (e) {
-              if (e.code === 'ExecutionDoesNotExist') {
-                console.log(`valid guid found ${event.guid}`);
-                break;
-              } else {
-                console.error("Something went wrong while searching for an available id.", e);
-              }
-            }
+            event.guid = match.groups.media_id;
+            event.cmsCommandId = match.groups.media_id;
           }
         }
 
@@ -116,7 +121,6 @@ exports.handler = async (event) => {
           name: event.guid
         };
         response = 'success';
-        console.log("event", event);
         break;
 
       case event.hasOwnProperty('guid'):
@@ -148,7 +152,9 @@ exports.handler = async (event) => {
     }
 
     let data = await stepfunctions.startExecution(params).promise();
-    console.log(`STATEMACHINE EXECUTE:: ${JSON.stringify(data, null, 2)}`);
+    logger.registerEvent(event);
+    logger.info("event", event);
+    logger.info("STATEMACHINE EXECUTE", data);
   } catch (err) {
     await error.handler(event, err);
     throw err;

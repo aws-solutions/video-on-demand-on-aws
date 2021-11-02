@@ -27,7 +27,6 @@
 **/.vscode/settings.json
 *~
 ~*
-.idea/
 .terraform/
 
 # System Files

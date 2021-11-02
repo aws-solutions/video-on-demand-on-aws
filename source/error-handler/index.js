@@ -14,84 +14,82 @@
 const AWS = require('aws-sdk');
 
 exports.handler = async (event) => {
-    console.log(`REQUEST:: ${JSON.stringify(event, null, 2)}`);
+  console.log(`REQUEST:: ${JSON.stringify(event, null, 2)}`);
 
-    const dynamo = new AWS.DynamoDB.DocumentClient({
-        region: process.env.AWS_REGION
-    });
+  const dynamo = new AWS.DynamoDB.DocumentClient({
+    region: process.env.AWS_REGION
+  });
 
-    const sns = new AWS.SNS({
-        region: process.env.AWS_REGION
-    });
+  const sns = new AWS.SNS({
+    region: process.env.AWS_REGION
+  });
 
-    let guid,
-        values,
-        url,
-        msg;
+  let guid,
+    values,
+    url,
+    msg;
 
-    if (event.function) {
-        url = 'https://console.aws.amazon.com/cloudwatch/home?region=' + process.env.AWS_REGION + '#logStream:group=/aws/lambda/' + event.function;
-        guid = event.cmsId || event.guid;
-        values = {
-            ':st': 'Error',
-            ':ea': event.function,
-            ':em': event.error,
-            ':ed': url
-        };
-
-        // Msg update to match DynamoDB entry
-        msg = {
-            guid: guid,
-            workflowStatus: 'Error',
-            workflowErrorAt: event.function,
-            errorMessage: event.error,
-            errorDetails: url
-        };
-    }
-
-    if (event.detail) {
-        url = 'https://console.aws.amazon.com/mediaconvert/home?region=' + process.env.AWS_REGION + '#/jobs/summary/' + event.detail.jobId;
-        guid = event.detail.userMetadata.cmsId || event.detail.userMetadata.guid;
-        values = {
-            ':st': 'Error',
-            ':ea': 'Encoding',
-            ':em': JSON.stringify(event, null, 2),
-            ':ed': url
-        };
-
-        // Msg update to match DynamoDB entry
-        msg = {
-            guid: guid,
-            workflowStatus: 'Error',
-            workflowErrorAt: 'Encoding',
-            errorMessage: event.detail.errorMessage,
-            errorDetails: url,
-        };
-    }
-
-    console.log(JSON.stringify(msg, null, 2));
-
-    // Update DynamoDB
-    let params = {
-        TableName: process.env.DynamoDBTable,
-        Key: {
-            guid: guid
-        },
-        UpdateExpression: 'SET workflowStatus = :st,' + 'workflowErrorAt = :ea,' + 'errorMessage = :em,' + 'errorDetails = :ed',
-        ExpressionAttributeValues: values
+  if (event.function) {
+    url = 'https://console.aws.amazon.com/cloudwatch/home?region=' + process.env.AWS_REGION + '#logStream:group=/aws/lambda/' + event.function;
+    guid = event.cmsId || event.guid;
+    values = {
+      ':st': 'Error',
+      ':ea': event.function,
+      ':em': event.error,
+      ':ed': url
     };
 
-    await dynamo.update(params).promise();
+    // Msg update to match DynamoDB entry
+    msg = {
+      guid: guid,
+      workflowStatus: 'Error',
+      workflowErrorAt: event.function,
+      errorMessage: event.error,
+      errorDetails: url
+    };
+  }
 
-    // Feature/so-vod-173 match SNS data structure with the SNS Notification
-    // Function for consistency.
-    params = {
-        Message: JSON.stringify(msg, null, 2),
-        Subject: ' workflow Status:: Error: ' + guid,
-        TargetArn: process.env.SnsTopic
+  if (event.detail) {
+    url = 'https://console.aws.amazon.com/mediaconvert/home?region=' + process.env.AWS_REGION + '#/jobs/summary/' + event.detail.jobId;
+    guid = event.detail.userMetadata.cmsId || event.detail.userMetadata.guid;
+    values = {
+      ':st': 'Error',
+      ':ea': 'Encoding',
+      ':em': JSON.stringify(event, null, 2),
+      ':ed': url
     };
 
-    await sns.publish(params).promise();
+    // Msg update to match DynamoDB entry
+    msg = {
+      guid: guid,
+      workflowStatus: 'Error',
+      workflowErrorAt: 'Encoding',
+      errorMessage: event.detail.errorMessage,
+      errorDetails: url
+    };
+  }
 
-    return event;
+  console.log(JSON.stringify(msg, null, 2));
+
+  // Update DynamoDB
+  let params = {
+    TableName: process.env.DynamoDBTable,
+    Key: {guid: guid},
+    UpdateExpression: 'SET workflowStatus = :st,' + 'workflowErrorAt = :ea,' + 'errorMessage = :em,' + 'errorDetails = :ed',
+    ExpressionAttributeValues: values
+  };
+
+  await dynamo.update(params).promise();
+
+  // Feature/so-vod-173 match SNS data structure with the SNS Notification
+  // Function for consistency.
+  params = {
+    Message: JSON.stringify(msg, null, 2),
+    Subject: ' workflow Status:: Error: ' + guid,
+    TargetArn: process.env.SnsTopic
+  };
+
+  await sns.publish(params).promise();
+
+  return event;
 };
