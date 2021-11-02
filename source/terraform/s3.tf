@@ -1,3 +1,15 @@
+locals {
+  cors_allowed_origins = [
+    "https://www.t-online.de",
+    "https://beta.t-online.de",
+    "https://beta.stroeer.engineering",
+    "https://varnish-eu-west-1.stroeer.engineering",
+    "https://paper-eu-west-1.stroeer.engineering",
+    "http://localhost:3000",
+    "http://local.t-online.de:3000"
+  ]
+}
+
 module "s3_source" {
   source  = "terraform-aws-modules/s3-bucket/aws"
   version = "~> 2.0"
@@ -14,26 +26,31 @@ module "s3_source" {
 
   lifecycle_rule = [
     {
-      id      = "${local.project}-source-archive"
-      enabled = true
-      tags = {
+      id         = "${local.project}-source-archive"
+      enabled    = true
+      tags       = {
         "${local.project}" = "GLACIER"
       }
-      transition = [{
-        days          = 1
-        storage_class = "GLACIER"
-      }]
-      }, {
-      id      = "${local.project}-source-deep-archive"
-      enabled = true
-      tags = {
+      transition = [
+        {
+          days          = 1
+          storage_class = "GLACIER"
+        }
+      ]
+    }, {
+      id         = "${local.project}-source-deep-archive"
+      enabled    = true
+      tags       = {
         "${local.project}" = "DEEP_ARCHIVE"
       }
-      transition = [{
-        days          = 1
-        storage_class = "DEEP_ARCHIVE"
-      }]
-  }]
+      transition = [
+        {
+          days          = 1
+          storage_class = "DEEP_ARCHIVE"
+        }
+      ]
+    }
+  ]
 
   versioning = {
     enabled = false
@@ -48,28 +65,28 @@ module "s3_source_notifications" {
   bucket = module.s3_source.s3_bucket_id
 
   lambda_notifications = {
-    mpg = {
+    mpg  = {
       function_arn  = aws_lambda_alias.λ_step_functions.arn
       function_name = module.λ_step_functions.function_name
       events        = ["s3:ObjectCreated:*", "s3:ObjectRemoved:*"]
       filter_suffix = ".mpg"
       qualifier     = aws_lambda_alias.λ_step_functions.name
     }
-    mp4 = {
+    mp4  = {
       function_arn  = aws_lambda_alias.λ_step_functions.arn
       function_name = module.λ_step_functions.function_name
       events        = ["s3:ObjectCreated:*", "s3:ObjectRemoved:*"]
       filter_suffix = ".mp4"
       qualifier     = aws_lambda_alias.λ_step_functions.name
     }
-    m4v = {
+    m4v  = {
       function_arn  = aws_lambda_alias.λ_step_functions.arn
       function_name = module.λ_step_functions.function_name
       events        = ["s3:ObjectCreated:*", "s3:ObjectRemoved:*"]
       filter_suffix = ".m4v"
       qualifier     = aws_lambda_alias.λ_step_functions.name
     }
-    mov = {
+    mov  = {
       function_arn  = aws_lambda_alias.λ_step_functions.arn
       function_name = module.λ_step_functions.function_name
       events        = ["s3:ObjectCreated:*", "s3:ObjectRemoved:*"]
@@ -100,6 +117,16 @@ module "s3_destination" {
   ignore_public_acls      = true
   restrict_public_buckets = true
 
+  cors_rule = [
+    {
+      allowed_methods = ["GET", "HEAD"]
+      allowed_origins = local.cors_allowed_origins
+      allowed_headers = ["*"]
+      expose_headers  = ["ETag"]
+      max_age_seconds = 3600
+    }
+  ]
+
   versioning = {
     enabled = false
   }
@@ -118,6 +145,17 @@ module "s3_destination_for_restricted_videos" {
   block_public_policy     = true
   ignore_public_acls      = true
   restrict_public_buckets = true
+
+  cors_rule = [
+    {
+      allowed_methods = ["GET", "HEAD"]
+      allowed_origins = local.cors_allowed_origins
+      allowed_headers = ["*"]
+      expose_headers  = ["ETag"]
+      max_age_seconds = 3600
+    }
+  ]
+
 
   versioning = {
     enabled = false
