@@ -12,10 +12,12 @@
  *********************************************************************************************************************/
 
 const AWS = require('aws-sdk');
-const error = require('./lib/error.js');
+const error = require('./lib/error/error');
+const logger = require('./lib/logger');
 
 exports.handler = async (event) => {
-    console.log(`REQUEST:: ${JSON.stringify(event, null, 2)}`);
+    logger.registerEvent(event);
+    logger.info("REQUEST", event);
 
     const dynamo = new AWS.DynamoDB.DocumentClient({
         region: process.env.AWS_REGION
@@ -87,7 +89,7 @@ exports.handler = async (event) => {
             };
 
             event.jobTemplate = jobTemplates[`${encodeProfile}${event.noAudioTrackPresent ? '_no_audio' : ''}`];
-            console.log(`Chosen template:: ${event.jobTemplate}`);
+            logger.info(`Chosen template:: ${event.jobTemplate}`);
 
             event.isCustomTemplate = false;
         } else {
@@ -98,6 +100,6 @@ exports.handler = async (event) => {
         throw err;
     }
 
-    console.log(`RESPONSE:: ${JSON.stringify(event, null, 2)}`);
+    logger.info(`RESPONSE:: ${JSON.stringify(event, null, 2)}`);
     return event;
 };

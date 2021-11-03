@@ -12,11 +12,13 @@
  *********************************************************************************************************************/
 
 const AWS = require('aws-sdk');
-const error = require('./lib/error.js');
+const error = require('./lib/error/error.js');
+const logger = require('./lib/logger')
 
 
 exports.handler = async (event) => {
-  console.log(`REQUEST:: ${JSON.stringify(event, null, 2)}`);
+  logger.registerEvent(event);
+  logger.info("REQUEST", event);
 
   const sqs = new AWS.SQS({
     region: process.env.AWS_REGION
@@ -25,7 +27,7 @@ exports.handler = async (event) => {
   try {
     let cmsId = event.hasOwnProperty("cmsId") ? event.cmsId : event.detail.userMetadata.cmsId
 
-    console.log(`SEND SQS:: MessageGroupId: ${cmsId} ; queue = ${process.env.SqsQueue}`);
+    logger.info(`SEND SQS:: MessageGroupId: ${cmsId} ; queue = ${process.env.SqsQueue}`);
 
     let params = {
       MessageBody: JSON.stringify(event),
@@ -34,8 +36,8 @@ exports.handler = async (event) => {
     };
 
     await sqs.sendMessage(params).promise()
-      .then(data => console.log("sqs:success", data))
-      .catch(err => console.log("sqs:error", err));
+      .then(data => logger.info("sqs:success", data))
+      .catch(err => logger.error("sqs:error", err));
 
   } catch (err) {
     await error.handler(event, err);

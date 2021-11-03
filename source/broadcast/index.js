@@ -12,18 +12,19 @@
  *********************************************************************************************************************/
 
 const AWS = require('aws-sdk');
-const https = require('https');
-const error = require('./lib/error.js');
+const error = require('./lib/error/error.js');
+const logger = require('./lib/logger');
 const axios = require('axios');
 
 const SsmHostKey = '/external/livingdocs/cms.base-url';
 const SsmTokenKey = '/external/livingdocs/cms.token';
 
 exports.handler = async (event) => {
-  console.log(`REQUEST:: ${JSON.stringify(event, null, 2)}`);
+  logger.registerEvent(event);
+  logger.info("REQUEST", event);
 
   if (!event.hasOwnProperty('cmsId')) {
-    console.log("Event does contain a 'cmsId'.", event);
+    logger.error("Event does contain a 'cmsId'.", event);
     return event;
   }
 
@@ -57,10 +58,10 @@ exports.handler = async (event) => {
 
     const reqForDependencies = await axios(getRequest);
     if (reqForDependencies.status === 200) {
-      console.log("reqForDependencies.data", reqForDependencies.data);
+      logger.info("reqForDependencies.data", reqForDependencies.data);
       for (const dependency of reqForDependencies.data) {
 
-        console.log(`notifying ${process.env.SnsTopic.split(':').pop()} -> ${dependency.id.toString()}`);
+        logger.info(`notifying ${process.env.SnsTopic.split(':').pop()} -> ${dependency.id.toString()}`);
         let snsParams = {
           Message: dependency.id.toString(),
           Subject: dependency.id.toString(),
@@ -70,7 +71,7 @@ exports.handler = async (event) => {
       }
 
     } else {
-      console.log(`cms responded with http/${reqForDependencies.status} for media-id:'${event.cmsId}'`);
+      logger.error(`cms responded with http/${reqForDependencies.status} for media-id:'${event.cmsId}'`);
     }
 
   } catch (err) {

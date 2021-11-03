@@ -12,34 +12,35 @@
  *********************************************************************************************************************/
 
 const AWS = require('aws-sdk');
+const logger = require('../logger');
 
 let errHandler = async (event, _err) => {
-  const lambda = new AWS.Lambda({
-    region: process.env.AWS_REGION
-  });
+    const lambda = new AWS.Lambda({
+        region: process.env.AWS_REGION
+    });
 
-  try {
-    let payload = {
-      'guid': event.guid,
-      'event': event,
-      'function': process.env.AWS_LAMBDA_FUNCTION_NAME,
-      'error': _err.toString()
-    };
+    try {
+        let payload = {
+            'guid': event.guid,
+            'event': event,
+            'function': process.env.AWS_LAMBDA_FUNCTION_NAME,
+            'error': _err.toString()
+        };
 
-    let params = {
-      FunctionName: process.env.ErrorHandler,
-      Payload: JSON.stringify(payload, null, 2)
-    };
-    console.error(_err);
+        let params = {
+            FunctionName: process.env.ErrorHandler,
+            Payload: JSON.stringify(payload, null, 2)
+        };
 
-    await lambda.invoke(params).promise();
+        await lambda.invoke(params).promise();
+    } catch (err) {
+        logger.error('Cannot invoke error handler', err);
+        throw err;
+    }
+
     return 'success';
-  } catch (err) {
-    console.log(err);
-    throw err;
-  }
 };
 
 module.exports = {
-  handler: errHandler
+    handler: errHandler
 };

@@ -12,10 +12,12 @@
  *********************************************************************************************************************/
 
 const AWS = require('aws-sdk');
-const error = require('./lib/error.js');
+const error = require('./lib/error/error.js');
+const logger = require('./lib/logger');
 
 exports.handler = async (event) => {
-  console.log(`REQUEST:: ${JSON.stringify(event, null, 2)}`);
+  logger.registerEvent(event);
+  logger.info("REQUEST", event);
 
   const dynamo = new AWS.DynamoDB.DocumentClient({
     region: process.env.AWS_REGION
@@ -52,7 +54,7 @@ exports.handler = async (event) => {
       params['ExpressionAttributeNames'] = {'#ttl': 'ttl'};
     }
 
-    console.log(`UPDATE:: ${JSON.stringify(params, null, 2)}`);
+    logger.info(`UPDATE:: ${JSON.stringify(params, null, 2)}`);
     await dynamo.update(params).promise();
 
     // Get updated data and reconst event data to return

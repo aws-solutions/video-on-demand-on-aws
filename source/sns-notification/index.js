@@ -12,25 +12,12 @@
  *********************************************************************************************************************/
 
 const AWS = require('aws-sdk');
-const error = require('./lib/error.js');
-
-const NOT_APPLICABLE_PROPERTIES = [
-  'mp4Outputs',
-  'mp4Urls',
-  'hlsPlaylist',
-  'hlsUrl',
-  'dashPlaylist',
-  'dashUrl',
-  'mssPlaylist',
-  'mssUrl',
-  'cmafDashPlaylist',
-  'cmafDashUrl',
-  'cmafHlsPlaylist',
-  'cmafHlsUrl'
-];
+const error = require('./lib/error/error');
+const logger = require('./lib/logger');
 
 exports.handler = async (event) => {
-  console.log(`REQUEST:: ${JSON.stringify(event, null, 2)}`);
+  logger.registerEvent(event);
+  logger.info("REQUEST", event);
 
   const sns = new AWS.SNS({
     region: process.env.AWS_REGION
@@ -61,7 +48,7 @@ exports.handler = async (event) => {
       throw new Error('Workflow Status not defined.');
     }
 
-    console.log(`SEND SNS:: ${JSON.stringify(event, null, 2)}`);
+    logger.info(`SEND SNS:: ${JSON.stringify(event, null, 2)}`);
 
     let params = {
       Message: JSON.stringify(msg, null, 2),

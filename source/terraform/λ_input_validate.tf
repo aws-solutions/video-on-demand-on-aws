@@ -6,7 +6,7 @@ locals {
 
 module "λ_input_validate" {
   source  = "moritzzimmer/lambda/aws"
-  version = "5.16.0"
+  version = "6.0.0"
 
   cloudwatch_lambda_insights_enabled = true
   function_name                      = "${local.project}-${local.input_validate_function_name}"
@@ -37,6 +37,12 @@ module "λ_input_validate" {
       InputRotate : "DEGREE_0"
       EnableSns : true
       EnableSqs : true
+    }
+  }
+
+  cloudwatch_log_subscription_filters = {
+    elasticsearch = {
+      destination_arn = data.aws_lambda_function.log_streaming.arn
     }
   }
 }
@@ -92,7 +98,7 @@ resource "aws_lambda_alias" "λ_input_validate" {
 
 module "λ_input_validate_deployment" {
   source  = "moritzzimmer/lambda/aws//modules/deployment"
-  version = "5.16.0"
+  version = "6.0.0"
 
   alias_name                        = aws_lambda_alias.λ_input_validate.name
   codestar_notifications_target_arn = data.aws_sns_topic.codestar_notifications.arn

@@ -12,6 +12,7 @@
  *********************************************************************************************************************/
 
 const AWS = require('aws-sdk');
+const logger = require('../logger');
 
 let errHandler = async (event, _err) => {
     const lambda = new AWS.Lambda({
@@ -30,10 +31,10 @@ let errHandler = async (event, _err) => {
             FunctionName: process.env.ErrorHandler,
             Payload: JSON.stringify(payload, null, 2)
         };
-        console.error(_err);
+
         await lambda.invoke(params).promise();
     } catch (err) {
-        console.log(err);
+        logger.error('Cannot invoke error handler', err);
         throw err;
     }
 

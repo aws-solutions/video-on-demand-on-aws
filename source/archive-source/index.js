@@ -12,10 +12,12 @@
  *********************************************************************************************************************/
 
 const AWS = require('aws-sdk');
-const error = require('./lib/error.js');
+const error = require('./lib/error/error.js');
+const logger = require('./lib/logger');
 
 exports.handler = async (event) => {
-    console.log(`REQUEST:: ${JSON.stringify(event, null, 2)}`);
+    logger.registerEvent(event);
+    logger.info("REQUEST", event);
 
     const s3 = new AWS.S3();
 

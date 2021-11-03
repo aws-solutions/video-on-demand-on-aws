@@ -6,7 +6,7 @@ locals {
 
 module "λ_error_handler" {
   source  = "moritzzimmer/lambda/aws"
-  version = "5.16.0"
+  version = "6.0.0"
 
   cloudwatch_lambda_insights_enabled = true
   function_name                      = "${local.project}-${local.error_handler_function_name}"
@@ -44,6 +44,12 @@ module "λ_error_handler" {
       AWS_NODEJS_CONNECTION_REUSE_ENABLED : "1"
       DynamoDBTable : aws_dynamodb_table.this.arn
       SnsTopic : aws_sns_topic.notifications.arn
+    }
+  }
+
+  cloudwatch_log_subscription_filters = {
+    elasticsearch = {
+      destination_arn = data.aws_lambda_function.log_streaming.arn
     }
   }
 }
@@ -105,7 +111,7 @@ resource "aws_lambda_alias" "λ_error_handler" {
 
 module "λ_error_handler_deployment" {
   source  = "moritzzimmer/lambda/aws//modules/deployment"
-  version = "5.16.0"
+  version = "6.0.0"
 
   alias_name                        = aws_lambda_alias.λ_error_handler.name
   codestar_notifications_target_arn = data.aws_sns_topic.codestar_notifications.arn

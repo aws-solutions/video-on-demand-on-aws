@@ -22,7 +22,7 @@ build :: check-node-version
 
 export TF_VAR_region
 tf ::
-	terraform -chdir=source/terraform/ init $(TF_BACKEND_CFG)
+	terraform -chdir=source/terraform/ init -upgrade $(TF_BACKEND_CFG)
 	terraform -chdir=source/terraform/ $(MODE)
 
 .PHONY: fmt

@@ -10,7 +10,7 @@ data "aws_sns_topic" "secondary" {
 
 module "λ_broadcast" {
   source  = "moritzzimmer/lambda/aws"
-  version = "5.16.0"
+  version = "6.0.0"
 
   cloudwatch_lambda_insights_enabled = true
   function_name                      = "${local.project}-${local.broadcast_function_name}"
@@ -38,6 +38,12 @@ module "λ_broadcast" {
       "/external/livingdocs/cms.token",
       "/external/livingdocs/cms.base-url"
     ]
+  }
+
+  cloudwatch_log_subscription_filters = {
+    elasticsearch = {
+      destination_arn = data.aws_lambda_function.log_streaming.arn
+    }
   }
 }
 
@@ -97,7 +103,7 @@ resource "aws_lambda_alias" "λ_broadcast" {
 
 module "λ_broadcast_deployment" {
   source  = "moritzzimmer/lambda/aws//modules/deployment"
-  version = "5.16.0"
+  version = "6.0.0"
 
   alias_name                         = aws_lambda_alias.λ_broadcast.name
   codestar_notifications_target_arn  = data.aws_sns_topic.codestar_notifications.arn

@@ -10,7 +10,7 @@ data "external" "mediaconvert_endpoint" {
 
 module "λ_encode" {
   source  = "moritzzimmer/lambda/aws"
-  version = "5.16.0"
+  version = "6.0.0"
 
   cloudwatch_lambda_insights_enabled = true
   function_name                      = "${local.project}-${local.encode_function_name}"
@@ -33,6 +33,12 @@ module "λ_encode" {
       Destination : module.s3_destination.s3_bucket_id
       DestinationRestricted : module.s3_destination_for_restricted_videos.s3_bucket_id
       ErrorHandler : aws_lambda_alias.λ_error_handler.arn
+    }
+  }
+
+  cloudwatch_log_subscription_filters = {
+    elasticsearch = {
+      destination_arn = data.aws_lambda_function.log_streaming.arn
     }
   }
 }
@@ -92,7 +98,7 @@ resource "aws_lambda_alias" "λ_encode" {
 
 module "λ_encode_deployment" {
   source  = "moritzzimmer/lambda/aws//modules/deployment"
-  version = "5.16.0"
+  version = "6.0.0"
 
   alias_name                        = aws_lambda_alias.λ_encode.name
   codestar_notifications_target_arn = data.aws_sns_topic.codestar_notifications.arn

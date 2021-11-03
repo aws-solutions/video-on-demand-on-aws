@@ -3,18 +3,6 @@ resource "aws_sns_topic" "notifications" {
   name              = "${local.project}-notifications"
 }
 
-resource "aws_sns_topic_subscription" "admin_debug" {
-  endpoint  = "mnaber@stroeer.de"
-  protocol  = "email"
-  topic_arn = aws_sns_topic.notifications.arn
-}
-
-resource "aws_sns_topic_subscription" "mozi_debug" {
-  endpoint  = "mzimmer@stroeer.de"
-  protocol  = "email"
-  topic_arn = aws_sns_topic.notifications.arn
-}
-
 resource "aws_sqs_queue" "notifications" {
   visibility_timeout_seconds        = 120
   name                              = "${local.project}-notfications"

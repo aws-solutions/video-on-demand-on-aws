@@ -13,10 +13,12 @@
 
 const moment = require('moment');
 const AWS = require('aws-sdk');
-const error = require('./lib/error');
+const error = require('./lib/error/error');
+const logger = require('./lib/logger');
 
 exports.handler = async (event) => {
-  console.log(`REQUEST:: ${JSON.stringify(event, null, 2)}`);
+  logger.registerEvent(event);
+  logger.info("REQUEST", event);
 
   const s3 = new AWS.S3();
   let data;
@@ -52,7 +54,7 @@ exports.handler = async (event) => {
 
     switch (event.workflowTrigger) {
       case 'Metadata':
-        console.log('Validating Metadata file::');
+        logger.info('Validating Metadata file::');
         data.srcMetadataFile = key;
 
         // Download json metadata file from s3

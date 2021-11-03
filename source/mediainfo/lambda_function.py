@@ -1,7 +1,7 @@
 ######################################################################################################################
 #  Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           #
 #                                                                                                                    #
-#  Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file except in compliance    #
+#  Licensed under the Apache License, Version 2.0 (the 'License'). You may not use this file except in compliance    #
 #  with the License. A copy of the License is located at                                                             #
 #                                                                                                                    #
 #      http://www.apache.org/licenses/LICENSE-2.0                                                                    #
@@ -10,13 +10,15 @@
 #  OR CONDITIONS OF ANY KIND, express or implied. See the License for the specific language governing permissions    #
 #  and limitations under the License.                                                                                #
 ######################################################################################################################
-
-import boto3
+import datetime
 import json
 import os
-import re
 import subprocess
+from typing import Dict
+
+import boto3
 from botocore.config import Config
+
 
 def parse_number(num):
     if num is None:
@@ -27,8 +29,10 @@ def parse_number(num):
     except ValueError:
         return float(num)
 
+
 def compact(attributes):
-    return { k: v for k, v in attributes.items() if v is not None }
+    return {k: v for k, v in attributes.items() if v is not None}
+
 
 def parse_common_attributes(track):
     attributes = {}
@@ -52,6 +56,7 @@ def parse_common_attributes(track):
 
     return attributes
 
+
 def parse_general_attributes(track):
     attributes = {}
 
@@ -61,6 +66,7 @@ def parse_general_attributes(track):
     attributes['totalBitrate'] = parse_number(track.get('OverallBitRate'))
 
     return compact(attributes)
+
 
 def parse_video_attributes(track):
     attributes = parse_common_attributes(track)
@@ -76,6 +82,7 @@ def parse_video_attributes(track):
 
     return compact(attributes)
 
+
 def parse_audio_attributes(track):
     attributes = parse_common_attributes(track)
 
@@ -87,6 +94,7 @@ def parse_audio_attributes(track):
 
     return compact(attributes)
 
+
 def parse_text_attributes(track):
     attributes = {}
 
@@ -97,6 +105,7 @@ def parse_text_attributes(track):
     attributes['captionServiceName'] = parse_number(track.get('CaptionServiceName'))
 
     return compact(attributes)
+
 
 def get_signed_url(bucket, obj):
     SIGNED_URL_EXPIRATION = 60 * 60 * 2
@@ -112,12 +121,28 @@ def get_signed_url(bucket, obj):
     s3_client = boto3.client('s3', config=boto_config)
     return s3_client.generate_presigned_url(
         'get_object',
-        Params={ 'Bucket': bucket, 'Key': obj },
+        Params={'Bucket': bucket, 'Key': obj},
         ExpiresIn=SIGNED_URL_EXPIRATION
     )
 
+
+def log(message: str, level: str, data: Dict[str, str] = None) -> None:
+    print(json.dumps({
+        '@timestamp': datetime.datetime.utcnow().replace(tzinfo=datetime.timezone.utc, microsecond=0).isoformat(),
+        '@version': '1',
+        'mdc': {
+            'Version': os.environ.get('AWS_LAMBDA_FUNCTION_VERSION', ''),
+            'RequestId': os.environ.get('_X_AMZN_TRACE_ID', '')
+        },
+        'funcName': os.environ.get('AWS_LAMBDA_FUNCTION_NAME', ''),
+        'level': level,
+        'message': message,
+        'data': json.dumps(data)
+    }))
+
+
 def lambda_handler(event, context):
-    print(f'REQUEST:: {json.dumps(event)}')
+    log('REQUEST', 'info', event)
 
     try:
         metadata = {}
@@ -128,7 +153,7 @@ def lambda_handler(event, context):
 
         signed_url = get_signed_url(event['srcBucket'], event['srcVideo'])
         json_content = json.loads(subprocess.check_output([executable_path, '--Output=JSON', signed_url]))
-        print(f'MEDIAINFO OUTPUT:: {json.dumps(json_content)}')
+        log('MEDIAINFO OUTPUT', 'info', json_content)
 
         tracks = json_content['media']['track']
         for track in tracks:
@@ -142,10 +167,10 @@ def lambda_handler(event, context):
             elif (track_type == 'Text'):
                 metadata.setdefault('text', []).append(parse_text_attributes(track))
             else:
-                print(f'Unsupported: {track_type}')
+                log(f'Unsupported: {track_type}', 'error')
 
         event['srcMediainfo'] = json.dumps(metadata, indent=2)
-        print(f'RESPONSE:: {json.dumps(metadata)}')
+        log('RESPONSE', 'info', metadata)
 
         return event
     except Exception as err:

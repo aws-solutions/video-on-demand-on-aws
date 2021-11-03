@@ -12,7 +12,8 @@
  *********************************************************************************************************************/
 
 const AWS = require('aws-sdk');
-const error = require('./lib/error.js');
+const error = require('./lib/error/error');
+const logger = require('./lib/logger');
 
 async function* listAllKeys(s3, params) {
   params = {...params};
@@ -24,7 +25,8 @@ async function* listAllKeys(s3, params) {
 }
 
 exports.handler = async (event) => {
-  console.log(`REQUEST:: ${JSON.stringify(event, null, 2)}`);
+  logger.registerEvent(event);
+  logger.info("REQUEST", event);
 
   const dynamo = new AWS.DynamoDB.DocumentClient({
     region: process.env.AWS_REGION
@@ -55,17 +57,17 @@ exports.handler = async (event) => {
         };
 
         for await (const listItem of listAllKeys(s3, s3ListParams)) {
-          console.log(`s3:delete: Found #${listItem.Contents.length} items for 's3://${dest_bucket}/${match.groups.prefix}'.`)
+          logger.info(`s3:delete: Found #${listItem.Contents.length} items for 's3://${dest_bucket}/${match.groups.prefix}'.`)
           await Promise.all(listItem.Contents.map(async item => {
             const s3DeleteParams = {
               Bucket: dest_bucket,
               Key: item.Key
             };
-            console.log('s3:deleting:', s3DeleteParams);
+            logger.info('s3:deleting:', s3DeleteParams);
             try {
               return await s3.deleteObject(s3DeleteParams).promise();
             } catch (e) {
-              console.error(`Cannot delete ${JSON.stringify(s3DeleteParams)}`, e);
+              logger.error(`Cannot delete ${JSON.stringify(s3DeleteParams)}`, e);
               throw e;
             }
           }));
@@ -78,15 +80,15 @@ exports.handler = async (event) => {
           guid: match.groups.media_id
         }
       }
-      console.log('ddb:deleting:', ddbParams);
+      logger.info('ddb:deleting:', ddbParams);
       try {
         return await dynamo.delete(ddbParams).promise();
       } catch (e) {
-        console.error(`Cannot delete ddb: ${JSON.stringify(ddbParams)}`, e);
+        logger.error(`Cannot delete ddb: ${JSON.stringify(ddbParams)}`, e);
         throw e;
       }
     } else {
-      console.log(`Could not extract cms id from key='${key}'`)
+      logger.info(`Could not extract cms id from key='${key}'`)
     }
 
   } catch (err) {

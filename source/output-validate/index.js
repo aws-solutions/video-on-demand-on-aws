@@ -12,7 +12,8 @@
  *********************************************************************************************************************/
 
 const AWS = require('aws-sdk');
-const error = require('./lib/error.js');
+const error = require('./lib/error/error');
+const logger = require('./lib/logger');
 const moment = require('moment');
 const path = require('path');
 
@@ -28,7 +29,8 @@ async function* listAllKeys(s3, params) {
 }
 
 exports.handler = async (event) => {
-  console.log(`REQUEST:: ${JSON.stringify(event, null, 2)}`);
+  logger.registerEvent(event);
+  logger.info("REQUEST", event);
 
   const dynamo = new AWS.DynamoDB.DocumentClient({
     region: process.env.AWS_REGION
@@ -62,7 +64,7 @@ exports.handler = async (event) => {
 
     // Parse MediaConvert Output and generate CloudFront URLS.
     event.detail.outputGroupDetails.forEach(output => {
-      console.log(`${output.type} found in outputs`);
+      logger.info(`${output.type} found in outputs`);
 
       switch (output.type) {
         case 'HLS_GROUP':

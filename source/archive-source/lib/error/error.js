@@ -1,5 +1,5 @@
 /*********************************************************************************************************************
- *  Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
+ *  Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
  *                                                                                                                    *
  *  Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file except in compliance    *
  *  with the License. A copy of the License is located at                                                             *
@@ -12,6 +12,7 @@
  *********************************************************************************************************************/
 
 const AWS = require('aws-sdk');
+const logger = require('../logger');
 
 let errHandler = async (event, _err) => {
     const lambda = new AWS.Lambda({
@@ -20,10 +21,10 @@ let errHandler = async (event, _err) => {
 
     try {
         let payload = {
-            "guid": event.guid,
-            "event": event,
-            "function": process.env.AWS_LAMBDA_FUNCTION_NAME,
-            "error": _err.toString()
+            'guid': event.guid,
+            'event': event,
+            'function': process.env.AWS_LAMBDA_FUNCTION_NAME,
+            'error': _err.toString()
         };
 
         let params = {
@@ -33,7 +34,7 @@ let errHandler = async (event, _err) => {
 
         await lambda.invoke(params).promise();
     } catch (err) {
-        console.log(err);
+        logger.error('Cannot invoke error handler', err);
         throw err;
     }
 

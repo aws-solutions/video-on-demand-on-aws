@@ -6,7 +6,7 @@ locals {
 
 module "λ_profiler" {
   source  = "moritzzimmer/lambda/aws"
-  version = "5.16.0"
+  version = "6.0.0"
 
   cloudwatch_lambda_insights_enabled = true
   function_name                      = "${local.project}-${local.profiler_function_name}"
@@ -26,6 +26,12 @@ module "λ_profiler" {
       AWS_NODEJS_CONNECTION_REUSE_ENABLED : "1"
       DynamoDBTable : aws_dynamodb_table.this.name
       ErrorHandler : aws_lambda_alias.λ_error_handler.arn
+    }
+  }
+
+  cloudwatch_log_subscription_filters = {
+    elasticsearch = {
+      destination_arn = data.aws_lambda_function.log_streaming.arn
     }
   }
 }
@@ -81,7 +87,7 @@ resource "aws_lambda_alias" "λ_profiler" {
 
 module "λ_profiler_deployment" {
   source  = "moritzzimmer/lambda/aws//modules/deployment"
-  version = "5.16.0"
+  version = "6.0.0"
 
   alias_name                        = aws_lambda_alias.λ_profiler.name
   codestar_notifications_target_arn = data.aws_sns_topic.codestar_notifications.arn
