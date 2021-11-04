@@ -98,39 +98,41 @@ exports.handler = async (event) => {
   }
 
   try {
-    const response = await axios.post(process.env.SlackHook, {
-      "blocks": [
-        {
-          "type": "header",
-          "text": {
-            "type": "plain_text",
-            "text": `☠📼☠ Workflow Status:: Error: ${guid} ☠📼☠`,
-            "emoji": true
+    Promise.all(process.env.SlackHook.split(",").map(async hook => {
+      const response = await axios.post(hook, {
+        "blocks": [
+          {
+            "type": "header",
+            "text": {
+              "type": "plain_text",
+              "text": `☠📼☠ Workflow Status:: Error: ${guid} ☠📼☠`,
+              "emoji": true
+            }
+          },
+          {
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": `*Message:*\n\`\`\`${JSON.stringify(msg, null, 2)}\`\`\``
+            }
+          },
+          {
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": `*URL:*\n${url}`
+            }
+          },
+          {
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": `*LivingDocs:*\nhttps://editor-production.livingdocs.stroeerws.de/p/t-online/media-library/${guid}`
+            }
           }
-        },
-        {
-          "type": "section",
-          "text": {
-            "type": "mrkdwn",
-            "text": `*Message:*\n\`\`\`${JSON.stringify(msg, null, 2)}\`\`\``
-          }
-        },
-        {
-          "type": "section",
-          "text": {
-            "type": "mrkdwn",
-            "text": `*URL:*\n${url}`
-          }
-        },
-        {
-          "type": "section",
-          "text": {
-            "type": "mrkdwn",
-            "text": `*LivingDocs:*\nhttps://editor-production.livingdocs.stroeerws.de/p/t-online/media-library/${guid}`
-          }
-        }
-      ]
-    });
+        ]
+      });
+    }));
 
     logger.info(response.data);
   } catch (e) {
