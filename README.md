@@ -25,176 +25,38 @@ teams/companies tf-modules or well-known community modules.
 
 We've also reduced some complexity by removing features we were not interested in (e.g. MediaPackage)
 
-### WorkFlow Triggers
+## Debugging errors
 
-#### Source Video Option
-If deployed with the workflow trigger parameter set to VideoFile, the CloudFormation template will configure S3 event notifications on the source S3 bucket to trigger the workflow whenever a video file (mpg, mp4, m4v, mov, or m2ts) is uploaded.
+given there are some failed _MediaConvert Jobs_, you can easily find them using this cmd:
 
-#### Source Metadata Option
-If deployed with the workflow trigger parameter set to MetadataFile, the S3 notification is configured to trigger the workflow whenever a JSON file is uploaded. This allows different workflow configuration to be defined for each source video processed by the workflow.
-
-> **Important:** The source video file must be uploaded to S3 before the metadata file is uploaded, and the metadata file must be valid JSON with a .json file extension. With source metadata enabled uploading video files to Amazon S3 will not trigger the workflow.
-
-**Example JSON metadata file:**
-```
-{
-    "srcVideo": "example.mpg",
-    "archiveSource": true,
-    "frameCapture": false,
-    "jobTemplate": "custom-job-template"
-}
+```shell
+$ aws mediaconvert list-jobs \
+    --max-items 5 \
+    --endpoint-url 'https://XXXXXX.mediaconvert.eu-west-1.amazonaws.com' \
+    --status ERROR \
+    --query 'Jobs[].{mediaId: UserMetadata.cmsId, jobId: Id, ErrorCode: ErrorCode, ErrorMessage: ErrorMessage, time: Timing.SubmitTime}
 ```
 
-The only required field for the metadata file is the **srcVideo**. The workflow will default to the environment variables settings for the ingest validate lambda function for any settings not defined in the metadata file.
+response:
 
-**Full list of options:**
-```
-{
-    "srcVideo": "string",
-    "archiveSource": string,
-    "frameCapture": boolean,
-    "srcBucket": "string",
-    "destBucket": "string",
-    "cloudFront": "string",
-    "jobTemplate_2160p": "string",
-    "jobTemplate_1080p": "string",
-    "jobTemplate_720p": "string",
-    "jobTemplate": "custom-job-template",
-    "inputRotate": "DEGREE_0|DEGREES_90|DEGREES_180|DEGREES_270|AUTO",
-    "captions": {
-        "srcFile": "string",
-        "fontSize": integer,
-        "fontColor": "WHITE|BLACK|YELLOW|RED|GREEN|BLUE"
+```json
+[
+    {
+        "mediaId": "CYNeCWbX4bMd",
+        "jobId": "1635930585113-8o6t1i",
+        "ErrorCode": 1075,
+        "ErrorMessage": "Demuxer: [invalid AVC header]",
+        "time": "2021-11-03T10:09:45+01:00"
+    },
+    {
+        "mediaId": "SdgTbssK2iwz",
+        "jobId": "1635927431182-wz7jc0",
+        "ErrorCode": 1076,
+        "ErrorMessage": "Demuxer: [ReadPacketData File read failed - end of file hit at length [33630142]. Is file truncated?]",
+        "time": "2021-11-03T09:17:11+01:00"
     }
-}
+]
 ```
-
-The solution also supports adding additional metadata, such as title, genre, or any other information, you want to store in Amazon DynamoDB.
-
-## Encoding Templates
-At launch the Solution creates 3 MediaConvert job templates which are used as the default encoding templates for the workflow:
-- **MediaConvert_Template_2160p**
-- **MediaConvert_Template_1080p**
-- **MediaConvert_Template_720p**
-
-By default, the profiler step in the process step function will check the source video height and set the parameter "jobTemplate" to one of the available templates. This variable is then passed to the encoding step which submits a job to Elemental MediaConvert. To customize the encoding templates used by the solution you can either replace the existing templates or you can use the source metadata version of the workflow and define the jobTemplate as part of the source metadata file.
-
-**To replace the templates:**
-1.	Use the system templates or create 3 new templates through the MediaConvert console (see the Elemental MediaConvert documentation for details).
-2.	Update the environment variables for the input validate lambda function with the names of the new templates.
-
-**To define the job template using metadata:**
-1.	Launch the solution with source metadata parameter. See Appendix E for more details.
-2.	Use the system templates or create a new template through the MediaConvert console (see the Elemental MediaConvert documentation for details).
-3.	Add "jobTemplate":"name of the template" to the metadata file, this will overwrite the profiler step in the process Step Functions.
-
-## QVBR Mode
-AWS MediaConvert Quality-defined Variable Bit-Rate (QVBR) control mode gets the best video quality for a given file size and is recommended for OTT and Video On Demand Content. The solution supports this feature and it will create HLS, MP4 and DASH custom presets with the following QVBR levels and Single Pass HQ encoding:
-
-| Resolution   |      MaxBitrate      |  QvbrQualityLevel |
-|----------|:-------------:|------:|
-| 2160p |  15000Kbps | 9 |
-| 1080p |  8500Kbps  | 8 |
-| 720p  |  6000Kbps  | 8 |
-| 720p  |  5000Kbps  | 8 |
-| 540p  |  3500Kbps  | 7 |
-| 360p  |  1500Kbps  | 7 |
-| 270p  |  400Kbps   | 7 |
-
-For more detail please see [QVBR and MediaConvert](https://docs.aws.amazon.com/mediaconvert/latest/ug/cbr-vbr-qvbr.html).
-
-## Accelerated Transcoding
-Version 5.1.0 introduces support for accelerated transcoding which is a pro tier  feature of AWS Elemental MediaConvert. This feature can be configured when launching the template with one of the following options:
-
-* **ENABLED** All files upload will have acceleration enabled. Files that are not supported will not be processed and the workflow will fail
-* **PREFERRED** All files uploaded will be processed but only supported files will have acceleration enabled, the workflow will not fail.
-* **DISABLED** No acceleration.
-
-For more detail please see [Accelerated Transcoding](https://docs.aws.amazon.com/mediaconvert/latest/ug/accelerated-transcoding.html).
-
-## Source code
-
-### Node.js 12
-* **archive-source:** Lambda function to tag the source video in s3 to enable the Glacier lifecycle policy.
-* **custom-resource:** Lambda backed CloudFormation custom resource to deploy MediaConvert templates configure S3 event notifications.
-* **dynamo:** Lambda function to Update DynamoDB.
-* **encode:** Lambda function to submit an encoding job to Elemental MediaConvert.
-* **error-handler:** Lambda function to handler any errors created by the workflow or MediaConvert.
-* **input-validate:** Lambda function to parse S3 event notifications and define the workflow parameters.
-* **media-package-assets:** Lambda function to ingest an asset into MediaPackage-VOD.
-* **output-validate:** Lambda function to parse MediaConvert CloudWatch Events.
-* **profiler:** Lambda function used to send publish and/or error notifications.
-* **step-functions:** Lambda function to trigger AWS Step Functions.
-
-### Python 3.7
-* **mediainfo:** Lambda function to run [mediainfo](https://mediaarea.net/en/MediaInfo) on an S3 signed url.
-
-> ./source/mediainfo/bin/mediainfo must be made executable before deploying to lambda.
-
-## Creating a custom build
-The solution can be deployed through the CloudFormation template available on the solution home page: [Video on Demand on AWS](https://aws.amazon.com/answers/media-entertainment/video-on-demand-on-aws/).
-To make changes to the solution, download or clone this repo, update the source code and then run the deployment/build-s3-dist.sh script to deploy the updated Lambda code to an Amazon S3 bucket in your account.
-
-### Prerequisites:
-* [AWS Command Line Interface](https://aws.amazon.com/cli/)
-* Node.js 12.x or later
-* Python 3.8 or later
-
-### 1. Running unit tests for customization
-Run unit tests to make sure added customization passes the tests:
-```
-cd ./deployment
-chmod +x ./run-unit-tests.sh
-./run-unit-tests.sh
-```
-
-### 2. Create an Amazon S3 Bucket
-The CloudFormation template is configured to pull the Lambda deployment packages from Amazon S3 bucket in the region the template is being launched in. Create a bucket in the desired region with the region name appended to the name of the bucket (e.g. for us-east-1 create a bucket named ```my-bucket-us-east-1```).
-```
-aws s3 mb s3://my-bucket-us-east-1
-```
-
-### 3. Build MediaInfo
-Build MediaInfo using the following commands on an [EC2 instance](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EC2_GetStarted.html) running an Amazon Linux AMI.
-
-```console
-sudo yum update -y
-sudo yum groupinstall 'Development Tools' -y
-sudo yum install libcurl-devel -y
-wget https://mediaarea.net/download/binary/mediainfo/20.09/MediaInfo_CLI_20.09_GNU_FromSource.tar.xz
-tar xvf MediaInfo_CLI_20.09_GNU_FromSource.tar.xz
-cd MediaInfo_CLI_GNU_FromSource/
-./CLI_Compile.sh --with-libcurl
-```
-
-Run these commands to confirm the compilation was successful:
-```console
-cd MediaInfo/Project/GNU/CLI/
-./mediainfo --version
-```
-Copy the mediainfo binary into the `source/mediainfo/bin` directory of your cloned respository.
-
-If you'd like to use a precompiled MediaInfo binary for Lambda built by the MediaArea team, you can download it [here](https://mediaarea.net/en/MediaInfo/Download/Lambda).
-For more information, check out the [MediaInfo site](https://mediaarea.net/en/MediaInfo).
-
-
-### 4. Create the deployment packages
-Build the distributable:
-```
-chmod +x ./build-s3-dist.sh
-./build-s3-dist.sh my-bucket video-on-demand-on-aws version
-```
-
-> **Notes**: The _build-s3-dist_ script expects the bucket name as one of its parameters, and this value should not include the region suffix.
-
-Deploy the distributable to the Amazon S3 bucket in your account:
-```
-aws s3 cp ./regional-s3-assets/ s3://my-bucket-us-east-1/video-on-demand-on-aws/version/ --recursive --acl bucket-owner-full-control
-```
-
-### 5. Launch the CloudFormation template.
-* Get the link of the video-on-demand-on-aws.template uploaded to your Amazon S3 bucket.
-* Deploy the Video on Demand to your account by launching a new AWS CloudFormation stack using the link of the video-on-demand-on-aws.template.
 
 ## Additional Resources
 

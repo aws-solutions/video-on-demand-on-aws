@@ -30,7 +30,7 @@ module "λ_error_handler" {
       event_pattern = jsonencode({
         source = ["aws.mediaconvert"]
         detail = {
-          status = ["ERROR"],
+          status       = ["ERROR"],
           userMetadata = {
             workflow : [local.project]
           }
@@ -42,8 +42,9 @@ module "λ_error_handler" {
   environment = {
     variables = {
       AWS_NODEJS_CONNECTION_REUSE_ENABLED : "1"
-      DynamoDBTable : aws_dynamodb_table.this.arn
-      SnsTopic : aws_sns_topic.notifications.arn
+      DynamoDBTable : aws_dynamodb_table.this.name
+      SnsTopic : data.aws_sns_topic.error_notifications.arn
+      SlackHook : aws_ssm_parameter.slack_hook.value
     }
   }
 
@@ -57,7 +58,7 @@ module "λ_error_handler" {
 data "aws_iam_policy_document" "λ_error_handler" {
   statement {
     actions   = ["sns:Publish"]
-    resources = [aws_sns_topic.notifications.id]
+    resources = [aws_sns_topic.notifications.id, data.aws_sns_topic.error_notifications.arn]
     condition {
       test     = "Bool"
       variable = "aws:SecureTransport"
@@ -113,10 +114,22 @@ module "λ_error_handler_deployment" {
   source  = "moritzzimmer/lambda/aws//modules/deployment"
   version = "6.0.0"
 
-  alias_name                        = aws_lambda_alias.λ_error_handler.name
-  codestar_notifications_target_arn = data.aws_sns_topic.codestar_notifications.arn
-  function_name                     = module.λ_error_handler.function_name
+  alias_name                         = aws_lambda_alias.λ_error_handler.name
+  codestar_notifications_target_arn  = data.aws_sns_topic.codestar_notifications.arn
+  function_name                      = module.λ_error_handler.function_name
   codepipeline_artifact_store_bucket = aws_s3_bucket.s3_λ_source.bucket
-  s3_bucket                         = aws_s3_bucket.s3_λ_source.bucket
-  s3_key                            = local.error_handler_s3_key
+  s3_bucket                          = aws_s3_bucket.s3_λ_source.bucket
+  s3_key                             = local.error_handler_s3_key
+}
+
+resource "aws_ssm_parameter" "slack_hook" {
+  name  = "/internal/buzzhub/slack_hook"
+  type  = "SecureString"
+  value = "changeMe"
+
+  lifecycle {
+    ignore_changes = [
+      value
+    ]
+  }
 }

@@ -11,6 +11,7 @@
  *  and limitations under the License.                                                                                *
  *********************************************************************************************************************/
 
+const axios = require('axios');
 const AWS = require('aws-sdk');
 const logger = require('./lib/logger');
 
@@ -26,10 +27,7 @@ exports.handler = async (event) => {
     region: process.env.AWS_REGION
   });
 
-  let guid,
-    values,
-    url,
-    msg;
+  let guid, values, url, msg;
 
   if (event.function) {
     url = 'https://console.aws.amazon.com/cloudwatch/home?region=' + process.env.AWS_REGION + '#logStream:group=/aws/lambda/' + event.function;
@@ -71,7 +69,7 @@ exports.handler = async (event) => {
     };
   }
 
-  logger.info(msg);
+  logger.info({msg});
 
   // Update DynamoDB
   let params = {
@@ -81,17 +79,64 @@ exports.handler = async (event) => {
     ExpressionAttributeValues: values
   };
 
-  await dynamo.update(params).promise();
+  try { await dynamo.update(params).promise();} catch (e) {
+    logger.error("Error updating dynamodb.", e);
+    // throw e;
+  }
 
   // Feature/so-vod-173 match SNS data structure with the SNS Notification
   // Function for consistency.
   params = {
     Message: JSON.stringify(msg, null, 2),
-    Subject: ' workflow Status:: Error: ' + guid,
+    Subject: `Workflow Status:: Error: ${guid}`,
     TargetArn: process.env.SnsTopic
   };
 
-  await sns.publish(params).promise();
+  try { await sns.publish(params).promise();} catch (e) {
+    logger.error("Error publishing to SNS.", e);
+    // throw e;
+  }
+
+  try {
+    const response = await axios.post(process.env.SlackHook, {
+      "blocks": [
+        {
+          "type": "header",
+          "text": {
+            "type": "plain_text",
+            "text": `☠📼☠ Workflow Status:: Error: ${guid} ☠📼☠`,
+            "emoji": true
+          }
+        },
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": `*Message:*\n\`\`\`${JSON.stringify(msg, null, 2)}\`\`\``
+          }
+        },
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": `*URL:*\n${url}`
+          }
+        },
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": `*LivingDocs:*\nhttps://editor-production.livingdocs.stroeerws.de/p/t-online/media-library/${guid}`
+          }
+        }
+      ]
+    });
+
+    logger.info(response.data);
+  } catch (e) {
+    logger.error('Error publishing to Slack webhook.', e);
+  }
+
 
   return event;
 };

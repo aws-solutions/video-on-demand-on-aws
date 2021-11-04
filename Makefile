@@ -17,7 +17,9 @@ clean ::
 test :: check-node-version
 	./deployment/run-unit-tests.sh
 
-build :: check-node-version
+build :: check-node-version clean
+	# node_modules may contain dev dependencies, so clean them first.
+	find . -name node_modules -exec rm -fr {} \;
 	./deployment/build-s3-dist.sh
 
 export TF_VAR_region

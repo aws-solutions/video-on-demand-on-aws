@@ -18,3 +18,7 @@ data "aws_caller_identity" "current" {}
 data "aws_sns_topic" "codestar_notifications" {
   name = "codestar-notifications"
 }
+
+data "aws_sns_topic" "error_notifications" {
+  name = "cloudwatch-notifications"
+}
