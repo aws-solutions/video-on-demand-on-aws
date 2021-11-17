@@ -3,28 +3,26 @@
     "CodecSettings": {
       "Codec": "H_264",
       "H264Settings": {
-        "CodecProfile": "MAIN",
+        "CodecProfile": "HIGH",
         "SpatialAdaptiveQuantization": "ENABLED",
         "TemporalAdaptiveQuantization": "ENABLED",
+        "Softness": 0,
         "Syntax": "DEFAULT",
-        "FramerateNumerator": 15000,
         "MinIInterval": 0,
         "UnregisteredSeiTimecode": "DISABLED",
-        "FramerateControl": "SPECIFIED",
-        "NumberReferenceFrames": 3,
-        "FramerateDenominator": 1001,
+        "FramerateControl": "INITIALIZE_FROM_SOURCE",
         "QvbrSettings": {
-          "QvbrQualityLevel": 7
+          "QvbrQualityLevel": 8
         },
-        "MaxBitrate": 400000,
+        "MaxBitrate": 4500000,
         "RateControlMode": "QVBR",
         "GopBReference": "ENABLED",
         "EntropyEncoding": "CABAC",
-        "GopSizeUnits": "FRAMES",
+        "GopSizeUnits": "SECONDS",
         "FlickerAdaptiveQuantization": "ENABLED",
         "Telecine": "NONE",
         "ParDenominator": 1,
-        "AdaptiveQuantization": "MEDIUM",
+        "AdaptiveQuantization": "HIGH",
         "InterlaceMode": "PROGRESSIVE",
         "QualityTuningLevel": "SINGLE_PASS_HQ",
         "HrdBufferInitialFillPercentage": 90,
@@ -32,30 +30,22 @@
         "FieldEncoding": "PAFF",
         "SlowPal": "DISABLED",
         "GopClosedCadence": 1,
-        "GopSize": 45.0,
+        "GopSize": 2.0,
         "ParControl": "SPECIFIED",
         "Slices": 1,
         "FramerateConversionAlgorithm": "DUPLICATE_DROP",
         "ParNumerator": 1,
         "SceneChangeDetect": "ENABLED",
-        "CodecLevel": "LEVEL_3_1",
         "NumberBFramesBetweenReferenceFrames": 3,
-        "HrdBufferSize": 800000
+        "HrdBufferSize": 9000000
       }
     },
-    "DropFrameTimecode": "ENABLED",
-    "VideoPreprocessors": {
-      "Deinterlacer": {
-        "Control": "NORMAL",
-        "Mode": "DEINTERLACE",
-        "Algorithm": "INTERPOLATE"
-      }
-    },
+    "DropFrameTimecode": "ENABLED", 
     "RespondToAfd": "NONE",
     "Sharpness": 50,
     "AfdSignaling": "NONE",
-    "Height": 270,
-    "Width": 480,
+    "Height": 720,
+    "Width": 1280,
     "ScalingBehavior": "DEFAULT",
     "ColorMetadata": "INSERT",
     "AntiAlias": "ENABLED",
@@ -65,12 +55,12 @@
     "CodecSettings": {
       "Codec": "AAC",
       "AacSettings": {
-        "CodecProfile": "HEV1",
+        "CodecProfile": "LC",
         "Specification": "MPEG4",
         "RateControlMode": "CBR",
         "AudioDescriptionBroadcasterMix": "NORMAL",
         "SampleRate": 48000,
-        "Bitrate": 64000,
+        "Bitrate": 160000,
         "CodingMode": "CODING_MODE_2_0",
         "RawFormat": "NONE"
       }
@@ -81,35 +71,11 @@
     "AudioType": 0
   }],
   "ContainerSettings": {
-    "M3u8Settings": {
-      "PatInterval": 0,
-      "PcrControl": "PCR_EVERY_PES_PACKET",
-      "PrivateMetadataPid": 503,
-      "VideoPid": 481,
-      "ProgramNumber": 1,
-      "PmtPid": 480,
-      "PmtInterval": 0,
-      "AudioPids": [
-        482,
-        483,
-        484,
-        485,
-        486,
-        487,
-        488,
-        489,
-        490,
-        491,
-        492,
-        493,
-        494,
-        495,
-        496,
-        497,
-        498
-      ],
-      "AudioFramesPerPes": 4
+    "Mp4Settings": {
+      "MoovPlacement": "PROGRESSIVE_DOWNLOAD",
+      "CslgAtom": "INCLUDE",
+      "FreeSpaceBox": "EXCLUDE"
     },
-    "Container": "M3U8"
+    "Container": "MP4"
   }
 }

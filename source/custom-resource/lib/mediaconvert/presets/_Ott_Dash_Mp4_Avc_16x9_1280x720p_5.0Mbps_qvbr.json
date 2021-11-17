@@ -3,20 +3,17 @@
     "CodecSettings": {
       "Codec": "H_264",
       "H264Settings": {
-        "CodecProfile": "MAIN",
+        "CodecProfile": "HIGH",
         "SpatialAdaptiveQuantization": "ENABLED",
         "TemporalAdaptiveQuantization": "ENABLED",
         "Syntax": "DEFAULT",
-        "FramerateNumerator": 30000,
         "MinIInterval": 0,
         "UnregisteredSeiTimecode": "DISABLED",
-        "FramerateControl": "SPECIFIED",
-        "NumberReferenceFrames": 3,
-        "FramerateDenominator": 1001,
+        "FramerateControl": "INITIALIZE_FROM_SOURCE",
         "QvbrSettings": {
-          "QvbrQualityLevel": 7
+          "QvbrQualityLevel": 8
         },
-        "MaxBitrate": 1200000,
+        "MaxBitrate": 5000000,
         "RateControlMode": "QVBR",
         "GopBReference": "ENABLED",
         "EntropyEncoding": "CABAC",
@@ -24,7 +21,7 @@
         "FlickerAdaptiveQuantization": "ENABLED",
         "Telecine": "NONE",
         "ParDenominator": 1,
-        "AdaptiveQuantization": "MEDIUM",
+        "AdaptiveQuantization": "HIGH",
         "InterlaceMode": "PROGRESSIVE",
         "QualityTuningLevel": "SINGLE_PASS_HQ",
         "HrdBufferInitialFillPercentage": 90,
@@ -38,24 +35,16 @@
         "FramerateConversionAlgorithm": "DUPLICATE_DROP",
         "ParNumerator": 1,
         "SceneChangeDetect": "ENABLED",
-        "CodecLevel": "LEVEL_3_1",
         "NumberBFramesBetweenReferenceFrames": 3,
-        "HrdBufferSize": 2400000
+        "HrdBufferSize": 10000000
       }
     },
-    "DropFrameTimecode": "ENABLED",
-    "VideoPreprocessors": {
-      "Deinterlacer": {
-        "Control": "NORMAL",
-        "Mode": "DEINTERLACE",
-        "Algorithm": "INTERPOLATE"
-      }
-    },
+    "DropFrameTimecode": "ENABLED", 
     "RespondToAfd": "NONE",
     "Sharpness": 50,
     "AfdSignaling": "NONE",
-    "Height": 360,
-    "Width": 640,
+    "Height": 720,
+    "Width": 1280,
     "ScalingBehavior": "DEFAULT",
     "ColorMetadata": "INSERT",
     "AntiAlias": "ENABLED",

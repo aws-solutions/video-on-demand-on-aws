@@ -2,16 +2,13 @@
   "VideoDescription": {
     "CodecSettings": {
       "H265Settings": {
-        "NumberReferenceFrames": 3,
         "SpatialAdaptiveQuantization": "ENABLED",
         "TemporalAdaptiveQuantization": "ENABLED",
-        "FramerateNumerator": 24000,
         "Tiles": "ENABLED",
         "MinIInterval": 0,
         "UnregisteredSeiTimecode": "DISABLED",
-        "FramerateControl": "SPECIFIED",
+        "FramerateControl": "INITIALIZE_FROM_SOURCE",
         "CodecProfile": "MAIN_MAIN",
-        "FramerateDenominator": 1001,
         "Bitrate": 20000000,
         "RateControlMode": "CBR",
         "GopBReference": "ENABLED",
@@ -34,20 +31,12 @@
         "AlternateTransferFunctionSei": "DISABLED",
         "ParNumerator": 1,
         "SceneChangeDetect": "ENABLED",
-        "CodecLevel": "AUTO",
         "GopClosedCadence": 1,
         "HrdBufferSize": 16000000
       },
       "Codec": "H_265"
     },
-    "DropFrameTimecode": "ENABLED",
-    "VideoPreprocessors": {
-      "Deinterlacer": {
-        "Control": "NORMAL",
-        "Mode": "DEINTERLACE",
-        "Algorithm": "INTERPOLATE"
-      }
-    },
+    "DropFrameTimecode": "ENABLED", 
     "RespondToAfd": "NONE",
     "Sharpness": 50,
     "AfdSignaling": "NONE",

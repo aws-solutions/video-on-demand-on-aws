@@ -7,12 +7,9 @@
         "SpatialAdaptiveQuantization": "ENABLED",
         "TemporalAdaptiveQuantization": "ENABLED",
         "Syntax": "DEFAULT",
-        "FramerateNumerator": 30000,
         "MinIInterval": 0,
         "UnregisteredSeiTimecode": "DISABLED",
-        "FramerateControl": "SPECIFIED",
-        "NumberReferenceFrames": 3,
-        "FramerateDenominator": 1001,
+        "FramerateControl": "INITIALIZE_FROM_SOURCE",
         "QvbrSettings": {
           "QvbrQualityLevel": 7
         },
@@ -38,24 +35,16 @@
         "FramerateConversionAlgorithm": "DUPLICATE_DROP",
         "ParNumerator": 1,
         "SceneChangeDetect": "ENABLED",
-        "CodecLevel": "LEVEL_4",
         "NumberBFramesBetweenReferenceFrames": 3,
         "HrdBufferSize": 7000000
       }
     },
-    "DropFrameTimecode": "ENABLED",
-    "VideoPreprocessors": {
-      "Deinterlacer": {
-        "Control": "NORMAL",
-        "Mode": "DEINTERLACE",
-        "Algorithm": "INTERPOLATE"
-      }
-    },
+    "DropFrameTimecode": "ENABLED", 
     "RespondToAfd": "NONE",
     "Sharpness": 50,
     "AfdSignaling": "NONE",
-    "Height": 720,
-    "Width": 1280,
+    "Height": 540,
+    "Width": 960,
     "ScalingBehavior": "DEFAULT",
     "ColorMetadata": "INSERT",
     "AntiAlias": "ENABLED",

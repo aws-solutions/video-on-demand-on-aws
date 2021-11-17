@@ -4,16 +4,31 @@ How to implement a video-on-demand workflow on AWS leveraging AWS Step Functions
 Source code for [Video on Demand on AWS](https://aws.amazon.com/solutions/video-on-demand-on-aws/) solution.
 
 ## On this Page
-- [Architecture Overview](#architecture-overview)
-- [Deployment](#deployment)
-- [Workflow Configuration](#workflow-configuration)
-- [Source Metadata Option](#source-metadata-option)
-- [Encoding Templates](#encoding-templates)
-- [QVBR Mode](#qvbr-mode)
-- [Accelerated Transcoding](#accelerated-transcoding)
-- [Source Code](#source-code)
-- [Creating a custom Build](#creating-a-custom-build)
-- [Additional Resources](#additional-resources)
+- [Video on Demand on AWS](#video-on-demand-on-aws)
+  - [On this Page](#on-this-page)
+  - [Architecture Overview](#architecture-overview)
+  - [Deployment](#deployment)
+  - [Workflow Configuration](#workflow-configuration)
+      - [Environment Variables:](#environment-variables)
+    - [WorkFlow Triggers](#workflow-triggers)
+      - [Source Video Option](#source-video-option)
+      - [Source Metadata Option](#source-metadata-option)
+  - [Encoding Templates](#encoding-templates)
+  - [QVBR Mode](#qvbr-mode)
+  - [Accelerated Transcoding](#accelerated-transcoding)
+  - [Source code](#source-code)
+    - [Node.js 12](#nodejs-12)
+    - [Python 3.7](#python-37)
+  - [Creating a custom build](#creating-a-custom-build)
+    - [Prerequisites:](#prerequisites)
+    - [1. Running unit tests for customization](#1-running-unit-tests-for-customization)
+    - [2. Create an Amazon S3 Bucket](#2-create-an-amazon-s3-bucket)
+    - [3. Build MediaInfo](#3-build-mediainfo)
+    - [4. Create the deployment packages](#4-create-the-deployment-packages)
+    - [5. Launch the CloudFormation template.](#5-launch-the-cloudformation-template)
+  - [Additional Resources](#additional-resources)
+    - [Services](#services)
+    - [Other Solutions and Demos](#other-solutions-and-demos)
 
 ## Architecture Overview
 ![Architecture](architecture.png)
@@ -195,13 +210,19 @@ For more information, check out the [MediaInfo site](https://mediaarea.net/en/Me
 
 
 ### 4. Create the deployment packages
-Build the distributable:
+First change directory into the deployment directory. 
+Run the following commands to build the distribution.
 ```
 chmod +x ./build-s3-dist.sh
 ./build-s3-dist.sh my-bucket video-on-demand-on-aws version
 ```
 
 > **Notes**: The _build-s3-dist_ script expects the bucket name as one of its parameters, and this value should not include the region suffix.
+
+Run this command to ensure that you are an owner of the AWS S3 bucket you are uploading files to. 
+```
+aws s3api head-bucket --bucket my-bucket-us-east-1 --expected-bucket-owner <YOUR-AWS-ACCOUNT-ID>
+```
 
 Deploy the distributable to the Amazon S3 bucket in your account:
 ```
@@ -230,16 +251,9 @@ aws s3 cp ./regional-s3-assets/ s3://my-bucket-us-east-1/video-on-demand-on-aws/
 - [Live to VOD with Machine Learning](https://github.com/aws-samples/aws-elemental-instant-video-highlights)
 - [Demo SPEKE Reference Server](https://github.com/awslabs/speke-reference-server)
 
-
-
-This solution collects anonymous operational metrics to help AWS improve the
-quality of features of the solution. For more information, including how to disable
-this capability, please see the [implementation guide](https://docs.aws.amazon.com/solutions/latest/video-on-demand/appendix-h.html).
-
-
 ***
 
-Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -252,3 +266,10 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+
+***
+
+This solution collects anonymous operational metrics to help AWS improve the
+quality of features of the solution. For more information, including how to disable
+this capability, please see the [implementation guide](https://docs.aws.amazon.com/solutions/latest/video-on-demand/appendix-h.html).
+

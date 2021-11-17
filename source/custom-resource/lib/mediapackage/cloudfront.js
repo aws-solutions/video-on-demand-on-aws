@@ -1,5 +1,5 @@
 /*********************************************************************************************************************
- *  Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
+ *  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
  *                                                                                                                    *
  *  Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file except in compliance    *
  *  with the License. A copy of the License is located at                                                             *
@@ -23,7 +23,7 @@ module.exports.addCustomOrigin = async (distributionId, domainName) => {
         throw new Error('domainName must be informed');
     }
 
-    const cloudFront = new AWS.CloudFront();
+    const cloudFront = new AWS.CloudFront({customUserAgent: process.env.SOLUTION_IDENTIFIER});
     const response = await cloudFront.getDistributionConfig({ Id: distributionId }).promise();
     const config = response.DistributionConfig;
 
@@ -59,7 +59,15 @@ module.exports.addCustomOrigin = async (distributionId, domainName) => {
         ForwardedValues: {
             QueryString: true,
             Cookies: { Forward: 'none' },
-            Headers: { Quantity: 0 },
+            Headers: {
+                Quantity: 4,
+                Items: [
+                    'Access-Control-Request-Headers',
+                    'Access-Control-Request-Method',
+                    'Origin',
+                    'Access-Control-Allow-Origin'
+                ]
+            },
             QueryStringCacheKeys: { Quantity: 1, Items: ['aws.manifestfilter'] }
         },
         TrustedSigners: { Enabled: false, Quantity: 0 },

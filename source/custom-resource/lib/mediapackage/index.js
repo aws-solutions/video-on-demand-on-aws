@@ -1,5 +1,5 @@
 /*********************************************************************************************************************
- *  Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
+ *  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
  *                                                                                                                    *
  *  Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file except in compliance    *
  *  with the License. A copy of the License is located at                                                             *
@@ -75,7 +75,7 @@ const getCmafParameters = (groupId, configId) => ({
 });
 
 const create = async (properties) => {
-    const mediaPackageVod = new AWS.MediaPackageVod();
+    const mediaPackageVod = new AWS.MediaPackageVod({customUserAgent: process.env.SOLUTION_IDENTIFIER});
     const randomId = crypto.randomBytes(8).toString('hex');
 
     const packagingGroup = await mediaPackageVod.createPackagingGroup({ Id: properties.GroupId }).promise();
@@ -128,7 +128,7 @@ const create = async (properties) => {
 };
 
 const update = async (properties) => {
-    const mediaPackageVod = new AWS.MediaPackageVod();
+    const mediaPackageVod = new AWS.MediaPackageVod({customUserAgent: process.env.SOLUTION_IDENTIFIER});
     const packagingGroup = await mediaPackageVod.describePackagingGroup({ Id: properties.GroupId }).promise();
 
     if (properties.EnableMediaPackage == 'true') {
@@ -142,7 +142,7 @@ const update = async (properties) => {
 };
 
 const purge = async (properties) => {
-    const mediaPackageVod = new AWS.MediaPackageVod();
+    const mediaPackageVod = new AWS.MediaPackageVod({customUserAgent: process.env.SOLUTION_IDENTIFIER});
     const groupId = properties.GroupId;
     let token;
 

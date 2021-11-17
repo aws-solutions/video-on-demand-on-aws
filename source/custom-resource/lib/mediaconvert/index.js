@@ -1,5 +1,5 @@
 /*********************************************************************************************************************
- *  Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
+ *  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
  *                                                                                                                    *
  *  Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file except in compliance    *
  *  with the License. A copy of the License is located at                                                             *
@@ -19,80 +19,80 @@ const DESCRIPTION = 'video on demand on aws';
 
 const qvbrPresets = [
     {
-        name: '_Mp4_Avc_Aac_16x9_1280x720p_24Hz_4.5Mbps_qvbr',
-        file: './lib/mediaconvert/presets/_Mp4_Avc_Aac_16x9_1280x720p_24Hz_4.5Mbps_qvbr.json'
+        name: '_Mp4_Avc_Aac_16x9_1280x720p_4.5Mbps_qvbr',
+        file: './lib/mediaconvert/presets/_Mp4_Avc_Aac_16x9_1280x720p_4.5Mbps_qvbr.json'
     },
     {
-        name: '_Mp4_Avc_Aac_16x9_1920x1080p_24Hz_6Mbps_qvbr',
-        file: './lib/mediaconvert/presets/_Mp4_Avc_Aac_16x9_1920x1080p_24Hz_6Mbps_qvbr.json'
+        name: '_Mp4_Avc_Aac_16x9_1920x1080p_6Mbps_qvbr',
+        file: './lib/mediaconvert/presets/_Mp4_Avc_Aac_16x9_1920x1080p_6Mbps_qvbr.json'
     },
     {
-        name: '_Mp4_Hevc_Aac_16x9_3840x2160p_24Hz_20Mbps_qvbr',
-        file: './lib/mediaconvert/presets/_Mp4_Hevc_Aac_16x9_3840x2160p_24Hz_20Mbps_qvbr.json'
+        name: '_Mp4_Hevc_Aac_16x9_3840x2160p_20Mbps_qvbr',
+        file: './lib/mediaconvert/presets/_Mp4_Hevc_Aac_16x9_3840x2160p_20Mbps_qvbr.json'
     },
     {
-        name: '_Ott_Dash_Mp4_Avc_16x9_1280x720p_30Hz_6.5Mbps_qvbr',
-        file: './lib/mediaconvert/presets/_Ott_Dash_Mp4_Avc_16x9_1280x720p_30Hz_6.5Mbps_qvbr.json'
+        name: '_Ott_Dash_Mp4_Avc_16x9_1280x720p_6.5Mbps_qvbr',
+        file: './lib/mediaconvert/presets/_Ott_Dash_Mp4_Avc_16x9_1280x720p_6.5Mbps_qvbr.json'
     },
     {
-        name: '_Ott_Dash_Mp4_Avc_16x9_480x270p_15Hz_0.4Mbps_qvbr',
-        file: './lib/mediaconvert/presets/_Ott_Dash_Mp4_Avc_16x9_480x270p_15Hz_0.4Mbps_qvbr.json'
+        name: '_Ott_Dash_Mp4_Avc_16x9_480x270p_0.4Mbps_qvbr',
+        file: './lib/mediaconvert/presets/_Ott_Dash_Mp4_Avc_16x9_480x270p_0.4Mbps_qvbr.json'
     },
     {
-        name: '_Ott_Dash_Mp4_Avc_16x9_1920x1080p_30Hz_8.5Mbps_qvbr',
-        file: './lib/mediaconvert/presets/_Ott_Dash_Mp4_Avc_16x9_1920x1080p_30Hz_8.5Mbps_qvbr.json'
+        name: '_Ott_Dash_Mp4_Avc_16x9_1920x1080p_8.5Mbps_qvbr',
+        file: './lib/mediaconvert/presets/_Ott_Dash_Mp4_Avc_16x9_1920x1080p_8.5Mbps_qvbr.json'
     },
     {
-        name: '_Ott_Dash_Mp4_Avc_16x9_640x360p_30Hz_0.6Mbps_qvbr',
-        file: './lib/mediaconvert/presets/_Ott_Dash_Mp4_Avc_16x9_640x360p_30Hz_0.6Mbps_qvbr.json'
+        name: '_Ott_Dash_Mp4_Avc_16x9_640x360p_0.6Mbps_qvbr',
+        file: './lib/mediaconvert/presets/_Ott_Dash_Mp4_Avc_16x9_640x360p_0.6Mbps_qvbr.json'
     },
     {
-        name: '_Ott_Dash_Mp4_Avc_16x9_1280x720p_30Hz_3.5Mbps_qvbr',
-        file: './lib/mediaconvert/presets/_Ott_Dash_Mp4_Avc_16x9_1280x720p_30Hz_3.5Mbps_qvbr.json'
+        name: '_Ott_Dash_Mp4_Avc_16x9_1280x720p_3.5Mbps_qvbr',
+        file: './lib/mediaconvert/presets/_Ott_Dash_Mp4_Avc_16x9_1280x720p_3.5Mbps_qvbr.json'
     },
     {
-        name: '_Ott_Dash_Mp4_Avc_16x9_640x360p_30Hz_1.2Mbps_qvbr',
-        file: './lib/mediaconvert/presets/_Ott_Dash_Mp4_Avc_16x9_640x360p_30Hz_1.2Mbps_qvbr.json'
+        name: '_Ott_Dash_Mp4_Avc_16x9_640x360p_1.2Mbps_qvbr',
+        file: './lib/mediaconvert/presets/_Ott_Dash_Mp4_Avc_16x9_640x360p_1.2Mbps_qvbr.json'
     },
     {
-        name: '_Ott_Dash_Mp4_Avc_16x9_1280x720p_30Hz_5.0Mbps_qvbr',
-        file: './lib/mediaconvert/presets/_Ott_Dash_Mp4_Avc_16x9_1280x720p_30Hz_5.0Mbps_qvbr.json'
+        name: '_Ott_Dash_Mp4_Avc_16x9_1280x720p_5.0Mbps_qvbr',
+        file: './lib/mediaconvert/presets/_Ott_Dash_Mp4_Avc_16x9_1280x720p_5.0Mbps_qvbr.json'
     },
     {
-        name: '_Ott_Dash_Mp4_Avc_16x9_960x540p_30Hz_3.5Mbps_qvbr',
-        file: './lib/mediaconvert/presets/_Ott_Dash_Mp4_Avc_16x9_960x540p_30Hz_3.5Mbps_qvbr.json'
+        name: '_Ott_Dash_Mp4_Avc_16x9_960x540p_3.5Mbps_qvbr',
+        file: './lib/mediaconvert/presets/_Ott_Dash_Mp4_Avc_16x9_960x540p_3.5Mbps_qvbr.json'
     },
     {
-        name: '_Ott_Hls_Ts_Avc_Aac_16x9_1280x720p_30Hz_3.5Mbps_qvbr',
-        file: './lib/mediaconvert/presets/_Ott_Hls_Ts_Avc_Aac_16x9_1280x720p_30Hz_3.5Mbps_qvbr.json'
+        name: '_Ott_Hls_Ts_Avc_Aac_16x9_1280x720p_3.5Mbps_qvbr',
+        file: './lib/mediaconvert/presets/_Ott_Hls_Ts_Avc_Aac_16x9_1280x720p_3.5Mbps_qvbr.json'
     },
     {
-        name: '_Ott_Hls_Ts_Avc_Aac_16x9_480x270p_15Hz_0.4Mbps_qvbr',
-        file: './lib/mediaconvert/presets/_Ott_Hls_Ts_Avc_Aac_16x9_480x270p_15Hz_0.4Mbps_qvbr.json'
+        name: '_Ott_Hls_Ts_Avc_Aac_16x9_480x270p_0.4Mbps_qvbr',
+        file: './lib/mediaconvert/presets/_Ott_Hls_Ts_Avc_Aac_16x9_480x270p_0.4Mbps_qvbr.json'
     },
     {
-        name: '_Ott_Hls_Ts_Avc_Aac_16x9_1280x720p_30Hz_5.0Mbps_qvbr',
-        file: './lib/mediaconvert/presets/_Ott_Hls_Ts_Avc_Aac_16x9_1280x720p_30Hz_5.0Mbps_qvbr.json'
+        name: '_Ott_Hls_Ts_Avc_Aac_16x9_1280x720p_5.0Mbps_qvbr',
+        file: './lib/mediaconvert/presets/_Ott_Hls_Ts_Avc_Aac_16x9_1280x720p_5.0Mbps_qvbr.json'
     },
     {
-        name: '_Ott_Hls_Ts_Avc_Aac_16x9_640x360p_30Hz_0.6Mbps_qvbr',
-        file: './lib/mediaconvert/presets/_Ott_Hls_Ts_Avc_Aac_16x9_640x360p_30Hz_0.6Mbps_qvbr.json'
+        name: '_Ott_Hls_Ts_Avc_Aac_16x9_640x360p_0.6Mbps_qvbr',
+        file: './lib/mediaconvert/presets/_Ott_Hls_Ts_Avc_Aac_16x9_640x360p_0.6Mbps_qvbr.json'
     },
     {
-        name: '_Ott_Hls_Ts_Avc_Aac_16x9_1280x720p_30Hz_6.5Mbps_qvbr',
-        file: './lib/mediaconvert/presets/_Ott_Hls_Ts_Avc_Aac_16x9_1280x720p_30Hz_6.5Mbps_qvbr.json'
+        name: '_Ott_Hls_Ts_Avc_Aac_16x9_1280x720p_6.5Mbps_qvbr',
+        file: './lib/mediaconvert/presets/_Ott_Hls_Ts_Avc_Aac_16x9_1280x720p_6.5Mbps_qvbr.json'
     },
     {
-        name: '_Ott_Hls_Ts_Avc_Aac_16x9_640x360p_30Hz_1.2Mbps_qvbr',
-        file: './lib/mediaconvert/presets/_Ott_Hls_Ts_Avc_Aac_16x9_640x360p_30Hz_1.2Mbps_qvbr.json'
+        name: '_Ott_Hls_Ts_Avc_Aac_16x9_640x360p_1.2Mbps_qvbr',
+        file: './lib/mediaconvert/presets/_Ott_Hls_Ts_Avc_Aac_16x9_640x360p_1.2Mbps_qvbr.json'
     },
     {
-        name: '_Ott_Hls_Ts_Avc_Aac_16x9_1920x1080p_30Hz_8.5Mbps_qvbr',
-        file: './lib/mediaconvert/presets/_Ott_Hls_Ts_Avc_Aac_16x9_1920x1080p_30Hz_8.5Mbps_qvbr.json'
+        name: '_Ott_Hls_Ts_Avc_Aac_16x9_1920x1080p_8.5Mbps_qvbr',
+        file: './lib/mediaconvert/presets/_Ott_Hls_Ts_Avc_Aac_16x9_1920x1080p_8.5Mbps_qvbr.json'
     },
     {
-        name: '_Ott_Hls_Ts_Avc_Aac_16x9_960x540p_30Hz_3.5Mbps_qvbr',
-        file: './lib/mediaconvert/presets/_Ott_Hls_Ts_Avc_Aac_16x9_960x540p_30Hz_3.5Mbps_qvbr.json'
+        name: '_Ott_Hls_Ts_Avc_Aac_16x9_960x540p_3.5Mbps_qvbr',
+        file: './lib/mediaconvert/presets/_Ott_Hls_Ts_Avc_Aac_16x9_960x540p_3.5Mbps_qvbr.json'
     }
 ];
 
@@ -160,7 +160,7 @@ const mediaPackageTemplatesNoPreset = [
 
 // Get the Account regional MediaConvert endpoint for making API calls
 const GetEndpoints = async () => {
-    const mediaconvert = new AWS.MediaConvert();
+    const mediaconvert = new AWS.MediaConvert({customUserAgent: process.env.SOLUTION_IDENTIFIER});
     const data = await mediaconvert.describeEndpoints().promise();
 
     return {
@@ -182,7 +182,8 @@ const _createTemplates = async (instance, templates, stackName) => {
 const Create = async (config) => {
     const mediaconvert = new AWS.MediaConvert({
         endpoint: config.EndPoint,
-        region: process.env.AWS_REGION
+        region: process.env.AWS_REGION,
+        customUserAgent: process.env.SOLUTION_IDENTIFIER
     });
 
     await _createTemplates(mediaconvert, mediaPackageTemplatesNoPreset, config.StackName);
@@ -194,7 +195,8 @@ const Create = async (config) => {
 const Update = async (config) => {
     const mediaconvert = new AWS.MediaConvert({
         endpoint: config.EndPoint,
-        region: process.env.AWS_REGION
+        region: process.env.AWS_REGION,
+        customUserAgent: process.env.SOLUTION_IDENTIFIER
     });
 
     let templatesNoPreset = 'false';
@@ -238,7 +240,8 @@ const _deleteTemplates = async (instance, templates, stackName) => {
 const Delete = async (config) => {
     const mediaconvert = new AWS.MediaConvert({
         endpoint: config.EndPoint,
-        region: process.env.AWS_REGION
+        region: process.env.AWS_REGION,
+        customUserAgent: process.env.SOLUTION_IDENTIFIER
     });
 
     try {

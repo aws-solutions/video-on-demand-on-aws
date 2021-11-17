@@ -611,6 +611,14 @@ Resources:
       Environment:
         Variables:
           AWS_NODEJS_CONNECTION_REUSE_ENABLED: "1"
+          SOLUTION_IDENTIFIER: "AwsSolution/SO0021/%%VERSION%%"
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W89
+            reason: "Lambda functions do not need a VPC"
+          - id: W92
+            reason: "Lambda do not need ReservedConcurrentExecutions in this case"    
 
   StepFunctionsRole:
     Type: AWS::IAM::Role
@@ -672,6 +680,14 @@ Resources:
           ProcessWorkflow: !Sub "arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${AWS::StackName}-process"
           PublishWorkflow: !Sub "arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${AWS::StackName}-publish"
           ErrorHandler: !GetAtt ErrorHandler.Arn
+          SOLUTION_IDENTIFIER: "AwsSolution/SO0021/%%VERSION%%"
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W89
+            reason: "Lambda functions do not need a VPC"
+          - id: W92
+            reason: "Lambda do not need ReservedConcurrentExecutions in this case"    
 
   InputValidateRole:
     Type: AWS::IAM::Role
@@ -754,6 +770,14 @@ Resources:
           EnableSns: !Ref EnableSns
           EnableSqs: !Ref EnableSqs
           AcceleratedTranscoding: !Ref AcceleratedTranscoding
+          SOLUTION_IDENTIFIER: "AwsSolution/SO0021/%%VERSION%%"
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W89
+            reason: "Lambda functions do not need a VPC"
+          - id: W92
+            reason: "Lambda do not need ReservedConcurrentExecutions in this case"    
 
   MediainfoRole:
     Type: AWS::IAM::Role
@@ -810,6 +834,14 @@ Resources:
       Environment:
         Variables:
           ErrorHandler: !GetAtt ErrorHandler.Arn
+          SOLUTION_IDENTIFIER: "AwsSolution/SO0021/%%VERSION%%"
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W89
+            reason: "Lambda functions do not need a VPC"
+          - id: W92
+            reason: "Lambda do not need ReservedConcurrentExecutions in this case"    
 
   DynamoUpdateRole:
     Type: AWS::IAM::Role
@@ -867,6 +899,14 @@ Resources:
           AWS_NODEJS_CONNECTION_REUSE_ENABLED: "1"
           DynamoDBTable: !Ref DynamoDBTable
           ErrorHandler: !GetAtt ErrorHandler.Arn
+          SOLUTION_IDENTIFIER: "AwsSolution/SO0021/%%VERSION%%"
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W89
+            reason: "Lambda functions do not need a VPC"
+          - id: W92
+            reason: "Lambda do not need ReservedConcurrentExecutions in this case"    
 
   ProfilerRole:
     Type: AWS::IAM::Role
@@ -924,6 +964,14 @@ Resources:
           AWS_NODEJS_CONNECTION_REUSE_ENABLED: "1"
           DynamoDBTable: !Ref DynamoDBTable
           ErrorHandler: !GetAtt ErrorHandler.Arn
+          SOLUTION_IDENTIFIER: "AwsSolution/SO0021/%%VERSION%%"
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W89
+            reason: "Lambda functions do not need a VPC"
+          - id: W92
+            reason: "Lambda do not need ReservedConcurrentExecutions in this case"    
 
   EncodeRole:
     Type: AWS::IAM::Role
@@ -988,6 +1036,14 @@ Resources:
           ErrorHandler: !GetAtt ErrorHandler.Arn
           MediaConvertRole: !GetAtt MediaConvertRole.Arn
           EndPoint: !GetAtt MediaConvertEndPoint.EndpointUrl
+          SOLUTION_IDENTIFIER: "AwsSolution/SO0021/%%VERSION%%"
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W89
+            reason: "Lambda functions do not need a VPC"
+          - id: W92
+            reason: "Lambda do not need ReservedConcurrentExecutions in this case"    
 
   OutputValidateRole:
     Type: AWS::IAM::Role
@@ -1051,6 +1107,14 @@ Resources:
           DynamoDBTable: !Ref DynamoDBTable
           ErrorHandler: !GetAtt ErrorHandler.Arn
           EndPoint: !GetAtt MediaConvertEndPoint.EndpointUrl
+          SOLUTION_IDENTIFIER: "AwsSolution/SO0021/%%VERSION%%"
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W89
+            reason: "Lambda functions do not need a VPC"
+          - id: W92
+            reason: "Lambda do not need ReservedConcurrentExecutions in this case"    
 
   ArchiveSourceRole:
     Type: AWS::IAM::Role
@@ -1107,6 +1171,14 @@ Resources:
         Variables:
           AWS_NODEJS_CONNECTION_REUSE_ENABLED: "1"
           ErrorHandler: !GetAtt ErrorHandler.Arn
+          SOLUTION_IDENTIFIER: "AwsSolution/SO0021/%%VERSION%%"
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W89
+            reason: "Lambda functions do not need a VPC"
+          - id: W92
+            reason: "Lambda do not need ReservedConcurrentExecutions in this case"    
 
   SqsSendMessageRole:
     Type: AWS::IAM::Role
@@ -1172,6 +1244,15 @@ Resources:
           AWS_NODEJS_CONNECTION_REUSE_ENABLED: "1"
           ErrorHandler: !GetAtt ErrorHandler.Arn
           SqsQueue: !Ref SqsQueue
+          SOLUTION_IDENTIFIER: "AwsSolution/SO0021/%%VERSION%%"
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W89
+            reason: "Lambda functions do not need a VPC"
+          - id: W92
+            reason: "Lambda do not need ReservedConcurrentExecutions in this case"    
+
   SnsNotificationRole:
     Type: AWS::IAM::Role
     Properties:
@@ -1232,6 +1313,14 @@ Resources:
           AWS_NODEJS_CONNECTION_REUSE_ENABLED: "1"
           ErrorHandler: !GetAtt ErrorHandler.Arn
           SnsTopic: !Ref SnsTopic
+          SOLUTION_IDENTIFIER: "AwsSolution/SO0021/%%VERSION%%"
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W89
+            reason: "Lambda functions do not need a VPC"
+          - id: W92
+            reason: "Lambda do not need ReservedConcurrentExecutions in this case"    
 
   MediaPackageAssetsRole:
     Type: AWS::IAM::Role
@@ -1295,6 +1384,14 @@ Resources:
           GroupId: !GetAtt MediaPackageVod.GroupId
           GroupDomainName: !GetAtt MediaPackageVod.GroupDomainName
           MediaPackageVodRole: !GetAtt MediaPackageVodRole.Arn
+          SOLUTION_IDENTIFIER: "AwsSolution/SO0021/%%VERSION%%"
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W89
+            reason: "Lambda functions do not need a VPC"
+          - id: W92
+            reason: "Lambda do not need ReservedConcurrentExecutions in this case"    
 
   ErrorHandlerRole:
     Type: AWS::IAM::Role
@@ -1355,6 +1452,14 @@ Resources:
           AWS_NODEJS_CONNECTION_REUSE_ENABLED: "1"
           DynamoDBTable: !Ref DynamoDBTable
           SnsTopic: !Ref SnsTopic
+          SOLUTION_IDENTIFIER: "AwsSolution/SO0021/%%VERSION%%"
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W89
+            reason: "Lambda functions do not need a VPC"
+          - id: W92
+            reason: "Lambda do not need ReservedConcurrentExecutions in this case"    
 
   IngestWorkflow:
     Type: AWS::StepFunctions::StateMachine

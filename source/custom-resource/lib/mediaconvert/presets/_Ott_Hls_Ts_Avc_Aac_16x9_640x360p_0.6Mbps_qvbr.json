@@ -10,9 +10,8 @@
          "FramerateNumerator": 30000,
          "MinIInterval": 0,
          "UnregisteredSeiTimecode": "DISABLED",
-         "FramerateControl": "SPECIFIED",
+         "FramerateControl": "INITIALIZE_FROM_SOURCE",
          "NumberReferenceFrames": 3,
-         "FramerateDenominator": 1001,
          "QvbrSettings": {
            "QvbrQualityLevel": 7
          },
@@ -38,7 +37,6 @@
          "FramerateConversionAlgorithm": "DUPLICATE_DROP",
          "ParNumerator": 1,
          "SceneChangeDetect": "ENABLED",
-         "CodecLevel": "LEVEL_3_1",
          "NumberBFramesBetweenReferenceFrames": 3,
          "HrdBufferSize": 1200000
        }

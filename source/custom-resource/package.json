@@ -18,10 +18,10 @@
   "devDependencies": {
     "aws-sdk": "^2.609.0",
     "aws-sdk-mock": "^5.0.0",
-    "axios-mock-adapter": "^1.17.0",
+    "mocha": "^7.0.0",
     "chai": "^4.2.0",
-    "lodash": "^4.17.15",
-    "mocha": "^7.0.0"
+    "axios-mock-adapter": "^1.17.0",
+    "lodash": "^4.17.15"
   },
   "private": true,
   "author": {

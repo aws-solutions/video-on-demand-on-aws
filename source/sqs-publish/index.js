@@ -19,7 +19,8 @@ exports.handler = async (event) => {
     console.log(`REQUEST:: ${JSON.stringify(event, null, 2)}`);
 
     const sqs = new AWS.SQS({
-        region: process.env.AWS_REGION
+        region: process.env.AWS_REGION,
+        customUserAgent: process.env.SOLUTION_IDENTIFIER
     });
 
     try {

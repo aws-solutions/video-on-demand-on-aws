@@ -4,8 +4,6 @@
 **/regional-s3-assets
 **/open-source
 **/.zip
-**/tmp
-**/out-tsc
 
 # python output
 **/__pycache__
@@ -16,18 +14,11 @@
 
 # dependencies
 **/node_modules
-
-# e2e
-**/e2e/*.js
-**/e2e/*.map
+package-lock.json
 
 # misc
 **/npm-debug.log
-**/testem.log
-# **/package-lock.json
 **/.vscode/settings.json
-*~
-~*
 
 # System Files
 **/.DS_Store

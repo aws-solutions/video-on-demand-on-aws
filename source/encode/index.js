@@ -1,5 +1,5 @@
 /*********************************************************************************************************************
- *  Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
+ *  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
  *                                                                                                                    *
  *  Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file except in compliance    *
  *  with the License. A copy of the License is located at                                                             *
@@ -124,7 +124,8 @@ exports.handler = async (event) => {
     console.log(`REQUEST:: ${JSON.stringify(event, null, 2)}`);
 
     const mediaconvert = new AWS.MediaConvert({
-        endpoint: process.env.EndPoint
+        endpoint: process.env.EndPoint,
+        customUserAgent: process.env.SOLUTION_IDENTIFIER
     });
 
     try {
@@ -145,11 +146,7 @@ exports.handler = async (event) => {
                         'Audio Selector 1': {
                             Offset: 0,
                             DefaultSelection: 'NOT_DEFAULT',
-                            ProgramSelection: 1,
-                            SelectorType: 'TRACK',
-                            Tracks: [
-                                1
-                            ]
+                            ProgramSelection: 1
                         }
                     },
                     VideoSelector: {

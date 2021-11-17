@@ -4,6 +4,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+
+## [5.3.0] - 2021-11-17
+### Added 
+- Added new input file types wmv, mkv, m3u8, mpeg, webm, and h264. 
+- Now allowing uppercase input file types to run the end to end video encoding workflow.
+- Added the MXF and mxf file types. Closes this request (https://github.com/aws-solutions/video-on-demand-on-aws/issues/124)
+- Additional headers added to Amazon CloudFront distribution attached to destination bucket for the out/* prefix. This will allow easier playback of content on modern browsers. Additional headers whitelisted are Origin, Access-Control-Allow-Origin, Access-Control-Request-Method, and Access-Control-Request-Headers.
+- Additional methods added to Amazon CloudFront distribution for destination bucket. Head and options added.
+
+### Changed
+- Added steps in Readme to make building the project more clear. 
+- Added Readme build step to ensure bucket ownership when uploading build files.
+- Removed deinterlacer preprocessor from templates to reduce costs. This causes MediaConvert jobs to run in Basic Tier mode instead of Pro Tier.
+- Modified job templates that force output frame rate to 30, 24, or 15 fps to instead follow the source fps of your video file. This allows 60fps content, as well as PAL 25/50 fps video files to have their frame rate preserved. 
+- Removed Dash and MP4 outputs, leaving just the HLS output. This saves costs running this solution.
+- Removed SelectorType and Tracks from job profiles, we will auto pick the first track. This allows audio only videos to encode without having an error.
+- Changed AWS MediaConvert templates codecLevel to auto to allow for more supported input file types.
+- Changed AWS MediaConvert audio track to auto to allow for video only workflows. This allows video files without audio track to work with the included AWS MediaConvert profiles. 
+
+### Fixed
+- Fixed naming in the MediaConvert custom resource. Closes this PR (https://github.com/aws-solutions/video-on-demand-on-aws/pull/84)
+- Update Axios package to 0.21.1
+
 ## [5.2.0] - 2020-12-10
 ### Added 
 - Support for S3 Signature Version4 for pre-signed URLs (https://github.com/awslabs/video-on-demand-on-aws/pull/111)
