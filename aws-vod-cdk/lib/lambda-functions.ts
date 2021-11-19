@@ -92,7 +92,7 @@ export class LambdaFunctions extends Construct {
           "Used to place all confirmed users into the 'AppSyncReadOnly' UserPool group",
         handler: 'index.handler',
         code: new lambda.AssetCode(
-          '../source/cognito-triggers/post-confirmation'
+          '../source/cognito-post-confirmation-trigger'
         ),
         runtime: lambda.Runtime.NODEJS_12_X,
         timeout: Duration.seconds(180),

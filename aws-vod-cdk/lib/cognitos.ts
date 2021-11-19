@@ -45,10 +45,6 @@ export class Cognitos extends Construct {
         familyName: requiredAndMutable,
         email: requiredAndMutable,
       },
-      signInAliases: {
-        username: true,
-        email: true,
-      },
       autoVerify: {
         email: true,
       },

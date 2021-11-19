@@ -21,7 +21,7 @@ export class UserPoolGroups extends Construct {
       {
         userPoolId: props.cognitos.userPool.userPoolId,
         groupName: 'AppSyncReadOnly',
-        precedence: 99,
+        precedence: 0,
         roleArn: props.iamRoles.appSyncReadOnly.roleArn,
       }
     );
