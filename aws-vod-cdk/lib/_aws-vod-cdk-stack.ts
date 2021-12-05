@@ -286,6 +286,27 @@ export class AwsVodCdkStack extends Stack {
       policyStatements.destinationBucket
     );
 
+    // Associate appropriate IAM Roles to the Identity Pool
+    const identityPoolRoleAttachment =
+      new cognito.CfnIdentityPoolRoleAttachment(
+        this,
+        'IdentityPoolRoleAttachment',
+        {
+          identityPoolId: cognitos.identityPool.ref,
+          roles: {
+            authenticated: iamRoles.appSyncReadOnly.roleArn,
+            unauthenticated: iamRoles.appSyncReadOnly.roleArn,
+          },
+          roleMappings: {
+            mapping: {
+              type: 'Token',
+              ambiguousRoleResolution: 'AuthenticatedRole',
+              identityProvider: `cognito-idp.${region}.amazonaws.com/${cognitos.userPool.userPoolId}:${cognitos.userPoolClient.userPoolClientId}`,
+            },
+          },
+        }
+      );
+
     // Add environment variables to LambdaFunctions
     // This must be done here to prevent circular dependency issues
     lambdaFunctions.encode.addEnvironment(

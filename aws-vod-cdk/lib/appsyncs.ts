@@ -24,9 +24,9 @@ export class AppSyncs extends Construct {
   public readonly mutationUpdateVideoRequest: string;
   public readonly mutationUpdateVideoResponse: string;
   public readonly mutationUpdateVideoResolver: appsync.CfnResolver;
-  public readonly queryGetVideosRequest: string;
-  public readonly queryGetVideosResponse: string;
-  public readonly queryGetVideosResolver: appsync.CfnResolver;
+  public readonly queryListVideosRequest: string;
+  public readonly queryListVideosResponse: string;
+  public readonly queryListVideosResolver: appsync.CfnResolver;
 
   constructor(scope: Stack, id: string, props: AppSyncsProps) {
     super(scope, id);
@@ -35,7 +35,7 @@ export class AppSyncs extends Construct {
 
     this.videoApi = new appsync.CfnGraphQLApi(this, 'VideoApi', {
       name: `${props.stackName}-GraphQL-API`,
-      authenticationType: 'AMAZON_COGNITO_USER_POOLS',
+      authenticationType: 'AWS_IAM',
       userPoolConfig: {
         awsRegion: props.region,
         userPoolId: props.cognitos.userPool.userPoolId,
@@ -128,34 +128,34 @@ export class AppSyncs extends Construct {
 
     this.mutationUpdateVideoResolver.addDependsOn(this.dataSource);
 
-    this.queryGetVideosRequest = readFileSync(
-      './lib/appsync/resolvers/queries/getVideos/request.vtl',
+    this.queryListVideosRequest = readFileSync(
+      './lib/appsync/resolvers/queries/listVideos/request.vtl',
       'utf-8'
     );
 
-    this.queryGetVideosResponse = readFileSync(
-      './lib/appsync/resolvers/queries/getVideos/response.vtl',
+    this.queryListVideosResponse = readFileSync(
+      './lib/appsync/resolvers/queries/listVideos/response.vtl',
       'utf-8'
     );
 
-    this.queryGetVideosResolver = new appsync.CfnResolver(
+    this.queryListVideosResolver = new appsync.CfnResolver(
       this,
       'QueryGetVideosResolver',
       {
         apiId: this.videoApi.attrApiId,
         typeName: 'Query',
-        fieldName: 'getVideos',
+        fieldName: 'listVideos',
         dataSourceName: `${props.stackName.replace(
           '-',
           '_'
         )}_DynamoDB_DataSource`,
-        requestMappingTemplate: this.queryGetVideosRequest,
-        responseMappingTemplate: this.queryGetVideosResponse,
+        requestMappingTemplate: this.queryListVideosRequest,
+        responseMappingTemplate: this.queryListVideosResponse,
       }
     );
 
-    this.queryGetVideosResolver.addDependsOn(this.videoApiGraphQLSchema);
+    this.queryListVideosResolver.addDependsOn(this.videoApiGraphQLSchema);
 
-    this.queryGetVideosResolver.addDependsOn(this.dataSource);
+    this.queryListVideosResolver.addDependsOn(this.dataSource);
   }
 }

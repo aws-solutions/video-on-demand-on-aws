@@ -46,16 +46,19 @@ export class IamRoles extends Construct {
 
     this.appSyncReadOnly = new iam.Role(this, 'AppSyncReadOnly', {
       roleName: `${props.stackName}-AppSyncReadOnlyRole`,
-      assumedBy: new iam.WebIdentityPrincipal(
-        'cognito-identity.amazonaws.com'
-      ).withConditions({
-        StringEquals: {
-          'cognito-identity.amazonaws.com:aud': props.cognitos.identityPool.ref,
+      assumedBy: new iam.FederatedPrincipal(
+        'cognito-identity.amazonaws.com',
+        {
+          StringEquals: {
+            'cognito-identity.amazonaws.com:aud':
+              props.cognitos.identityPool.ref,
+          },
+          // 'ForAnyValue:StringLike': {
+          //   'cognito-identity.amazonaws.com:amr': 'unauthenticated',
+          // },
         },
-        'ForAnyValue:StringLike': {
-          'cognito-identity.amazonaws.com:amr': 'unauthenticated',
-        },
-      }),
+        'sts:AssumeRoleWithWebIdentity'
+      ),
       inlinePolicies: {
         [`${props.stackName}-AppSyncReadOnlyRolePolicyDocument`]:
           props.policyDocuments.appsyncReadOnly,

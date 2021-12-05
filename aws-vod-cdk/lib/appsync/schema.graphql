@@ -87,7 +87,7 @@ input TableVideoFilterInput {
 
 type Query {
   getVideo(guid: String!): Video
-  getVideos(
+  listVideos(
     filter: TableVideoFilterInput
     limit: Int
     nextToken: String
