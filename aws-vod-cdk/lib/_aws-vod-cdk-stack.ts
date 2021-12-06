@@ -58,6 +58,7 @@ export class AwsVodCdkStack extends Stack {
 
     const dynamoDbTables = new DynamoDbTables(this, 'DynamoDbTables', {
       stackName: stackName,
+      stackStage: contextVariables.stackStage,
     });
 
     const eventPatterns = new EventPatterns(this, 'EventPatterns', {
@@ -66,6 +67,7 @@ export class AwsVodCdkStack extends Stack {
 
     const kmsKeys = new KmsKeys(this, 'KmsKeys', {
       stackName: stackName,
+      stackStage: contextVariables.stackStage,
     });
 
     const lambdaPermissions = new LambdaPermissions(this, 'Permissions', {
@@ -74,6 +76,7 @@ export class AwsVodCdkStack extends Stack {
 
     const s3Buckets = new S3Buckets(this, 'S3Buckets', {
       stackName: stackName,
+      stackStage: contextVariables.stackStage,
     });
 
     const snsTopics = new SnsTopics(this, 'SnsTopics', {

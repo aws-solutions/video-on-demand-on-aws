@@ -3,6 +3,7 @@ import { aws_dynamodb as dynamoDb, CfnDeletionPolicy } from 'aws-cdk-lib';
 
 export interface DynamoDbTablesProps {
   stackName: string;
+  stackStage: string;
 }
 
 export class DynamoDbTables extends Construct {
@@ -59,7 +60,13 @@ export class DynamoDbTables extends Construct {
       billingMode: 'PAY_PER_REQUEST',
     });
 
-    this.videoInfo.cfnOptions.deletionPolicy = CfnDeletionPolicy.RETAIN;
-    this.videoInfo.cfnOptions.updateReplacePolicy = CfnDeletionPolicy.RETAIN;
+    this.videoInfo.cfnOptions.deletionPolicy =
+      props.stackStage === 'Prod'
+        ? CfnDeletionPolicy.RETAIN
+        : CfnDeletionPolicy.DELETE;
+    this.videoInfo.cfnOptions.updateReplacePolicy =
+      props.stackStage === 'Prod'
+        ? CfnDeletionPolicy.RETAIN
+        : CfnDeletionPolicy.DELETE;
   }
 }

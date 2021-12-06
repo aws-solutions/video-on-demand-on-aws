@@ -24,6 +24,9 @@ export class AppSyncs extends Construct {
   public readonly mutationUpdateVideoRequest: string;
   public readonly mutationUpdateVideoResponse: string;
   public readonly mutationUpdateVideoResolver: appsync.CfnResolver;
+  public readonly queryGetVideoRequest: string;
+  public readonly queryGetVideoResponse: string;
+  public readonly queryGetVideoResolver: appsync.CfnResolver;
   public readonly queryListVideosRequest: string;
   public readonly queryListVideosResponse: string;
   public readonly queryListVideosResolver: appsync.CfnResolver;
@@ -128,6 +131,36 @@ export class AppSyncs extends Construct {
 
     this.mutationUpdateVideoResolver.addDependsOn(this.dataSource);
 
+    this.queryGetVideoRequest = readFileSync(
+      './lib/appsync/resolvers/queries/getVideo/request.vtl',
+      'utf-8'
+    );
+
+    this.queryGetVideoResponse = readFileSync(
+      './lib/appsync/resolvers/queries/getVideo/response.vtl',
+      'utf-8'
+    );
+
+    this.queryGetVideoResolver = new appsync.CfnResolver(
+      this,
+      'QueryGetVideoResolver',
+      {
+        apiId: this.videoApi.attrApiId,
+        typeName: 'Query',
+        fieldName: 'getVideo',
+        dataSourceName: `${props.stackName.replace(
+          '-',
+          '_'
+        )}_DynamoDB_DataSource`,
+        requestMappingTemplate: this.queryGetVideoRequest,
+        responseMappingTemplate: this.queryGetVideoResponse,
+      }
+    );
+
+    this.queryGetVideoResolver.addDependsOn(this.videoApiGraphQLSchema);
+
+    this.queryGetVideoResolver.addDependsOn(this.dataSource);
+
     this.queryListVideosRequest = readFileSync(
       './lib/appsync/resolvers/queries/listVideos/request.vtl',
       'utf-8'
@@ -140,7 +173,7 @@ export class AppSyncs extends Construct {
 
     this.queryListVideosResolver = new appsync.CfnResolver(
       this,
-      'QueryGetVideosResolver',
+      'QueryListVideosResolver',
       {
         apiId: this.videoApi.attrApiId,
         typeName: 'Query',

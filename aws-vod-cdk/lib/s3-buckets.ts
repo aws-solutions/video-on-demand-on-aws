@@ -3,6 +3,7 @@ import { aws_s3 as s3, Duration, RemovalPolicy } from 'aws-cdk-lib';
 
 export interface S3BucketsProps {
   stackName: string;
+  stackStage: string;
 }
 
 export class S3Buckets extends Construct {
@@ -18,7 +19,10 @@ export class S3Buckets extends Construct {
       accessControl: s3.BucketAccessControl.LOG_DELIVERY_WRITE,
       encryption: s3.BucketEncryption.S3_MANAGED,
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
-      removalPolicy: RemovalPolicy.RETAIN,
+      removalPolicy:
+        props.stackStage === 'Prod'
+          ? RemovalPolicy.RETAIN
+          : RemovalPolicy.DESTROY,
     });
 
     this.destination = new s3.Bucket(this, 'DestinationBucket', {
@@ -35,7 +39,10 @@ export class S3Buckets extends Construct {
       encryption: s3.BucketEncryption.S3_MANAGED,
       serverAccessLogsBucket: this.logs,
       serverAccessLogsPrefix: 's3-access/',
-      removalPolicy: RemovalPolicy.RETAIN,
+      removalPolicy:
+        props.stackStage === 'Prod'
+          ? RemovalPolicy.RETAIN
+          : RemovalPolicy.DESTROY,
     });
 
     this.source = new s3.Bucket(this, 'SourceBucket', {
@@ -74,7 +81,10 @@ export class S3Buckets extends Construct {
       serverAccessLogsBucket: this.logs,
       serverAccessLogsPrefix: 's3-access/',
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
-      removalPolicy: RemovalPolicy.RETAIN,
+      removalPolicy:
+        props.stackStage === 'Prod'
+          ? RemovalPolicy.RETAIN
+          : RemovalPolicy.DESTROY,
     });
   }
 }

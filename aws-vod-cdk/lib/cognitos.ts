@@ -1,5 +1,5 @@
 import { Construct } from 'constructs';
-import { aws_cognito as cognito, Stack } from 'aws-cdk-lib';
+import { aws_cognito as cognito, RemovalPolicy, Stack } from 'aws-cdk-lib';
 import { aws_route53 as route53 } from 'aws-cdk-lib';
 import { aws_route53_targets as targets } from 'aws-cdk-lib';
 import { CertificateManagers } from './certificate-managers';
@@ -48,6 +48,10 @@ export class Cognitos extends Construct {
       autoVerify: {
         email: true,
       },
+      removalPolicy:
+        props.stackStage === 'Prod'
+          ? RemovalPolicy.RETAIN
+          : RemovalPolicy.DESTROY,
     });
 
     this.userPoolClient = new cognito.UserPoolClient(this, 'UserPoolClient', {
