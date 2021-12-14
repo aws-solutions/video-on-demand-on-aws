@@ -82,7 +82,7 @@ exports.handler = async (event) => {
       }
       logger.info('ddb:deleting:', ddbParams);
       try {
-        return await dynamo.delete(ddbParams).promise();
+        await dynamo.delete(ddbParams).promise();
       } catch (e) {
         logger.error(`Cannot delete ddb: ${JSON.stringify(ddbParams)}`, e);
         throw e;

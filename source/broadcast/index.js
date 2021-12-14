@@ -24,8 +24,8 @@ exports.handler = async (event) => {
   logger.info("REQUEST", event);
 
   if (!event.hasOwnProperty('cmsId')) {
-    logger.error("Event does contain a 'cmsId'.", event);
-    return event;
+    logger.error("Event is missing a 'cmsId'.", event);
+    throw event;
   }
 
   const sns = new AWS.SNS({
