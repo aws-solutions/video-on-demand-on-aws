@@ -19,12 +19,12 @@ jobs:
 
       - run: make test build
 
-      - name: configure aws
+      - name: configure aws credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: eu-west-1
+          role-to-assume: arn:aws:iam::053041861227:role/github-s3-access-eu-west-1
+          role-session-name: GitHubActions
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Copy files to production with the AWS CLI
         run: |
