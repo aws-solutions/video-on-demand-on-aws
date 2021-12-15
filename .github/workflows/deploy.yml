@@ -24,7 +24,7 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::053041861227:role/github-s3-access-eu-west-1
           role-session-name: GitHubActions
-          aws-region: ${{ env.AWS_REGION }}
+          aws-region: eu-west-1
 
       - name: Copy files to production with the AWS CLI
         run: |
