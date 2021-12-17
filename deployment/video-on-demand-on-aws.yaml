@@ -41,7 +41,7 @@ Parameters:
       - No
 
   EnableSns:
-    Description: Enable Ingest and Publish email notifications, error messages are not afeected by this parameter.
+    Description: Enable Ingest and Publish email notifications, error messages are not affected by this parameter.
     Type: String
     Default: Yes
     AllowedValues:
@@ -49,7 +49,7 @@ Parameters:
       - No    
   
   EnableSqs:
-    Description: Publish the workflow results to an SQS queue to injest upstream
+    Description: Publish the workflow results to an SQS queue to ingest upstream
     Type: String
     Default: Yes
     AllowedValues:
@@ -57,7 +57,7 @@ Parameters:
       - No  
 
   AcceleratedTranscoding:
-    Description: Enable accelerated transcoding in AWS Elemental MediaConvert. PREFERRED will only use acceleration if the input files is supported. ENABLED accleration is applied to all files (this will fail for unsupported file types) see MediaConvert Documentation for more detail https://docs.aws.amazon.com/mediaconvert/latest/ug/accelerated-transcoding.html
+    Description: Enable accelerated transcoding in AWS Elemental MediaConvert. PREFERRED will only use acceleration if the input files are supported. ENABLED acceleration is applied to all files (this will fail for unsupported file types) see MediaConvert Documentation for more detail https://docs.aws.amazon.com/mediaconvert/latest/ug/accelerated-transcoding.html
     Type: String
     Default: PREFERRED
     AllowedValues:
