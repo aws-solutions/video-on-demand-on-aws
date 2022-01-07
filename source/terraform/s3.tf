@@ -8,6 +8,7 @@ locals {
     "http://localhost:3000",
     "http://local.t-online.de:3000"
   ]
+  s3_λ_source_bucket = "${local.project}-lambda-sources-${data.aws_caller_identity.current.account_id}-${data.aws_region.current.name}"
 }
 
 module "s3_source" {
@@ -19,10 +20,18 @@ module "s3_source" {
   force_destroy = true
 
   # S3 bucket-level Public Access Block configuration
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
+  block_public_acls                     = true
+  block_public_policy                   = true
+  ignore_public_acls                    = true
+  restrict_public_buckets               = true
+  attach_deny_insecure_transport_policy = true
+  server_side_encryption_configuration  = {
+    rule = {
+      apply_server_side_encryption_by_default = {
+        sse_algorithm = "aws:kms"
+      }
+    }
+  }
 
   lifecycle_rule = [
     {
@@ -112,10 +121,18 @@ module "s3_destination" {
   force_destroy = true
 
   # S3 bucket-level Public Access Block configuration
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
+  block_public_acls                     = true
+  block_public_policy                   = true
+  ignore_public_acls                    = true
+  restrict_public_buckets               = true
+  attach_deny_insecure_transport_policy = true
+  server_side_encryption_configuration  = {
+    rule = {
+      apply_server_side_encryption_by_default = {
+        sse_algorithm = "aws:kms"
+      }
+    }
+  }
 
   cors_rule = [
     {
@@ -141,10 +158,18 @@ module "s3_destination_for_restricted_videos" {
   force_destroy = true
 
   # S3 bucket-level Public Access Block configuration
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
+  block_public_acls                     = true
+  block_public_policy                   = true
+  ignore_public_acls                    = true
+  restrict_public_buckets               = true
+  attach_deny_insecure_transport_policy = true
+  server_side_encryption_configuration  = {
+    rule = {
+      apply_server_side_encryption_by_default = {
+        sse_algorithm = "aws:kms"
+      }
+    }
+  }
 
   cors_rule = [
     {
@@ -200,7 +225,15 @@ resource "aws_s3_bucket_object" "redirect_videos_restricted" {
 
 resource "aws_s3_bucket" "s3_λ_source" {
   acl           = "private"
-  bucket        = "${local.project}-lambda-sources-${data.aws_caller_identity.current.account_id}-${data.aws_region.current.name}"
+  bucket        = local.s3_λ_source_bucket
+  server_side_encryption_configuration {
+    rule {
+      apply_server_side_encryption_by_default {
+        sse_algorithm = "aws:kms"
+      }
+    }
+  }
+  policy        = data.aws_iam_policy_document.s3_λ_source.json
   force_destroy = true
 
   versioning {
@@ -215,4 +248,34 @@ resource "aws_s3_bucket_public_access_block" "source" {
   block_public_policy     = true
   ignore_public_acls      = true
   restrict_public_buckets = true
+}
+
+data "aws_iam_policy_document" "s3_λ_source" {
+  // Default TLS enforcement
+  statement {
+    sid    = "denyInsecureTransport"
+    effect = "Deny"
+
+    actions = [
+      "s3:*",
+    ]
+
+    resources = [
+      "arn:aws:s3:::${local.s3_λ_source_bucket}",
+      "arn:aws:s3:::${local.s3_λ_source_bucket}/*",
+    ]
+
+    principals {
+      type        = "*"
+      identifiers = ["*"]
+    }
+
+    condition {
+      test     = "Bool"
+      variable = "aws:SecureTransport"
+      values   = [
+        "false"
+      ]
+    }
+  }
 }
