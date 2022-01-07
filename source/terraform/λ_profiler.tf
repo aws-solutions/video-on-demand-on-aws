@@ -15,7 +15,7 @@ module "λ_profiler" {
   ignore_external_function_updates   = true
   publish                            = true
   runtime                            = "nodejs14.x"
-  s3_bucket                          = aws_s3_bucket.s3_λ_source.bucket
+  s3_bucket                          = module.s3_λ_source.s3_bucket_id
   s3_key                             = local.profiler_s3_key
   s3_object_version                  = aws_s3_bucket_object.λ_profiler.version_id
   timeout                            = 120
@@ -65,7 +65,7 @@ resource "aws_iam_role_policy_attachment" "λ_profiler" {
 // this resource is only used for the initial `terraform apply` - all further
 // deployments are running on CodePipeline
 resource "aws_s3_bucket_object" "λ_profiler" {
-  bucket = aws_s3_bucket.s3_λ_source.bucket
+  bucket = module.s3_λ_source.s3_bucket_id
   key    = local.profiler_s3_key
   source = fileexists(local.profiler_package) ? local.profiler_package : null
   etag   = fileexists(local.profiler_package) ? filemd5(local.profiler_package) : null
@@ -92,7 +92,7 @@ module "λ_profiler_deployment" {
   alias_name                        = aws_lambda_alias.λ_profiler.name
   codestar_notifications_target_arn = data.aws_sns_topic.codestar_notifications.arn
   function_name                     = module.λ_profiler.function_name
-  codepipeline_artifact_store_bucket = aws_s3_bucket.s3_λ_source.bucket
-  s3_bucket                         = aws_s3_bucket.s3_λ_source.bucket
+  codepipeline_artifact_store_bucket = module.s3_λ_source.s3_bucket_id
+  s3_bucket                         = module.s3_λ_source.s3_bucket_id
   s3_key                            = local.profiler_s3_key
 }

@@ -19,10 +19,18 @@ module "s3_source" {
   force_destroy = true
 
   # S3 bucket-level Public Access Block configuration
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
+  block_public_acls                     = true
+  block_public_policy                   = true
+  ignore_public_acls                    = true
+  restrict_public_buckets               = true
+  attach_deny_insecure_transport_policy = true
+  server_side_encryption_configuration  = {
+    rule = {
+      apply_server_side_encryption_by_default = {
+        sse_algorithm = "aws:kms"
+      }
+    }
+  }
 
   lifecycle_rule = [
     {
@@ -112,10 +120,18 @@ module "s3_destination" {
   force_destroy = true
 
   # S3 bucket-level Public Access Block configuration
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
+  block_public_acls                     = true
+  block_public_policy                   = true
+  ignore_public_acls                    = true
+  restrict_public_buckets               = true
+  attach_deny_insecure_transport_policy = true
+  server_side_encryption_configuration  = {
+    rule = {
+      apply_server_side_encryption_by_default = {
+        sse_algorithm = "aws:kms"
+      }
+    }
+  }
 
   cors_rule = [
     {
@@ -141,10 +157,18 @@ module "s3_destination_for_restricted_videos" {
   force_destroy = true
 
   # S3 bucket-level Public Access Block configuration
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
+  block_public_acls                     = true
+  block_public_policy                   = true
+  ignore_public_acls                    = true
+  restrict_public_buckets               = true
+  attach_deny_insecure_transport_policy = true
+  server_side_encryption_configuration  = {
+    rule = {
+      apply_server_side_encryption_by_default = {
+        sse_algorithm = "aws:kms"
+      }
+    }
+  }
 
   cors_rule = [
     {
@@ -198,21 +222,25 @@ resource "aws_s3_bucket_object" "redirect_videos_restricted" {
   etag             = md5(local.video_redirect)
 }
 
-resource "aws_s3_bucket" "s3_λ_source" {
+module "s3_λ_source" {
+  source  = "terraform-aws-modules/s3-bucket/aws"
+  version = "~> 2.0"
+
   acl           = "private"
-  bucket        = "${local.project}-lambda-sources-${data.aws_caller_identity.current.account_id}-${data.aws_region.current.name}"
+  bucket        = "${local.project}-lambda-source-${data.aws_caller_identity.current.account_id}-${data.aws_region.current.name}"
   force_destroy = true
 
-  versioning {
-    enabled = true
+  # S3 bucket-level Public Access Block configuration
+  block_public_acls                     = true
+  block_public_policy                   = true
+  ignore_public_acls                    = true
+  restrict_public_buckets               = true
+  attach_deny_insecure_transport_policy = true
+  server_side_encryption_configuration  = {
+    rule = {
+      apply_server_side_encryption_by_default = {
+        sse_algorithm = "aws:kms"
+      }
+    }
   }
-}
-
-resource "aws_s3_bucket_public_access_block" "source" {
-  bucket = aws_s3_bucket.s3_λ_source.id
-
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
 }

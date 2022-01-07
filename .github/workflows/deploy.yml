@@ -33,4 +33,4 @@ jobs:
 
       - name: Copy files to production with the AWS CLI
         run: |
-          aws s3 sync target/ s3://buzzhub-lambda-sources-053041861227-eu-west-1
+          aws s3 sync target/ s3://buzzhub-lambda-source-053041861227-eu-west-1
