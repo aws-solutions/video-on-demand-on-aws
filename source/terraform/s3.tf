@@ -243,4 +243,9 @@ module "s3_λ_source" {
       }
     }
   }
+
+  // code pipeline requires versioned buckets
+  versioning = {
+    enabled = true
+  }
 }
