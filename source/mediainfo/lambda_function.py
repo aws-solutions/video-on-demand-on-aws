@@ -108,21 +108,17 @@ def parse_text_attributes(track):
 
 
 def get_signed_url(bucket, obj):
-    SIGNED_URL_EXPIRATION = 60 * 60 * 2
     AWS_REGION = os.environ['AWS_REGION']
     ## PR: https://github.com/awslabs/video-on-demand-on-aws/pull/111
     boto_config = Config(
+        signature_version='s3v4',
         region_name=AWS_REGION,
-        s3={
-            'addressing_style': 'virtual',
-            'signature_version': 's3v4'
-        }
     )
     s3_client = boto3.client('s3', config=boto_config)
     return s3_client.generate_presigned_url(
         'get_object',
         Params={'Bucket': bucket, 'Key': obj},
-        ExpiresIn=SIGNED_URL_EXPIRATION
+        ExpiresIn=7200
     )
 
 
@@ -150,10 +146,15 @@ def lambda_handler(event, context):
 
         dir_path = os.path.dirname(os.path.realpath(__file__))
         executable_path = os.path.join(dir_path, 'bin', 'mediainfo')
+        # executable_path = os.path.join('/', 'usr', 'local', 'bin', 'mediainfo')
 
         signed_url = get_signed_url(event['srcBucket'], event['srcVideo'])
-        json_content = json.loads(subprocess.check_output([executable_path, '--Output=JSON', signed_url]))
+        media_info = subprocess.run([executable_path, '--Output=JSON', signed_url], check=True, capture_output=True)
+        json_content = json.loads(media_info.stdout)
         log('MEDIAINFO OUTPUT', 'info', json_content)
+        stderr = media_info.stderr.decode('utf-8')
+        if stderr and stderr != '':
+            log('MEDIAINFO OUTPUT', 'error', {'stderr': stderr})
 
         tracks = json_content['media']['track']
         for track in tracks:
