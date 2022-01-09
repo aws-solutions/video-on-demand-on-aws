@@ -27,6 +27,9 @@ export class AppSyncs extends Construct {
   public readonly queryGetVideoRequest: string;
   public readonly queryGetVideoResponse: string;
   public readonly queryGetVideoResolver: appsync.CfnResolver;
+  public readonly queryGetVideosByTagRequest: string;
+  public readonly queryGetVideosByTagResponse: string;
+  public readonly queryGetVideosByTagResolver: appsync.CfnResolver;
   public readonly queryListVideosRequest: string;
   public readonly queryListVideosResponse: string;
   public readonly queryListVideosResolver: appsync.CfnResolver;
@@ -160,6 +163,36 @@ export class AppSyncs extends Construct {
     this.queryGetVideoResolver.addDependsOn(this.videoApiGraphQLSchema);
 
     this.queryGetVideoResolver.addDependsOn(this.dataSource);
+
+    this.queryGetVideosByTagRequest = readFileSync(
+      './lib/appsync/resolvers/queries/getVideosByTag/request.vtl',
+      'utf-8'
+    );
+
+    this.queryGetVideosByTagResponse = readFileSync(
+      './lib/appsync/resolvers/queries/getVideosByTag/response.vtl',
+      'utf-8'
+    );
+
+    this.queryGetVideosByTagResolver = new appsync.CfnResolver(
+      this,
+      'QueryGetVideosByTagResolver',
+      {
+        apiId: this.videoApi.attrApiId,
+        typeName: 'Query',
+        fieldName: 'getVideosByTag',
+        dataSourceName: `${props.stackName.replace(
+          '-',
+          '_'
+        )}_DynamoDB_DataSource`,
+        requestMappingTemplate: this.queryGetVideosByTagRequest,
+        responseMappingTemplate: this.queryGetVideosByTagResponse,
+      }
+    );
+
+    this.queryGetVideosByTagResolver.addDependsOn(this.videoApiGraphQLSchema);
+
+    this.queryGetVideosByTagResolver.addDependsOn(this.dataSource);
 
     this.queryListVideosRequest = readFileSync(
       './lib/appsync/resolvers/queries/listVideos/request.vtl',

@@ -1,0 +1,12 @@
+{
+    "version" : "2017-02-28",
+    "operation" : "Scan",
+    "filter": {
+        "expression": "contains(tags, :tag)",
+        "expressionValues" : {
+            ":tag": {
+                "S": "${ctx.args.tag}"
+            }
+        }
+    }
+}

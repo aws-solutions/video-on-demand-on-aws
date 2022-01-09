@@ -1,0 +1,5 @@
+## Pass back the result from DynamoDB. **
+{
+    "tag": $util.toJson($ctx.args.tag)
+    "videos": $util.toJson($ctx.result.items)
+}
