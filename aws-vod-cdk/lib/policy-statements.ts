@@ -311,12 +311,18 @@ export class PolicyStatements extends Construct {
 
     this.encodeRoleS3GetObject = new iam.PolicyStatement({
       actions: ['s3:GetObject'],
-      resources: [props.s3Buckets.source.bucketArn],
+      resources: [
+        props.s3Buckets.source.bucketArn,
+        `${props.s3Buckets.source.bucketArn}/*`,
+      ],
     });
 
     this.encodeRoleS3PutObject = new iam.PolicyStatement({
       actions: ['s3:PutObject'],
-      resources: [props.s3Buckets.destination.bucketArn],
+      resources: [
+        props.s3Buckets.destination.bucketArn,
+        `${props.s3Buckets.destination.bucketArn}/*`,
+      ],
     });
 
     this.errorHandlerRoleDynamoDb = new iam.PolicyStatement({
