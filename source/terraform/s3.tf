@@ -24,7 +24,7 @@ module "s3_source" {
   ignore_public_acls                    = true
   restrict_public_buckets               = true
   attach_deny_insecure_transport_policy = true
-  server_side_encryption_configuration = {
+  server_side_encryption_configuration  = {
     rule = {
       apply_server_side_encryption_by_default = {
         sse_algorithm = "aws:kms"
@@ -125,13 +125,6 @@ module "s3_destination" {
   ignore_public_acls                    = true
   restrict_public_buckets               = true
   attach_deny_insecure_transport_policy = true
-  server_side_encryption_configuration = {
-    rule = {
-      apply_server_side_encryption_by_default = {
-        sse_algorithm = "aws:kms"
-      }
-    }
-  }
 
   cors_rule = [
     {
@@ -162,13 +155,6 @@ module "s3_destination_for_restricted_videos" {
   ignore_public_acls                    = true
   restrict_public_buckets               = true
   attach_deny_insecure_transport_policy = true
-  server_side_encryption_configuration = {
-    rule = {
-      apply_server_side_encryption_by_default = {
-        sse_algorithm = "aws:kms"
-      }
-    }
-  }
 
   cors_rule = [
     {
