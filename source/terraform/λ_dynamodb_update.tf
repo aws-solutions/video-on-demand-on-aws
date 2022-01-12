@@ -6,7 +6,7 @@ locals {
 
 module "λ_dynamodb_update" {
   source  = "moritzzimmer/lambda/aws"
-  version = "6.0.0"
+  version = "6.1.0"
 
   cloudwatch_lambda_insights_enabled = true
   function_name                      = "${local.project}-${local.dynamodb_update_function_name}"

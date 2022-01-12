@@ -6,7 +6,7 @@ locals {
 
 module "λ_input_validate" {
   source  = "moritzzimmer/lambda/aws"
-  version = "6.0.0"
+  version = "6.1.0"
 
   cloudwatch_lambda_insights_enabled = true
   function_name                      = "${local.project}-${local.input_validate_function_name}"

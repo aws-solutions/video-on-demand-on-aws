@@ -6,7 +6,7 @@ locals {
 
 module "λ_media_info" {
   source  = "moritzzimmer/lambda/aws"
-  version = "6.0.0"
+  version = "6.1.0"
 
   cloudwatch_lambda_insights_enabled = true
   function_name                      = "${local.project}-${local.media_info_function_name}"

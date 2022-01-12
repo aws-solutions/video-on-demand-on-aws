@@ -6,7 +6,7 @@ locals {
 
 module "λ_sns_notification" {
   source  = "moritzzimmer/lambda/aws"
-  version = "6.0.0"
+  version = "6.1.0"
 
   cloudwatch_lambda_insights_enabled = true
   function_name                      = "${local.project}-${local.sns_notification_function_name}"

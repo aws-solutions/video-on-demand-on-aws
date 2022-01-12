@@ -14,7 +14,7 @@ data "aws_cloudfront_distribution" "video" {
 
 module "λ_broadcast" {
   source  = "moritzzimmer/lambda/aws"
-  version = "6.0.0"
+  version = "6.1.0"
 
   cloudwatch_lambda_insights_enabled = true
   function_name                      = "${local.project}-${local.broadcast_function_name}"

@@ -6,7 +6,7 @@ locals {
 
 module "λ_archive_source" {
   source  = "moritzzimmer/lambda/aws"
-  version = "6.0.0"
+  version = "6.1.0"
 
   cloudwatch_lambda_insights_enabled = true
   function_name                      = "${local.project}-${local.archive_source_function_name}"

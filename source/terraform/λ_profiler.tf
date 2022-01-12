@@ -6,7 +6,7 @@ locals {
 
 module "λ_profiler" {
   source  = "moritzzimmer/lambda/aws"
-  version = "6.0.0"
+  version = "6.1.0"
 
   cloudwatch_lambda_insights_enabled = true
   function_name                      = "${local.project}-${local.profiler_function_name}"
