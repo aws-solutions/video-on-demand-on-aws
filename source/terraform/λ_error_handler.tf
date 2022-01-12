@@ -30,7 +30,7 @@ module "λ_error_handler" {
       event_pattern = jsonencode({
         source = ["aws.mediaconvert"]
         detail = {
-          status       = ["ERROR"],
+          status = ["ERROR"],
           userMetadata = {
             workflow : [local.project]
           }

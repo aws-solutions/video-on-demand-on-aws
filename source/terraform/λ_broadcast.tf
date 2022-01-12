@@ -8,6 +8,10 @@ data "aws_sns_topic" "secondary" {
   name = "cms-updates-secondary"
 }
 
+data "aws_cloudfront_distribution" "video" {
+  id = "E3L057UN16VOXR"
+}
+
 module "λ_broadcast" {
   source  = "moritzzimmer/lambda/aws"
   version = "6.0.0"
@@ -29,6 +33,7 @@ module "λ_broadcast" {
     variables = {
       AWS_NODEJS_CONNECTION_REUSE_ENABLED : "1"
       SnsTopic : data.aws_sns_topic.secondary.arn
+      DistributionId : data.aws_cloudfront_distribution.video.id
       ErrorHandler : aws_lambda_alias.λ_error_handler.arn
     }
   }
@@ -57,6 +62,12 @@ data "aws_iam_policy_document" "λ_broadcast" {
       values   = ["true"]
     }
   }
+
+  statement {
+    actions   = ["cloudfront:CreateInvalidation"]
+    resources = [data.aws_cloudfront_distribution.video.arn]
+  }
+
   statement {
     actions   = ["lambda:InvokeFunction"]
     resources = [aws_lambda_alias.λ_error_handler.arn]

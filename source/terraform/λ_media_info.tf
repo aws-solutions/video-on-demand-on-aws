@@ -87,10 +87,10 @@ module "λ_media_info_deployment" {
   source  = "moritzzimmer/lambda/aws//modules/deployment"
   version = "6.0.0"
 
-  alias_name                        = aws_lambda_alias.λ_media_info.name
-  codestar_notifications_target_arn = data.aws_sns_topic.codestar_notifications.arn
-  function_name                     = module.λ_media_info.function_name
+  alias_name                         = aws_lambda_alias.λ_media_info.name
+  codestar_notifications_target_arn  = data.aws_sns_topic.codestar_notifications.arn
+  function_name                      = module.λ_media_info.function_name
   codepipeline_artifact_store_bucket = module.s3_λ_source.s3_bucket_id
-  s3_bucket                         = module.s3_λ_source.s3_bucket_id
-  s3_key                            = local.media_info_s3_key
+  s3_bucket                          = module.s3_λ_source.s3_bucket_id
+  s3_key                             = local.media_info_s3_key
 }

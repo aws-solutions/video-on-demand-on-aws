@@ -15,6 +15,7 @@ const AWS = require('aws-sdk');
 const error = require('./lib/error/error.js');
 const logger = require('./lib/logger');
 const axios = require('axios');
+const path = require('path');
 
 const SsmHostKey = '/external/livingdocs/cms.base-url';
 const SsmTokenKey = '/external/livingdocs/cms.token';
@@ -36,6 +37,19 @@ exports.handler = async (event) => {
     region: process.env.AWS_REGION
   });
 
+  const cloudFront = new AWS.CloudFront();
+
+  const invalidationParams = {
+    'DistributionId': process.env.DistributionId,
+    'InvalidationBatch': {
+      'CallerReference': event.guid, // Same caller reference will return existing invalidations
+      'Paths': {
+        'Quantity': 1,
+        'Items': [`/${path.dirname(event.srcVideo)}/*`]
+      }
+    }
+  }
+
   const ssmParams = {
     Names: [SsmHostKey, SsmTokenKey],
     WithDecryption: true
@@ -55,6 +69,10 @@ exports.handler = async (event) => {
       url: `${host}/api/beta/mediaLibrary/${event.cmsId}/incomingDocumentReferences`,
       method: 'GET'
     };
+
+    logger.info(`Invalidating ${JSON.stringify(invalidationParams)}`)
+    const invalidation = await cloudFront.createInvalidation(invalidationParams).promise()
+    logger.info(`Invalidated with ${JSON.stringify(invalidation)}`)
 
     const reqForDependencies = await axios(getRequest);
     if (reqForDependencies.status === 200) {

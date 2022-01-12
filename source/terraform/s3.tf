@@ -24,7 +24,7 @@ module "s3_source" {
   ignore_public_acls                    = true
   restrict_public_buckets               = true
   attach_deny_insecure_transport_policy = true
-  server_side_encryption_configuration  = {
+  server_side_encryption_configuration = {
     rule = {
       apply_server_side_encryption_by_default = {
         sse_algorithm = "aws:kms"
@@ -34,9 +34,9 @@ module "s3_source" {
 
   lifecycle_rule = [
     {
-      id         = "${local.project}-source-archive"
-      enabled    = true
-      tags       = {
+      id      = "${local.project}-source-archive"
+      enabled = true
+      tags = {
         "${local.project}" = "GLACIER"
       }
       transition = [
@@ -45,10 +45,10 @@ module "s3_source" {
           storage_class = "GLACIER"
         }
       ]
-    }, {
-      id         = "${local.project}-source-deep-archive"
-      enabled    = true
-      tags       = {
+      }, {
+      id      = "${local.project}-source-deep-archive"
+      enabled = true
+      tags = {
         "${local.project}" = "DEEP_ARCHIVE"
       }
       transition = [
@@ -73,28 +73,28 @@ module "s3_source_notifications" {
   bucket = module.s3_source.s3_bucket_id
 
   lambda_notifications = {
-    mpg  = {
+    mpg = {
       function_arn  = aws_lambda_alias.λ_step_functions.arn
       function_name = module.λ_step_functions.function_name
       events        = ["s3:ObjectCreated:*", "s3:ObjectRemoved:*"]
       filter_suffix = ".mpg"
       qualifier     = aws_lambda_alias.λ_step_functions.name
     }
-    mp4  = {
+    mp4 = {
       function_arn  = aws_lambda_alias.λ_step_functions.arn
       function_name = module.λ_step_functions.function_name
       events        = ["s3:ObjectCreated:*", "s3:ObjectRemoved:*"]
       filter_suffix = ".mp4"
       qualifier     = aws_lambda_alias.λ_step_functions.name
     }
-    m4v  = {
+    m4v = {
       function_arn  = aws_lambda_alias.λ_step_functions.arn
       function_name = module.λ_step_functions.function_name
       events        = ["s3:ObjectCreated:*", "s3:ObjectRemoved:*"]
       filter_suffix = ".m4v"
       qualifier     = aws_lambda_alias.λ_step_functions.name
     }
-    mov  = {
+    mov = {
       function_arn  = aws_lambda_alias.λ_step_functions.arn
       function_name = module.λ_step_functions.function_name
       events        = ["s3:ObjectCreated:*", "s3:ObjectRemoved:*"]
@@ -125,7 +125,7 @@ module "s3_destination" {
   ignore_public_acls                    = true
   restrict_public_buckets               = true
   attach_deny_insecure_transport_policy = true
-  server_side_encryption_configuration  = {
+  server_side_encryption_configuration = {
     rule = {
       apply_server_side_encryption_by_default = {
         sse_algorithm = "aws:kms"
@@ -162,7 +162,7 @@ module "s3_destination_for_restricted_videos" {
   ignore_public_acls                    = true
   restrict_public_buckets               = true
   attach_deny_insecure_transport_policy = true
-  server_side_encryption_configuration  = {
+  server_side_encryption_configuration = {
     rule = {
       apply_server_side_encryption_by_default = {
         sse_algorithm = "aws:kms"
@@ -236,7 +236,7 @@ module "s3_λ_source" {
   ignore_public_acls                    = true
   restrict_public_buckets               = true
   attach_deny_insecure_transport_policy = true
-  server_side_encryption_configuration  = {
+  server_side_encryption_configuration = {
     rule = {
       apply_server_side_encryption_by_default = {
         sse_algorithm = "aws:kms"

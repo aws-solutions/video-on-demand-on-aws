@@ -40,14 +40,14 @@ module "λ_purge" {
 
 data "aws_iam_policy_document" "λ_purge" {
   statement {
-    actions   = ["s3:DeleteObject*"]
+    actions = ["s3:DeleteObject*"]
     resources = [
       "${module.s3_destination.s3_bucket_arn}/*",
       "${module.s3_destination_for_restricted_videos.s3_bucket_arn}/*"
     ]
   }
   statement {
-    actions   = ["s3:ListBucket"]
+    actions = ["s3:ListBucket"]
     resources = [
       module.s3_destination.s3_bucket_arn,
       module.s3_destination_for_restricted_videos.s3_bucket_arn
@@ -105,10 +105,10 @@ module "λ_purge_deployment" {
   source  = "moritzzimmer/lambda/aws//modules/deployment"
   version = "6.0.0"
 
-  alias_name                        = aws_lambda_alias.λ_purge.name
-  codestar_notifications_target_arn = data.aws_sns_topic.codestar_notifications.arn
-  function_name                     = module.λ_purge.function_name
+  alias_name                         = aws_lambda_alias.λ_purge.name
+  codestar_notifications_target_arn  = data.aws_sns_topic.codestar_notifications.arn
+  function_name                      = module.λ_purge.function_name
   codepipeline_artifact_store_bucket = module.s3_λ_source.s3_bucket_id
-  s3_bucket                         = module.s3_λ_source.s3_bucket_id
-  s3_key                            = local.purge_s3_key
+  s3_bucket                          = module.s3_λ_source.s3_bucket_id
+  s3_key                             = local.purge_s3_key
 }

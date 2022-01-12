@@ -30,7 +30,7 @@ module "λ_step_functions" {
       event_pattern = jsonencode({
         source = ["aws.mediaconvert"]
         detail = {
-          status       = ["COMPLETE"],
+          status = ["COMPLETE"],
           userMetadata = {
             workflow : [local.project]
           }
@@ -58,7 +58,7 @@ module "λ_step_functions" {
 
 data "aws_iam_policy_document" "λ_step_functions" {
   statement {
-    actions   = ["states:StartExecution"]
+    actions = ["states:StartExecution"]
     resources = [
       "arn:aws:states:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:stateMachine:${local.project}-ingest",
       "arn:aws:states:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:stateMachine:${local.project}-process",
@@ -66,7 +66,7 @@ data "aws_iam_policy_document" "λ_step_functions" {
     ]
   }
   statement {
-    actions   = ["states:DescribeExecution"]
+    actions = ["states:DescribeExecution"]
     resources = [
       "arn:aws:states:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:execution:${local.project}-ingest:*"
     ]
