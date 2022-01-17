@@ -55,26 +55,26 @@ exports.handler = async (event) => {
     // but this may not be unique, so check if this run already exists (prevent error `ExecutionAlreadyExists`)
     let i = 0;
     while (true) {
+      const id_to_be_tested = i === 0 ? execution_id : `${execution_id}__rerun_${i}`;
       i += 1;
       if (i > 50) {
         break;
       }
       try {
-        const executionArn = `${process.env.IngestWorkflow}:${execution_id}`.replace(':stateMachine:', ':execution:');
+        const executionArn = `${process.env.IngestWorkflow}:${id_to_be_tested}`.replace(':stateMachine:', ':execution:');
         const execution = await stepfunctions.describeExecution({executionArn: executionArn}).promise();
-        logger.trace(`${event.guid} : execution already exists with state ${execution.status}.`);
-        execution_id = `${execution_id}__rerun_${i}`;
+        logger.trace(`${id_to_be_tested} : execution already exists with state ${execution.status}.`);
       } catch (e) {
         if (e.code === 'ExecutionDoesNotExist') {
-          logger.trace(`unused execution arn found ${execution_id}`);
-          return execution_id;
+          logger.trace(`unused execution arn found ${id_to_be_tested}`);
+          return id_to_be_tested;
         } else {
           logger.error("Something went wrong while searching for an available id.", e);
         }
       }
     }
     return uuidv4();
-  }
+  };
 
   let response;
   let params;

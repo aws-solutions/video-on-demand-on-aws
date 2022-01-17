@@ -67,6 +67,7 @@ describe('#STEP FUNCTIONS::', () => {
 
   it('should return "success" on Ingest Execute success', async () => {
     AWS.mock('StepFunctions', 'startExecution', Promise.resolve(data));
+    AWS.mock('StepFunctions', 'describeExecution', Promise.reject({code: "ExecutionDoesNotExist"}));
     AWS.mock('S3', 'headObject', Promise.reject(null));
 
     const response = await lambda.handler(_ingest);
@@ -101,6 +102,7 @@ describe('#STEP FUNCTIONS::', () => {
 
   it('should return "STEP ERROR" when step execution fails', async () => {
     AWS.mock('StepFunctions', 'startExecution', Promise.reject('STEP ERROR'));
+    AWS.mock('StepFunctions', 'describeExecution', Promise.reject({code: "ExecutionDoesNotExist"}));
     AWS.mock('Lambda', 'invoke', Promise.resolve());
     AWS.mock('S3', 'headObject', Promise.reject(null));
 
@@ -113,6 +115,7 @@ describe('#STEP FUNCTIONS::', () => {
 
     it("should extract the id from cms head request", async () => {
       AWS.mock('StepFunctions', 'startExecution', Promise.resolve(data));
+      AWS.mock('StepFunctions', 'describeExecution', Promise.reject({code: "ExecutionDoesNotExist"}));
       AWS.mock('Lambda', 'invoke', Promise.resolve());
       AWS.mock('S3', 'headObject', Promise.resolve({
         "Metadata": {
@@ -127,6 +130,7 @@ describe('#STEP FUNCTIONS::', () => {
 
     it("should generate a guid if cms_id is not present", async () => {
       AWS.mock('StepFunctions', 'startExecution', Promise.resolve(data));
+      AWS.mock('StepFunctions', 'describeExecution', Promise.reject({code: "ExecutionDoesNotExist"}));
       AWS.mock('Lambda', 'invoke', Promise.resolve());
       AWS.mock('S3', 'headObject', Promise.resolve({}));
 
@@ -136,6 +140,7 @@ describe('#STEP FUNCTIONS::', () => {
 
     it("should generate a guid if s3 call is failing", async () => {
       AWS.mock('StepFunctions', 'startExecution', Promise.resolve(data));
+      AWS.mock('StepFunctions', 'describeExecution', Promise.reject({code: "ExecutionDoesNotExist"}));
       AWS.mock('Lambda', 'invoke', Promise.resolve());
       AWS.mock('S3', 'headObject', Promise.reject(null));
 
@@ -144,18 +149,27 @@ describe('#STEP FUNCTIONS::', () => {
     });
 
     it("marks deleted objects for purging", async () => {
-      const doStep = (params, callback) => {
+      const doStartExecution = (params, callback) => {
         callback(null, data);
       };
-      const spyStep = spy(doStep);
-      AWS.mock('StepFunctions', 'startExecution', spyStep);
+      // mock some existing executions
+      let existingExecutions = 5;
+      let describeExecutionCallCount = 0;
+      const doDescribeExecution = (params, callback) => {
+        callback(null, describeExecutionCallCount++ < existingExecutions ? {} : Promise.reject({code: "ExecutionDoesNotExist"}));
+      };
+      const startExecutionSpy = spy(doStartExecution);
+      const describeExecutionSpy = spy(doDescribeExecution);
+
+      AWS.mock('StepFunctions', 'startExecution', startExecutionSpy);
+      AWS.mock('StepFunctions', 'describeExecution', describeExecutionSpy);
 
       const fixture = {..._ingest};
       fixture.Records[0].eventName = 'ObjectRemoved:Delete';
       const response = await lambda.handler(fixture);
 
       expect(response).to.equal('success');
-      expect(spyStep).to.have.been.called.with({
+      expect(startExecutionSpy).to.have.been.called.with({
         "input": JSON.stringify({
             "Records": [{
               "eventName": "ObjectRemoved:Delete",
@@ -163,14 +177,17 @@ describe('#STEP FUNCTIONS::', () => {
             }],
             "doPurge": true,
           "cmsId": "fake-media-id",
-          "guid": 'fake-media-id',
+          "guid": `fake-media-id__rerun_${existingExecutions}`,
           "cmsCommandId": "fake-media-id",
           "workflowTrigger": "Video"
           }
         ),
-        "name": 'fake-media-id',
+        "name": `fake-media-id__rerun_${existingExecutions}`,
         "stateMachineArn": "INGEST"
       });
+      expect(describeExecutionSpy).to.have.been.called.with({
+        "executionArn": `${process.env.IngestWorkflow}:fake-media-id__rerun_${existingExecutions}`
+      })
     });
   });
 });
