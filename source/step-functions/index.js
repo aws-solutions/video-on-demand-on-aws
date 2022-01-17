@@ -50,6 +50,32 @@ exports.handler = async (event) => {
     return undefined;
   };
 
+  const find_unused_execution_id = async (execution_id) => {
+    // we're using the commandId here if possible,
+    // but this may not be unique, so check if this run already exists (prevent error `ExecutionAlreadyExists`)
+    let i = 0;
+    while (true) {
+      i += 1;
+      if (i > 50) {
+        break;
+      }
+      try {
+        const executionArn = `${process.env.IngestWorkflow}:${execution_id}`.replace(':stateMachine:', ':execution:');
+        const execution = await stepfunctions.describeExecution({executionArn: executionArn}).promise();
+        logger.trace(`${event.guid} : execution already exists with state ${execution.status}.`);
+        execution_id = `${execution_id}__rerun_${i}`;
+      } catch (e) {
+        if (e.code === 'ExecutionDoesNotExist') {
+          logger.trace(`unused execution arn found ${execution_id}`);
+          return execution_id;
+        } else {
+          logger.error("Something went wrong while searching for an available id.", e);
+        }
+      }
+    }
+    return uuidv4();
+  }
+
   let response;
   let params;
 
@@ -73,29 +99,7 @@ exports.handler = async (event) => {
 
           event.guid = event.cmsCommandId || uuidv4();
           if (event.cmsCommandId) {
-            // we're using the commandId here if possible,
-            // but this may not be unique, so check if this run already exists (prevent error `ExecutionAlreadyExists`)
-            let i = 0;
-            while (true) {
-              i += 1;
-              if (i > 30) {
-                event.guid = uuidv4();
-                break;
-              }
-              try {
-                const executionArn = `${process.env.IngestWorkflow}:${event.guid}`.replace(':stateMachine:', ':execution:');
-                const data = await stepfunctions.describeExecution({executionArn: executionArn}).promise();
-                logger.trace(`invalid guid found ${event.guid} : execution already exists with state ${data.status}.`);
-                event.guid = `${event.cmsCommandId}__rerun_${i}`;
-              } catch (e) {
-                if (e.code === 'ExecutionDoesNotExist') {
-                  logger.trace(`valid guid found ${event.guid}`);
-                  break;
-                } else {
-                  logger.error("Something went wrong while searching for an available id.", e);
-                }
-              }
-            }
+            event.guid = await find_unused_execution_id(event.cmsCommandId);
           }
         } else {
           // ObjectRemoved:DeleteMarkerCreated
@@ -104,7 +108,7 @@ exports.handler = async (event) => {
           const match = key.match(/^20\d{2}\/\d{2}\/(?<media_id>[\w-]+)\//);
           if (match && match.groups.media_id) {
             event.cmsId = match.groups.media_id;
-            event.guid = match.groups.media_id;
+            event.guid = await find_unused_execution_id(match.groups.media_id);
             event.cmsCommandId = match.groups.media_id;
           }
         }
@@ -151,6 +155,7 @@ exports.handler = async (event) => {
         throw new Error('invalid event object');
     }
 
+    logger.info("params", params);
     let data = await stepfunctions.startExecution(params).promise();
     logger.registerEvent(event);
     logger.info("event", event);
