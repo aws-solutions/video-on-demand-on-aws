@@ -65,6 +65,7 @@ exports.handler = async (event) => {
       workflowStatus: 'Error',
       workflowErrorAt: 'Encoding',
       errorMessage: event.detail.errorMessage,
+      userMetadata: event.detail.userMetadata,
       errorDetails: url
     };
   }
@@ -98,8 +99,8 @@ exports.handler = async (event) => {
   }
 
   try {
-    Promise.all(process.env.SlackHook.split(",").map(async hook => {
-      const response = await axios.post(hook, {
+    const response = Promise.all(process.env.SlackHook.split(",").map(async hook => {
+      return await axios.post(hook, {
         "blocks": [
           {
             "type": "header",
@@ -134,11 +135,10 @@ exports.handler = async (event) => {
       });
     }));
 
-    logger.info(response.data);
+    logger.info({response});
   } catch (e) {
     logger.error('Error publishing to Slack webhook.', e);
   }
-
 
   return event;
 };

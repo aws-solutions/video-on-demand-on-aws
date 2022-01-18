@@ -108,7 +108,7 @@ def parse_text_attributes(track):
 
 
 def get_signed_url(bucket, obj):
-    AWS_REGION = os.environ['AWS_REGION']
+    AWS_REGION = os.environ.get('AWS_REGION', 'eu-west-1')
     ## PR: https://github.com/awslabs/video-on-demand-on-aws/pull/111
     boto_config = Config(
         signature_version='s3v4',
@@ -123,14 +123,23 @@ def get_signed_url(bucket, obj):
 
 
 def log(message: str, level: str, data: Dict[str, str] = None) -> None:
+    # const userMetadata = (event.detail && event.detail.userMetadata) || {};
+    user_metadata = data.get('detail', {}).get('userMetadata', {})
+
     print(json.dumps({
-        '@timestamp': datetime.datetime.utcnow().replace(tzinfo=datetime.timezone.utc, microsecond=0).isoformat(),
         '@version': '1',
+        '@timestamp': datetime.datetime.utcnow().replace(tzinfo=datetime.timezone.utc, microsecond=0).isoformat(),
         'mdc': {
+            'cmsId': data.get('cmsId', user_metadata.get('cmsId', '')),
+            'guid': data.get('guid', user_metadata.get('guid', '')),
+            'geoRestriction': data.get('geoRestriction', ''),
+            'cmsCommandId': data.get('cmsCommandId', user_metadata.get('cmsCommandId')),
+            'ttl': data.get('ttl', ''),
+            'doPurge': data.get('doPurge', ''),
             'Version': os.environ.get('AWS_LAMBDA_FUNCTION_VERSION', ''),
-            'RequestId': os.environ.get('_X_AMZN_TRACE_ID', '')
+            'RequestId': os.environ.get('_X_AMZN_TRACE_ID', ''),
+            'Function': os.environ.get('AWS_LAMBDA_FUNCTION_NAME', ''),
         },
-        'funcName': os.environ.get('AWS_LAMBDA_FUNCTION_NAME', ''),
         'level': level,
         'message': message,
         'data': json.dumps(data)
@@ -144,28 +153,35 @@ def lambda_handler(event, context):
         metadata = {}
         metadata['filename'] = event['srcVideo']
 
+        signed_url = get_signed_url(event['srcBucket'], event['srcVideo'])
+
         dir_path = os.path.dirname(os.path.realpath(__file__))
         executable_path = os.path.join(dir_path, 'bin', 'mediainfo')
-        # executable_path = os.path.join('/', 'usr', 'local', 'bin', 'mediainfo')
-
-        signed_url = get_signed_url(event['srcBucket'], event['srcVideo'])
         media_info = subprocess.run([executable_path, '--Output=JSON', signed_url], check=True, capture_output=True)
-        json_content = json.loads(media_info.stdout)
-        log('MEDIAINFO OUTPUT', 'info', json_content)
+
+        # docker — uncomment for local testing
+        # media_info = subprocess.run([f'docker run --rm shamelesscookie/mediainfo --Output=JSON "{signed_url}"'], capture_output=True, shell=True)
+        # media_info.check_returncode()
+        # print(f'stdout = >> {media_info.stdout.decode("utf-8")} <<')
+        # print(f'stderr = >> {media_info.stderr.decode("utf-8")} <<')
+
         stderr = media_info.stderr.decode('utf-8')
         if stderr and stderr != '':
-            log('MEDIAINFO OUTPUT', 'error', {'stderr': stderr})
+            raise Exception('mediainfo failed.\n' + stderr)
+
+        json_content = json.loads(media_info.stdout)
+        log('MEDIAINFO OUTPUT', 'info', json_content)
 
         tracks = json_content['media']['track']
         for track in tracks:
             track_type = track['@type']
-            if (track_type == 'General'):
+            if track_type == 'General':
                 metadata['container'] = parse_general_attributes(track)
-            elif (track_type == 'Video'):
+            elif track_type == 'Video':
                 metadata.setdefault('video', []).append(parse_video_attributes(track))
-            elif (track_type == 'Audio'):
+            elif track_type == 'Audio':
                 metadata.setdefault('audio', []).append(parse_audio_attributes(track))
-            elif (track_type == 'Text'):
+            elif track_type == 'Text':
                 metadata.setdefault('text', []).append(parse_text_attributes(track))
             else:
                 log(f'Unsupported: {track_type}', 'error')
@@ -175,6 +191,7 @@ def lambda_handler(event, context):
 
         return event
     except Exception as err:
+        log(str(err), "error", event)
         payload = {
             'guid': event['guid'],
             'event': event,
@@ -190,3 +207,16 @@ def lambda_handler(event, context):
         )
 
         raise err
+
+#
+# if __name__ == '__main__':
+#     lambda_handler({"guid": "787f8310-a070-4ca1-84a8-dfd5b8714d82", "startTime": "2022-01-17T09:20:22.122Z",
+#                     "workflowTrigger": "Video", "workflowStatus": "Ingest", "workflowName": "buzzhub",
+#                     "frameCapture": True, "archiveSource": "DEEP_ARCHIVE",
+#                     "jobTemplate_1080p": "buzzhub_Ott_1080p_Avc_Aac_16x9_qvbr_no_preset",
+#                     "jobTemplate_1080p_no_audio": "buzzhub_Ott_1080p_Avc_16x9_qvbr_no_preset",
+#                     "jobTemplate_720p": "buzzhub_Ott_720p_Avc_Aac_16x9_qvbr_no_preset",
+#                     "jobTemplate_720p_no_audio": "buzzhub_Ott_720p_Avc_16x9_qvbr_no_preset", "inputRotate": "DEGREE_0",
+#                     "acceleratedTranscoding": "PREFERRED", "enableSns": True, "enableSqs": True, "doPurge": False,
+#                     "srcBucket": "buzzhub-master-videos-053041861227-eu-west-1",
+#                     "srcVideo": "2022/01/Kyxjuj-LhRai/schwerer-unfall-fuehrt-zu-vollsperrung-auf-der-a3.mp4"}, None)
