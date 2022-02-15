@@ -122,7 +122,7 @@ def get_signed_url(bucket, obj):
     )
 
 
-def log(message: str, level: str, data: Dict[str, str] = None) -> None:
+def log(message: str, level: str, data: Dict[str, str] = {}) -> None:
     # const userMetadata = (event.detail && event.detail.userMetadata) || {};
     user_metadata = data.get('detail', {}).get('userMetadata', {})
 
@@ -184,7 +184,7 @@ def lambda_handler(event, context):
             elif track_type == 'Text':
                 metadata.setdefault('text', []).append(parse_text_attributes(track))
             else:
-                log(f'Unsupported: {track_type}', 'error')
+                log(message=f'Unsupported track @type: {track_type}', level='error', data=track)
 
         event['srcMediainfo'] = json.dumps(metadata, indent=2)
         log('RESPONSE', 'info', metadata)
@@ -210,13 +210,23 @@ def lambda_handler(event, context):
 
 #
 # if __name__ == '__main__':
-#     lambda_handler({"guid": "787f8310-a070-4ca1-84a8-dfd5b8714d82", "startTime": "2022-01-17T09:20:22.122Z",
-#                     "workflowTrigger": "Video", "workflowStatus": "Ingest", "workflowName": "buzzhub",
-#                     "frameCapture": True, "archiveSource": "DEEP_ARCHIVE",
-#                     "jobTemplate_1080p": "buzzhub_Ott_1080p_Avc_Aac_16x9_qvbr_no_preset",
-#                     "jobTemplate_1080p_no_audio": "buzzhub_Ott_1080p_Avc_16x9_qvbr_no_preset",
-#                     "jobTemplate_720p": "buzzhub_Ott_720p_Avc_Aac_16x9_qvbr_no_preset",
-#                     "jobTemplate_720p_no_audio": "buzzhub_Ott_720p_Avc_16x9_qvbr_no_preset", "inputRotate": "DEGREE_0",
-#                     "acceleratedTranscoding": "PREFERRED", "enableSns": True, "enableSqs": True, "doPurge": False,
-#                     "srcBucket": "buzzhub-master-videos-053041861227-eu-west-1",
-#                     "srcVideo": "2022/01/Kyxjuj-LhRai/schwerer-unfall-fuehrt-zu-vollsperrung-auf-der-a3.mp4"}, None)
+#     lambda_handler({
+#         "guid": "e129c065-d408-4ab4-8dd2-f4730e021da0__rerun_1",
+#         "startTime": "2022-02-15T10:24:58.411Z",
+#         "workflowTrigger": "Video",
+#         "workflowStatus": "Ingest",
+#         "workflowName": "buzzhub",
+#         "archiveSource": "DEEP_ARCHIVE",
+#         "jobTemplate_1080p": "buzzhub_Ott_1080p_Avc_Aac_16x9_qvbr_no_preset",
+#         "jobTemplate_1080p_no_audio": "buzzhub_Ott_1080p_Avc_16x9_qvbr_no_preset",
+#         "jobTemplate_720p": "buzzhub_Ott_720p_Avc_Aac_16x9_qvbr_no_preset",
+#         "jobTemplate_720p_no_audio": "buzzhub_Ott_720p_Avc_16x9_qvbr_no_preset",
+#         "inputRotate": "DEGREE_0",
+#         "acceleratedTranscoding": "PREFERRED",
+#         "geoRestriction": "world-wide",
+#         "cmsId": "juUBYHbHK1Va",
+#         "cmsCommandId": "e129c065-d408-4ab4-8dd2-f4730e021da0",
+#         "ttl": 253402290720,
+#         "srcBucket": "buzzhub-master-videos-053041861227-eu-west-1",
+#         "srcVideo": "2021/11/juUBYHbHK1Va/reiner-calmund-ist-kaum-wiederzuerkennen.mp4"
+#     }, None)
