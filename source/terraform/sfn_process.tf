@@ -22,6 +22,11 @@ resource "aws_iam_role" "media_transcode_role" {
           Effect   = "Allow"
           Resource = "arn:aws:execute-api:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:*"
         },
+        {
+          Action   = ["iam:ListAttachedRolePolicies"]
+          Effect   = "Allow"
+          Resource = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${local.project}-media-transcode-role"
+        },
       ]
     })
   }

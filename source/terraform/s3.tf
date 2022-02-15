@@ -124,7 +124,6 @@ module "s3_destination" {
   block_public_policy                   = true
   ignore_public_acls                    = true
   restrict_public_buckets               = true
-  attach_deny_insecure_transport_policy = true
 
   cors_rule = [
     {
@@ -154,7 +153,6 @@ module "s3_destination_for_restricted_videos" {
   block_public_policy                   = true
   ignore_public_acls                    = true
   restrict_public_buckets               = true
-  attach_deny_insecure_transport_policy = true
 
   cors_rule = [
     {
