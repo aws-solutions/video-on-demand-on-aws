@@ -6,7 +6,7 @@
 # cd deployment
 # ./build-s3-dist.sh source-bucket-base-name trademarked-solution-name version-code
 #
-# Paramenters:
+# Parameters:
 #  - source-bucket-base-name: Name for the S3 bucket location where the template will source the Lambda
 #    code from. The template will append '-[region_name]' to this bucket name.
 #    For example: ./build-s3-dist.sh solutions my-solution v1.0.0
@@ -34,43 +34,42 @@ source_dir="$template_dir/../source"
 echo "------------------------------------------------------------------------------"
 echo "Rebuild distribution"
 echo "------------------------------------------------------------------------------"
-rm -rf $template_dist_dir
-mkdir -p $template_dist_dir
-rm -rf $build_dist_dir
-mkdir -p $build_dist_dir
+rm -rf "$template_dist_dir"
+mkdir -p "$template_dist_dir"
+rm -rf "$build_dist_dir"
+mkdir -p "$build_dist_dir"
 
 echo "------------------------------------------------------------------------------"
 echo "CloudFormation Template"
 echo "------------------------------------------------------------------------------"
-cp $template_dir/video-on-demand-on-aws.yaml $template_dist_dir/video-on-demand-on-aws.template
+cp "$template_dir/video-on-demand-on-aws.yaml" "$template_dist_dir/video-on-demand-on-aws.yaml"
 
 replace="s/%%BUCKET_NAME%%/$1/g"
 echo "sed -i -e $replace"
-sed -i -e $replace $template_dist_dir/video-on-demand-on-aws.template
+sed -i -e $replace "$template_dist_dir/video-on-demand-on-aws.yaml"
 
 replace="s/%%SOLUTION_NAME%%/$2/g"
 echo "sed -i -e $replace"
-sed -i -e $replace $template_dist_dir/video-on-demand-on-aws.template
+sed -i -e $replace "$template_dist_dir/video-on-demand-on-aws.yaml"
 
 replace="s/%%VERSION%%/$3/g"
 echo "sed -i -e $replace"
-sed -i -e $replace $template_dist_dir/video-on-demand-on-aws.template
-sed -i -e $replace $template_dir/../README.md
+sed -i -e $replace "$template_dist_dir/video-on-demand-on-aws.yaml"
 
-cp $template_dist_dir/video-on-demand-on-aws.template $build_dist_dir/
+cp "$template_dist_dir/video-on-demand-on-aws.yaml" "$build_dist_dir/"
 
 echo "------------------------------------------------------------------------------"
 echo "Download mediainfo binary for AWS Lambda"
 echo "------------------------------------------------------------------------------"
-cd $source_dir/mediainfo/
+cd "$source_dir/mediainfo/"
 rm -rf bin/*
 curl -O https://mediaarea.net/download/binary/mediainfo/20.09/MediaInfo_CLI_20.09_Lambda.zip
-unzip MediaInfo_CLI_20.09_Lambda.zip 
+unzip MediaInfo_CLI_20.09_Lambda.zip
 mv LICENSE bin/
 chmod +x ./bin/mediainfo
 rm -r MediaInfo_CLI_20.09_Lambda.zip
 
-cd $source_dir/
+cd "$source_dir/"
 echo "------------------------------------------------------------------------------"
 echo "Lambda Functions"
 echo "------------------------------------------------------------------------------"
@@ -87,7 +86,7 @@ for folder in */ ; do
         rm -rf node_modules/
         npm i --production
 
-        zip -q -r9 $zip_path .
+        zip -q -r9 "$zip_path" .
     elif [ -e "setup.py" ]; then
         # If you're running this command on macOS and Python3 has been installed using Homebrew, you might see this issue:
         #    DistutilsOptionError: must supply either home or prefix/exec-prefix
