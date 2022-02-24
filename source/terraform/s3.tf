@@ -36,7 +36,7 @@ module "s3_source" {
     {
       id      = "${local.project}-source-archive"
       enabled = true
-      tags = {
+      tags    = {
         "${local.project}" = "GLACIER"
       }
       transition = [
@@ -45,10 +45,10 @@ module "s3_source" {
           storage_class = "GLACIER"
         }
       ]
-      }, {
+    }, {
       id      = "${local.project}-source-deep-archive"
       enabled = true
-      tags = {
+      tags    = {
         "${local.project}" = "DEEP_ARCHIVE"
       }
       transition = [
@@ -67,7 +67,7 @@ module "s3_source" {
 
 // https://github.com/terraform-aws-modules/terraform-aws-s3-bucket/tree/master/examples/notification
 module "s3_source_notifications" {
-  source  = "terraform-aws-modules/s3-bucket/aws//modules/notification"
+  source  = "registry.terraform.io/terraform-aws-modules/s3-bucket/aws//modules/notification"
   version = "~> 2.0"
 
   bucket = module.s3_source.s3_bucket_id
@@ -112,18 +112,20 @@ module "s3_source_notifications" {
 }
 
 module "s3_destination" {
-  source  = "terraform-aws-modules/s3-bucket/aws"
+  source  = "registry.terraform.io/terraform-aws-modules/s3-bucket/aws"
   version = "~> 2.0"
 
   acl           = "private"
   bucket        = "${local.project}-transcoded-videos-${data.aws_caller_identity.current.account_id}-${data.aws_region.current.name}"
-  force_destroy = true
+  force_destroy = false
 
   # S3 bucket-level Public Access Block configuration
   block_public_acls                     = true
   block_public_policy                   = true
   ignore_public_acls                    = true
   restrict_public_buckets               = true
+  attach_policy                         = true
+  policy                                = data.aws_iam_policy_document.s3_policy_videos.json
 
   cors_rule = [
     {
@@ -141,18 +143,20 @@ module "s3_destination" {
 }
 
 module "s3_destination_for_restricted_videos" {
-  source  = "terraform-aws-modules/s3-bucket/aws"
+  source  = "registry.terraform.io/terraform-aws-modules/s3-bucket/aws"
   version = "~> 2.0"
 
   acl           = "private"
   bucket        = "${local.project}-transcoded-restricted-videos-${data.aws_caller_identity.current.account_id}-${data.aws_region.current.name}"
-  force_destroy = true
+  force_destroy = false
 
   # S3 bucket-level Public Access Block configuration
   block_public_acls                     = true
   block_public_policy                   = true
   ignore_public_acls                    = true
   restrict_public_buckets               = true
+  attach_policy                         = true
+  policy                                = data.aws_iam_policy_document.s3_policy_restricted_videos.json
 
   cors_rule = [
     {
@@ -205,9 +209,18 @@ resource "aws_s3_bucket_object" "redirect_videos_restricted" {
   content_encoding = "UTF-8"
   etag             = md5(local.video_redirect)
 }
+// transparent pixel to check for geo_blocking being in place or not
+resource "aws_s3_bucket_object" "test_pixel_restricted" {
+  bucket         = module.s3_destination_for_restricted_videos.s3_bucket_id
+  key            = "1x1.png"
+  content_base64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAQMAAAAl21bKAAAAA1BMVEUAAACnej3aAAAAAXRSTlMAQObYZgAAAApJREFUCNdjYAAAAAIAAeIhvDMAAAAASUVORK5CYII="
+  cache_control  = "public, max-age=86400"
+  content_type   = "image/png"
+  etag           = "71a50dbba44c78128b221b7df7bb51f1"
+}
 
 module "s3_λ_source" {
-  source  = "terraform-aws-modules/s3-bucket/aws"
+  source  = "registry.terraform.io/terraform-aws-modules/s3-bucket/aws"
   version = "~> 2.0"
 
   acl           = "private"
@@ -220,7 +233,7 @@ module "s3_λ_source" {
   ignore_public_acls                    = true
   restrict_public_buckets               = true
   attach_deny_insecure_transport_policy = true
-  server_side_encryption_configuration = {
+  server_side_encryption_configuration  = {
     rule = {
       apply_server_side_encryption_by_default = {
         sse_algorithm = "aws:kms"
