@@ -6,7 +6,8 @@ locals {
     "https://varnish-eu-west-1.stroeer.engineering",
     "https://paper-eu-west-1.stroeer.engineering",
     "http://localhost:3000",
-    "http://local.t-online.de:3000"
+    "http://local.t-online.de:3000",
+    "https://local.t-online.de",
   ]
 }
 
