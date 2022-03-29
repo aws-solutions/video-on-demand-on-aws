@@ -1,10 +1,20 @@
 repos:
-  - repo: git://github.com/antonbabenko/pre-commit-terraform
-    rev: v1.50.0
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: 48bc03ca3f0f2f782d2f430069868019a6892062 # see https://github.com/antonbabenko/pre-commit-terraform/issues/337
     hooks:
       - id: terraform_fmt
-  - repo: git://github.com/pre-commit/pre-commit-hooks
-    rev: v4.0.1
+      - id: terraform_validate
+        args:
+          - --init-args=-backend=false
+      - id: terraform_tflint
+        args:
+          - --args=--config=__GIT_WORKING_DIR__/.tflint.hcl
+#      - id: terraform_tfsec
+#        files: source/terraform/
+#        args:
+#          - --args=--config-file=__GIT_WORKING_DIR__/.tfsec.json --exclude-downloaded-modules
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.1.0
     hooks:
       - id: check-merge-conflict
       - id: trailing-whitespace

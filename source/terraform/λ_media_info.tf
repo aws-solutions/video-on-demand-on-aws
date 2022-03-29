@@ -13,6 +13,7 @@ module "λ_media_info" {
   description                        = "Creates a unique identifier (GUID) and executes the Ingest StateMachine"
   handler                            = "lambda_function.lambda_handler"
   ignore_external_function_updates   = true
+  layers                             = [local.lambda_insights_arn]
   publish                            = true
   runtime                            = "python3.7"
   s3_bucket                          = module.s3_λ_source.s3_bucket_id

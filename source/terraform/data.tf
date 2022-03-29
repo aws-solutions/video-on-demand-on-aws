@@ -1,8 +1,10 @@
 locals {
-  project            = "buzzhub"
-  environment        = "production"
-  lambda_package_dir = "../../target"
-  s3_prefix          = "package"
+  project             = "buzzhub"
+  environment         = "production"
+  lambda_insights_arn = "arn:aws:lambda:${data.aws_region.current.name}:580247275435:layer:LambdaInsightsExtension:18"
+  lambda_package_dir  = "../../target"
+  s3_prefix           = "package"
+
   tags = {
     managed_by   = "terraform"
     map-migrated = "d-server-00fvusu7ux3q9a"

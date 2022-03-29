@@ -36,5 +36,9 @@ resource "aws_dynamodb_table" "this" {
     range_key       = "ttl"
     projection_type = "KEYS_ONLY"
   }
+
+  point_in_time_recovery {
+    enabled = true
+  }
 }
 

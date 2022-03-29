@@ -21,6 +21,7 @@ module "λ_broadcast" {
   description                        = "update articles that depend on the video being processed."
   handler                            = "index.handler"
   ignore_external_function_updates   = true
+  layers                             = [local.lambda_insights_arn]
   publish                            = true
   runtime                            = "nodejs14.x"
   s3_bucket                          = module.s3_λ_source.s3_bucket_id

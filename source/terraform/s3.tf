@@ -25,7 +25,7 @@ module "s3_source" {
   ignore_public_acls                    = true
   restrict_public_buckets               = true
   attach_deny_insecure_transport_policy = true
-  server_side_encryption_configuration  = {
+  server_side_encryption_configuration = {
     rule = {
       apply_server_side_encryption_by_default = {
         sse_algorithm = "aws:kms"
@@ -37,7 +37,7 @@ module "s3_source" {
     {
       id      = "${local.project}-source-archive"
       enabled = true
-      tags    = {
+      tags = {
         "${local.project}" = "GLACIER"
       }
       transition = [
@@ -46,10 +46,10 @@ module "s3_source" {
           storage_class = "GLACIER"
         }
       ]
-    }, {
+      }, {
       id      = "${local.project}-source-deep-archive"
       enabled = true
-      tags    = {
+      tags = {
         "${local.project}" = "DEEP_ARCHIVE"
       }
       transition = [
@@ -121,12 +121,12 @@ module "s3_destination" {
   force_destroy = false
 
   # S3 bucket-level Public Access Block configuration
-  block_public_acls                     = true
-  block_public_policy                   = true
-  ignore_public_acls                    = true
-  restrict_public_buckets               = true
-  attach_policy                         = true
-  policy                                = data.aws_iam_policy_document.s3_policy_videos.json
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+  attach_policy           = true
+  policy                  = data.aws_iam_policy_document.s3_policy_videos.json
 
   cors_rule = [
     {
@@ -152,12 +152,12 @@ module "s3_destination_for_restricted_videos" {
   force_destroy = false
 
   # S3 bucket-level Public Access Block configuration
-  block_public_acls                     = true
-  block_public_policy                   = true
-  ignore_public_acls                    = true
-  restrict_public_buckets               = true
-  attach_policy                         = true
-  policy                                = data.aws_iam_policy_document.s3_policy_restricted_videos.json
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+  attach_policy           = true
+  policy                  = data.aws_iam_policy_document.s3_policy_restricted_videos.json
 
   cors_rule = [
     {
@@ -234,7 +234,7 @@ module "s3_λ_source" {
   ignore_public_acls                    = true
   restrict_public_buckets               = true
   attach_deny_insecure_transport_policy = true
-  server_side_encryption_configuration  = {
+  server_side_encryption_configuration = {
     rule = {
       apply_server_side_encryption_by_default = {
         sse_algorithm = "aws:kms"

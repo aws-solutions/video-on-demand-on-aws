@@ -27,15 +27,24 @@ tf ::
 	terraform -chdir=source/terraform/ init -upgrade $(TF_BACKEND_CFG)
 	terraform -chdir=source/terraform/ $(MODE)
 
-.PHONY: fmt
-fmt: ## Rewrites terraform files to canonical format
+terraform/fmt: ## Checks all terraform files for canonical format
 	@echo "+ $@"
-	@terraform -chdir=source/terraform/ fmt -check=true
+	@terraform -chdir=source/terraform fmt -check=true -recursive
 
-.PHONY: validate
-validate: ## Validates the Terraform files
+terraform/validate: ## Validates all Terraform files
 	@echo "+ $@"
-	@terraform -chdir=source/terraform/ init -backend=false && terraform -chdir=source/terraform/ validate
+	@terraform -chdir=source/terraform init -backend=false > /dev/null
+	@terraform -chdir=source/terraform validate || exit 1
+
+terraform/lint: ## Lints all Terraform files
+	@echo "+ $@"
+	@tflint --init
+	@cd source/terraform && terraform init -backend=false > /dev/null
+	@cd source/terraform && tflint --config ../../.tflint.hcl . || exit 2
+
+terraform/sec: ## Runs tfsec on all Terraform files
+	@echo "+ $@"
+	@cd source/terraform && tfsec --exclude-downloaded-modules --config-file ../../.tfsec.json --concise-output|| exit 2
 
 LAMBDA_NODE_VER=14
 CURR_NODE_VER=$(shell node -v)

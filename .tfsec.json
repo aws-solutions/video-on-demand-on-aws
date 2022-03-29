@@ -1,0 +1,7 @@
+{
+  "exclude": [
+    "aws-cloudwatch-log-group-customer-key",
+    "aws-ecr-repository-customer-key",
+    "aws-lambda-enable-tracing"
+  ]
+}
