@@ -15,7 +15,7 @@ module "λ_media_info" {
   ignore_external_function_updates   = true
   layers                             = [local.lambda_insights_arn]
   publish                            = true
-  runtime                            = "python3.7"
+  runtime                            = "python3.8"
   s3_bucket                          = module.s3_λ_source.s3_bucket_id
   s3_key                             = local.media_info_s3_key
   s3_object_version                  = aws_s3_bucket_object.λ_media_info.version_id
