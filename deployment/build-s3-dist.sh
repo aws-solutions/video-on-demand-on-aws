@@ -26,7 +26,7 @@ if [ ! -f "$source_dir/mediainfo/bin/mediainfo" ]
 then
   cd $source_dir/mediainfo/
   rm -rf bin/*
-  MI_VERSION="21.03"
+  MI_VERSION="21.09"
   curl -O https://mediaarea.net/download/binary/mediainfo/${MI_VERSION}/MediaInfo_CLI_${MI_VERSION}_Lambda.zip
   unzip MediaInfo_CLI_${MI_VERSION}_Lambda.zip
   mv LICENSE bin/
