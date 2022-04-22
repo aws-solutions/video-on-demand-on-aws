@@ -11,7 +11,7 @@ resource "aws_sfn_state_machine" "ingest" {
   }
 
   tracing_configuration {
-    enabled = true
+    enabled = false
   }
 
   definition = jsonencode({

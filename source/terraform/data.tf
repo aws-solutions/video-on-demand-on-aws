@@ -24,3 +24,7 @@ data "aws_sns_topic" "codestar_notifications" {
 data "aws_sns_topic" "error_notifications" {
   name = "cloudwatch-notifications"
 }
+
+data "aws_lambda_function" "log_streaming" {
+  function_name = "lambda-logs-to-elasticsearch"
+}

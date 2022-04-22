@@ -11,7 +11,7 @@ resource "aws_sfn_state_machine" "publish" {
   }
 
   tracing_configuration {
-    enabled = true
+    enabled = false
   }
 
   definition = jsonencode({
