@@ -175,11 +175,11 @@ describe('#STEP FUNCTIONS::', () => {
               "eventName": "ObjectRemoved:Delete",
               "s3": {"bucket": {"name": "bucket_name"}, "object": {"key": "2021/09/fake-media-id/big_bunny.mp4"}}
             }],
+            "workflowTrigger": "Video",
             "doPurge": true,
-          "cmsId": "fake-media-id",
-          "guid": `fake-media-id__rerun_${existingExecutions}`,
-          "cmsCommandId": "fake-media-id",
-          "workflowTrigger": "Video"
+            "cmsId": "fake-media-id",
+            "guid": `fake-media-id__rerun_${existingExecutions}`,
+            "cmsCommandId": "fake-media-id"
           }
         ),
         "name": `fake-media-id__rerun_${existingExecutions}`,
