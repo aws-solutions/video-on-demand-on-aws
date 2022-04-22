@@ -142,7 +142,7 @@ exports.handler = async (event) => {
     url = `https://${process.env.AWS_REGION}.console.aws.amazon.com/states/home?region=${process.env.AWS_REGION}#/executions/details/${event?.detail?.executionArn || ""}`;
     const input = JSON.parse(event.detail.input ?? "{}");
     const userMetadata = input?.detail?.userMetadata ?? {};
-    guid = userMetadata?.cmsId ?? event.guid;
+    guid = userMetadata?.cmsId ?? input?.cmsId ?? event.guid;
     values = {
       ':st': event.detail.status,
       ':ea': 'StepFunction',
