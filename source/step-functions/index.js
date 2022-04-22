@@ -95,14 +95,19 @@ exports.handler = async (event) => {
             if (metadata.hasOwnProperty("geo-restriction")) event.geoRestriction = metadata["geo-restriction"];
             if (metadata.hasOwnProperty("command-id")) event.cmsCommandId = metadata["command-id"];
             if (metadata.hasOwnProperty("ttl")) event.ttl = parseInt(metadata["ttl"], 10);
+          } else {
+            // this may occur during a re-run of a failed workflow, in this case at least extract the media_id
+            const match = key.match(/^20\d{2}\/\d{2}\/(?<media_id>[\w-]+)\//);
+            if (match && match.groups.media_id) {
+              event.cmsId = match.groups.media_id;
+            }
           }
 
           event.guid = event.cmsCommandId || uuidv4();
           if (event.cmsCommandId) {
             event.guid = await find_unused_execution_id(event.cmsCommandId);
           }
-        } else {
-          // ObjectRemoved:DeleteMarkerCreated
+        } else if (event.Records[0].eventName.startsWith('ObjectRemoved:')) {
           event.doPurge = true;
           logger.info(`marking ${bucket}/${key} for purging since eventName=${event.Records[0].eventName}`);
           const match = key.match(/^20\d{2}\/\d{2}\/(?<media_id>[\w-]+)\//);

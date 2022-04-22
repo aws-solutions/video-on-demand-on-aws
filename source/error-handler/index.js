@@ -15,6 +15,73 @@ const axios = require('axios');
 const AWS = require('aws-sdk');
 const logger = require('./lib/logger');
 
+const send_slack = async (guid, msg, url) => {
+  await Promise.all(process.env.SlackHook.split(",").map(async hook => {
+    return await axios.post(hook, {
+      "blocks": [
+        {
+          "type": "header",
+          "text": {
+            "type": "plain_text",
+            "text": `☠📼☠ Workflow Status:: Error: ${guid} ☠📼☠`,
+            "emoji": true
+          }
+        },
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": `*Message:*\n\`\`\`${JSON.stringify(msg, null, 2)}\`\`\``
+          }
+        },
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": `*URLs:*\n- <${url}|AWS Details>\n- <https://editor-production.livingdocs.stroeerws.de/p/t-online/media-library/${guid}|LivingDocs Details>`
+          }
+        }
+      ]
+    });
+  }));
+};
+
+const send_ops_genie = async (msg) => {
+  const list_response = await axios.get('https://api.opsgenie.com/v2/alerts',
+    {
+      params: {query: `status:open AND alias:${msg.guid}`},
+      headers: {'Authorization': `GenieKey ${process.env.GenieKey}`}
+    }
+  );
+  const alert_exists = list_response.data.data.length > 0;
+
+  if (alert_exists && msg.workflowStatus === 'SUCCEEDED') {
+    // close alert
+    logger.info(`closing open alert for id=${msg.guid}`);
+    return axios.post(`https://api.opsgenie.com/v2/alerts/${msg.guid}/close?identifierType=alias`, {
+        user: 'buzzhub',
+        source: 'error-handler',
+        note: msg.errorMessage
+      },
+      {headers: {'Authorization': `GenieKey ${process.env.GenieKey}`}});
+  }
+  if (!alert_exists && ["ABORTED", "TIMED_OUT", "FAILED"].includes(msg.workflowStatus)) {
+    // create alert
+    logger.info(`creating open alert for id=${msg.guid}`);
+    return axios.post('https://api.opsgenie.com/v2/alerts', {
+      alias: msg.guid,
+      priority: 'P1',
+      message: msg.errorMessage,
+      description: msg.errorMessage,
+      details: Object.fromEntries(['guid', 'workflowStatus', 'workflowErrorAt'].map(k => [k, msg[k]])),
+      user: "buzzhub",
+      source: "error-handler"
+    }, {headers: {'Authorization': `GenieKey ${process.env.GenieKey}`}});
+  }
+
+  return Promise.resolve("done");
+};
+
 exports.handler = async (event) => {
   logger.registerEvent(event);
   logger.info("REQUEST", event);
@@ -29,32 +96,56 @@ exports.handler = async (event) => {
 
   let guid, values, url, msg;
 
-  if (event.function) {
-    url = 'https://console.aws.amazon.com/cloudwatch/home?region=' + process.env.AWS_REGION + '#logStream:group=/aws/lambda/' + event.function;
-    guid = event.cmsId || event.guid;
-    values = {
-      ':st': 'Error',
-      ':ea': event.function,
-      ':em': event.error,
-      ':ed': url
-    };
+  if (event.source !== 'aws.states') {
+    if (event.function) {
+      url = 'https://console.aws.amazon.com/cloudwatch/home?region=' + process.env.AWS_REGION + '#logStream:group=/aws/lambda/' + event.function;
+      guid = event.cmsId || event.guid;
+      values = {
+        ':st': 'Error',
+        ':ea': event.function,
+        ':em': event.error,
+        ':ed': url
+      };
 
-    // Msg update to match DynamoDB entry
-    msg = {
-      guid: guid,
-      workflowStatus: 'Error',
-      workflowErrorAt: event.function,
-      errorMessage: event.error,
-      errorDetails: url
-    };
-  }
+      // Msg update to match DynamoDB entry
+      msg = {
+        guid: guid,
+        workflowStatus: 'Error',
+        workflowErrorAt: event.function,
+        errorMessage: event.error,
+        errorDetails: url
+      };
+    }
 
-  if (event.detail) {
-    url = 'https://console.aws.amazon.com/mediaconvert/home?region=' + process.env.AWS_REGION + '#/jobs/summary/' + event.detail.jobId;
-    guid = event.detail.userMetadata.cmsId || event.detail.userMetadata.guid;
+    if (event.detail) {
+      url = 'https://console.aws.amazon.com/mediaconvert/home?region=' + process.env.AWS_REGION + '#/jobs/summary/' + event.detail.jobId;
+      guid = event.detail.userMetadata.cmsId || event.detail.userMetadata.guid;
+      values = {
+        ':st': 'Error',
+        ':ea': 'Encoding',
+        ':em': JSON.stringify(event, null, 2),
+        ':ed': url
+      };
+
+      // Msg update to match DynamoDB entry
+      msg = {
+        guid: guid,
+        workflowStatus: 'Error',
+        workflowErrorAt: 'Encoding',
+        errorMessage: event.detail.errorMessage,
+        userMetadata: event.detail.userMetadata,
+        errorDetails: url
+      };
+    }
+  } else if (event.source === 'aws.states') {
+    // step function error
+    url = `https://${process.env.AWS_REGION}.console.aws.amazon.com/states/home?region=${process.env.AWS_REGION}#/executions/details/${event?.detail?.executionArn || ""}`;
+    const input = JSON.parse(event.detail.input ?? "{}");
+    const userMetadata = input?.detail?.userMetadata ?? {};
+    guid = userMetadata?.cmsId ?? event.guid;
     values = {
-      ':st': 'Error',
-      ':ea': 'Encoding',
+      ':st': event.detail.status,
+      ':ea': 'StepFunction',
       ':em': JSON.stringify(event, null, 2),
       ':ed': url
     };
@@ -62,83 +153,54 @@ exports.handler = async (event) => {
     // Msg update to match DynamoDB entry
     msg = {
       guid: guid,
-      workflowStatus: 'Error',
-      workflowErrorAt: 'Encoding',
-      errorMessage: event.detail.errorMessage,
-      userMetadata: event.detail.userMetadata,
+      workflowStatus: event.detail.status,
+      workflowErrorAt: 'StepFunction',
+      errorMessage: `buzzhub workflow ${guid} terminated with state ${event.detail.status}`,
+      userMetadata: userMetadata,
       errorDetails: url
     };
+
   }
 
   logger.info({msg});
 
-  // Update DynamoDB
-  let params = {
-    TableName: process.env.DynamoDBTable,
-    Key: {guid: guid},
-    UpdateExpression: 'SET workflowStatus = :st,' + 'workflowErrorAt = :ea,' + 'errorMessage = :em,' + 'errorDetails = :ed',
-    ExpressionAttributeValues: values
-  };
+  if (["ABORTED", "TIMED_OUT", "FAILED", 'Error'].includes(msg.workflowStatus)) {
 
-  try { await dynamo.update(params).promise();} catch (e) {
-    logger.error("Error updating dynamodb.", e);
-    // throw e;
+    // Update DynamoDB
+    let params = {
+      TableName: process.env.DynamoDBTable,
+      Key: {guid: guid},
+      UpdateExpression: 'SET workflowStatus = :st,' + 'workflowErrorAt = :ea,' + 'errorMessage = :em,' + 'errorDetails = :ed',
+      ExpressionAttributeValues: values
+    };
+
+    try { await dynamo.update(params).promise();} catch (e) {
+      logger.error("Error updating dynamodb.", e);
+      // throw e;
+    }
+
+    // Feature/so-vod-173 match SNS data structure with the SNS Notification
+    // Function for consistency.
+    params = {
+      Message: JSON.stringify(msg, null, 2),
+      Subject: `Workflow Status:: Error: ${guid}`,
+      TargetArn: process.env.SnsTopic
+    };
+
+    try { await sns.publish(params).promise();} catch (e) {
+      logger.error("Error publishing to SNS.", e);
+      // throw e;
+    }
+
+    try { await send_slack(guid, msg, url); } catch (e) {
+      logger.error('Error publishing to Slack webhook.', e);
+    }
   }
 
-  // Feature/so-vod-173 match SNS data structure with the SNS Notification
-  // Function for consistency.
-  params = {
-    Message: JSON.stringify(msg, null, 2),
-    Subject: `Workflow Status:: Error: ${guid}`,
-    TargetArn: process.env.SnsTopic
-  };
-
-  try { await sns.publish(params).promise();} catch (e) {
-    logger.error("Error publishing to SNS.", e);
-    // throw e;
+  try { await send_ops_genie(msg); } catch (e) {
+    logger.error('Error publishing to OpsGenie.', e);
   }
 
-  try {
-    const response = Promise.all(process.env.SlackHook.split(",").map(async hook => {
-      return await axios.post(hook, {
-        "blocks": [
-          {
-            "type": "header",
-            "text": {
-              "type": "plain_text",
-              "text": `☠📼☠ Workflow Status:: Error: ${guid} ☠📼☠`,
-              "emoji": true
-            }
-          },
-          {
-            "type": "section",
-            "text": {
-              "type": "mrkdwn",
-              "text": `*Message:*\n\`\`\`${JSON.stringify(msg, null, 2)}\`\`\``
-            }
-          },
-          {
-            "type": "section",
-            "text": {
-              "type": "mrkdwn",
-              "text": `*URL:*\n${url}`
-            }
-          },
-          {
-            "type": "section",
-            "text": {
-              "type": "mrkdwn",
-              "text": `*LivingDocs:*\nhttps://editor-production.livingdocs.stroeerws.de/p/t-online/media-library/${guid}`
-            }
-          }
-        ]
-      });
-    }));
-
-    logger.info({response});
-  } catch (e) {
-    logger.error('Error publishing to Slack webhook.', e);
-  }
 
   return event;
 };

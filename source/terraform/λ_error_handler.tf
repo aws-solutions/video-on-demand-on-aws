@@ -5,7 +5,7 @@ locals {
 }
 
 module "λ_error_handler" {
-  source  = "moritzzimmer/lambda/aws"
+  source  = "registry.terraform.io/moritzzimmer/lambda/aws"
   version = "6.1.0"
 
   cloudwatch_lambda_insights_enabled = true
@@ -31,10 +31,29 @@ module "λ_error_handler" {
       event_pattern = jsonencode({
         source = ["aws.mediaconvert"]
         detail = {
-          status = ["ERROR"],
+          status       = ["ERROR"],
           userMetadata = {
             workflow : [local.project]
           }
+        }
+      })
+    }
+
+    # https://docs.aws.amazon.com/step-functions/latest/dg/cw-events.html#cw-events-events
+    step_functions = {
+      cloudwatch_event_target_arn = aws_lambda_alias.λ_error_handler.arn
+      name                        = "${local.project}-StepFunctionErrors"
+      description                 = "StepFunctions Error event rule"
+
+      event_pattern = jsonencode({
+        source = ["aws.states"]
+        detail = {
+          status          = ["ABORTED", "TIMED_OUT", "FAILED", "SUCCEEDED"]
+          stateMachineArn = [
+            aws_sfn_state_machine.ingest.arn,
+            aws_sfn_state_machine.process.arn,
+            aws_sfn_state_machine.publish.arn
+          ]
         }
       })
     }
@@ -45,7 +64,8 @@ module "λ_error_handler" {
       AWS_NODEJS_CONNECTION_REUSE_ENABLED : "1"
       DynamoDBTable : aws_dynamodb_table.this.name
       SnsTopic : data.aws_sns_topic.error_notifications.arn
-      SlackHook : aws_ssm_parameter.slack_hook.value
+      SlackHook : aws_ssm_parameter.slack_hook.value,
+      GenieKey : data.aws_ssm_parameter.genie_key.value
     }
   }
 
@@ -133,4 +153,9 @@ resource "aws_ssm_parameter" "slack_hook" {
       value
     ]
   }
+}
+
+data "aws_ssm_parameter" "genie_key" {
+  name            = "/external/opsgenie/api.key"
+  with_decryption = true
 }
