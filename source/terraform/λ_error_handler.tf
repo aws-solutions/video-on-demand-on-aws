@@ -156,6 +156,6 @@ resource "aws_ssm_parameter" "slack_hook" {
 }
 
 data "aws_ssm_parameter" "genie_key" {
-  name            = "/external/opsgenie/api.key"
+  name            = "/external/opsgenie/buzzhub.api.key"
   with_decryption = true
 }

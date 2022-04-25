@@ -47,23 +47,35 @@ const send_slack = async (guid, msg, url) => {
 };
 
 const send_ops_genie = async (msg) => {
-  const list_response = await axios.get('https://api.opsgenie.com/v2/alerts',
-    {
-      params: {query: `status:open AND alias:${msg.guid}`},
-      headers: {'Authorization': `GenieKey ${process.env.GenieKey}`}
+  let alert_exists;
+  try {
+    const list_response = await axios.get(`https://api.opsgenie.com/v2/alerts/${msg.guid}`,
+      {
+        params: {identifierType: 'alias'},
+        headers: {'Authorization': `GenieKey ${process.env.GenieKey}`}
+      }
+    );
+    alert_exists = list_response.status === 200;
+  } catch (e) {
+    if (e.response.status === 404) {
+      alert_exists = false;
+    } else {
+      throw e;
     }
-  );
-  const alert_exists = list_response.data.data.length > 0;
+  }
 
   if (alert_exists && msg.workflowStatus === 'SUCCEEDED') {
     // close alert
     logger.info(`closing open alert for id=${msg.guid}`);
-    return axios.post(`https://api.opsgenie.com/v2/alerts/${msg.guid}/close?identifierType=alias`, {
+    return axios.post(`https://api.opsgenie.com/v2/alerts/${msg.guid}/close`, {
         user: 'buzzhub',
         source: 'error-handler',
         note: msg.errorMessage
       },
-      {headers: {'Authorization': `GenieKey ${process.env.GenieKey}`}});
+      {
+        params: {identifierType: 'alias'},
+        headers: {Authorization: `GenieKey ${process.env.GenieKey}`}
+      });
   }
   if (!alert_exists && ["ABORTED", "TIMED_OUT", "FAILED"].includes(msg.workflowStatus)) {
     // create alert
@@ -79,7 +91,7 @@ const send_ops_genie = async (msg) => {
     }, {headers: {'Authorization': `GenieKey ${process.env.GenieKey}`}});
   }
 
-  return Promise.resolve("done");
+  return Promise.resolve("noop");
 };
 
 exports.handler = async (event) => {
@@ -197,7 +209,7 @@ exports.handler = async (event) => {
     }
   }
 
-  try { await send_ops_genie(msg); } catch (e) {
+  try { logger.info((await send_ops_genie(msg)).data); } catch (e) {
     logger.error('Error publishing to OpsGenie.', e);
   }
 
