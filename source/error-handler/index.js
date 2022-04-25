@@ -55,7 +55,7 @@ const send_ops_genie = async (msg) => {
         headers: {'Authorization': `GenieKey ${process.env.GenieKey}`}
       }
     );
-    alert_exists = list_response.status === 200;
+    alert_exists = list_response.status === 200 && list_response.data.data.status === 'open';
   } catch (e) {
     if (e.response.status === 404) {
       alert_exists = false;
