@@ -46,7 +46,7 @@ module "λ_sqs_publish" {
   }
 
   cloudwatch_log_subscription_filters = {
-    elasticsearch = {
+    opensearch = {
       destination_arn = data.aws_lambda_function.log_streaming.arn
     }
   }

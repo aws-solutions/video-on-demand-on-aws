@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/antonbabenko/pre-commit-terraform
-    rev: v1.62.3
+    rev: v1.70.1
     hooks:
       - id: terraform_fmt
       - id: terraform_validate
@@ -14,7 +14,7 @@ repos:
 #        args:
 #          - --args=--config-file=__GIT_WORKING_DIR__/.tfsec.json --exclude-downloaded-modules
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.1.0
+    rev: v4.2.0
     hooks:
       - id: check-merge-conflict
       - id: trailing-whitespace

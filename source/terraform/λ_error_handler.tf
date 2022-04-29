@@ -31,7 +31,7 @@ module "λ_error_handler" {
       event_pattern = jsonencode({
         source = ["aws.mediaconvert"]
         detail = {
-          status       = ["ERROR"],
+          status = ["ERROR"],
           userMetadata = {
             workflow : [local.project]
           }
@@ -48,7 +48,7 @@ module "λ_error_handler" {
       event_pattern = jsonencode({
         source = ["aws.states"]
         detail = {
-          status          = ["ABORTED", "TIMED_OUT", "FAILED", "SUCCEEDED"]
+          status = ["ABORTED", "TIMED_OUT", "FAILED", "SUCCEEDED"]
           stateMachineArn = [
             aws_sfn_state_machine.ingest.arn,
             aws_sfn_state_machine.process.arn,
@@ -70,7 +70,7 @@ module "λ_error_handler" {
   }
 
   cloudwatch_log_subscription_filters = {
-    elasticsearch = {
+    opensearch = {
       destination_arn = data.aws_lambda_function.log_streaming.arn
     }
   }
