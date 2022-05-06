@@ -82,7 +82,7 @@ const send_ops_genie = async (msg) => {
     logger.info(`creating open alert for id=${msg.guid}`);
     return axios.post('https://api.opsgenie.com/v2/alerts', {
       alias: msg.guid,
-      priority: 'P1',
+      priority: 'P5',
       message: msg.errorMessage,
       description: msg.errorMessage,
       details: Object.fromEntries(['guid', 'workflowStatus', 'workflowErrorAt'].map(k => [k, msg[k]])),
