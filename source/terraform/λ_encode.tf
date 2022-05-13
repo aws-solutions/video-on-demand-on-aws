@@ -46,7 +46,7 @@ module "λ_encode" {
 
 data "aws_iam_policy_document" "λ_encode" {
   statement {
-    actions   = ["mediaconvert:CreateJob", "mediaconvert:GetJobTemplate"]
+    actions   = ["mediaconvert:CreateJob", "mediaconvert:GetJobTemplate", "mediaconvert:TagResource"]
     resources = ["arn:aws:mediaconvert:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:*"]
   }
   statement {
