@@ -71,20 +71,27 @@ exports.handler = async (event) => {
     };
 
     logger.info(`Invalidating ${JSON.stringify(invalidationParams)}`)
-    const invalidation = await cloudFront.createInvalidation(invalidationParams).promise()
-    logger.info(`Invalidated with ${JSON.stringify(invalidation)}`)
+    // const invalidation = await cloudFront.createInvalidation(invalidationParams).promise()
+    // logger.info(`Invalidated with ${JSON.stringify(invalidation)}`)
 
     const reqForDependencies = await axios(getRequest);
     if (reqForDependencies.status === 200) {
       logger.info("reqForDependencies.data", reqForDependencies.data);
       for (const dependency of reqForDependencies.data) {
 
-        logger.info(`notifying ${process.env.SnsTopic.split(':').pop()} -> ${dependency.id.toString()}`);
+        const message = dependency.id.toString();
+        const topic_arn = process.env.SnsTopic;
+        logger.info(`notifying ${topic_arn.split(':').pop()} -> ${message}`);
         let snsParams = {
-          Message: dependency.id.toString(),
-          Subject: dependency.id.toString(),
-          TargetArn: process.env.SnsTopic
+          Message: message,
+          Subject: message,
+          TargetArn: topic_arn
         };
+        if (topic_arn.endsWith(".fifo")) {
+          snsParams = {...snsParams,
+            MessageDeduplicationId: message,
+            MessageGroupId: message};
+        }
         await sns.publish(snsParams).promise();
       }
 

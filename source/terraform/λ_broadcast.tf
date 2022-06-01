@@ -5,15 +5,19 @@ locals {
 }
 
 data "aws_sns_topic" "secondary" {
-  name = "cms-updates-secondary"
+  name = "cms-updates-secondary.fifo"
 }
 
 data "aws_cloudfront_distribution" "video" {
   id = "E3L057UN16VOXR"
 }
 
+data "aws_kms_alias" "sns_sqs" {
+  name = "alias/sqs_sns"
+}
+
 module "λ_broadcast" {
-  source  = "moritzzimmer/lambda/aws"
+  source  = "registry.terraform.io/moritzzimmer/lambda/aws"
   version = "6.1.0"
 
   cloudwatch_lambda_insights_enabled = true
@@ -73,6 +77,18 @@ data "aws_iam_policy_document" "λ_broadcast" {
     actions   = ["lambda:InvokeFunction"]
     resources = [aws_lambda_alias.λ_error_handler.arn]
   }
+
+  statement {
+    actions = [
+      "kms:GenerateDataKey",
+      "kms:Decrypt"
+    ]
+
+    resources = [
+      data.aws_kms_alias.sns_sqs.target_key_arn
+    ]
+  }
+
 }
 
 resource "aws_iam_policy" "λ_broadcast" {
@@ -114,7 +130,7 @@ resource "aws_lambda_alias" "λ_broadcast" {
 }
 
 module "λ_broadcast_deployment" {
-  source  = "moritzzimmer/lambda/aws//modules/deployment"
+  source  = "registry.terraform.io/moritzzimmer/lambda/aws//modules/deployment"
   version = "6.0.0"
 
   alias_name                         = aws_lambda_alias.λ_broadcast.name
