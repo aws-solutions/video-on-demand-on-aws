@@ -71,8 +71,8 @@ exports.handler = async (event) => {
     };
 
     logger.info(`Invalidating ${JSON.stringify(invalidationParams)}`)
-    // const invalidation = await cloudFront.createInvalidation(invalidationParams).promise()
-    // logger.info(`Invalidated with ${JSON.stringify(invalidation)}`)
+    const invalidation = await cloudFront.createInvalidation(invalidationParams).promise()
+    logger.info(`Invalidated with ${JSON.stringify(invalidation)}`)
 
     const reqForDependencies = await axios(getRequest);
     if (reqForDependencies.status === 200) {
