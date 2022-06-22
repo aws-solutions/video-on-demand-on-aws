@@ -30,8 +30,9 @@ describe('#BROADCAST::', () => {
 
   process.env.AWS_REGION = 'us-west-1';
   process.env.SnsTopic = `arn:aws:sns:${process.env.AWS_REGION}:000000000000:my-sns-topic`;
-  process.env.ErrorHandler = 'error_handler';
+  process.env.ErrorHandler = 'buzzhub-error-handler';
   process.env.DistributionId = 'video-distribution';
+  process.env.DistributionIdRestricted = 'video-distribution-restricted';
 
   afterEach(() => AWS.restore('CloudFront'));
   afterEach(() => AWS.restore('SSM'));
@@ -93,16 +94,19 @@ describe('#BROADCAST::', () => {
 
     await lambda.handler(eventFixture);
 
-    expect(invalidationSpy).to.have.been.called.with({
-      "DistributionId":  process.env.DistributionId,
+    expect(invalidationSpy).to.have.been.first.called.with({
+      "DistributionId": process.env.DistributionId,
       "InvalidationBatch": {
         "CallerReference": eventFixture.guid,
-        "Paths": {
-          "Items": [
-            "/2021/11/foo-bar/*"
-          ],
-          "Quantity": 1
-        }
+        "Paths": {"Items": ["/2021/11/foo-bar/*"], "Quantity": 1}
+      }
+    });
+
+    expect(invalidationSpy).to.have.been.second.called.with({
+      "DistributionId": process.env.DistributionIdRestricted,
+      "InvalidationBatch": {
+        "CallerReference": eventFixture.guid,
+        "Paths": {"Items": ["/2021/11/foo-bar/*"], "Quantity": 1}
       }
     });
     scope.isDone();

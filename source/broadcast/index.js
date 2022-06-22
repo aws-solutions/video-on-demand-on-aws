@@ -37,17 +37,25 @@ exports.handler = async (event) => {
     region: process.env.AWS_REGION
   });
 
-  const cloudFront = new AWS.CloudFront();
+  const cloudFront = new AWS.CloudFront({maxRetries: 10});
 
-  const invalidationParams = {
-    'DistributionId': process.env.DistributionId,
-    'InvalidationBatch': {
-      'CallerReference': event.guid, // Same caller reference will return existing invalidations
-      'Paths': {
-        'Quantity': 1,
-        'Items': [`/${path.dirname(event.srcVideo)}/*`]
+  const invalidate = async () => {
+    let invalidations = [process.env.DistributionId, process.env.DistributionIdRestricted].map(async (distributionId) => {
+      let invalidationParams = {
+        'DistributionId': distributionId,
+        'InvalidationBatch': {
+          'CallerReference': event.guid, // Same caller reference will return existing invalidations
+          'Paths': {
+            'Quantity': 1,
+            'Items': [`/${path.dirname(event.srcVideo)}/*`]
+          }
+        }
       }
-    }
+      logger.info(`Invalidating ${JSON.stringify(invalidationParams)}`)
+      const invalidation = await(cloudFront.createInvalidation(invalidationParams).promise())
+      logger.info(`Invalidated with ${JSON.stringify(invalidation)}`)
+    });
+    await Promise.all(invalidations);
   }
 
   const ssmParams = {
@@ -70,9 +78,7 @@ exports.handler = async (event) => {
       method: 'GET'
     };
 
-    logger.info(`Invalidating ${JSON.stringify(invalidationParams)}`)
-    const invalidation = await cloudFront.createInvalidation(invalidationParams).promise()
-    logger.info(`Invalidated with ${JSON.stringify(invalidation)}`)
+    await invalidate()
 
     const reqForDependencies = await axios(getRequest);
     if (reqForDependencies.status === 200) {

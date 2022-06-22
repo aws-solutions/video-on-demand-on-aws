@@ -12,6 +12,10 @@ data "aws_cloudfront_distribution" "video" {
   id = "E3L057UN16VOXR"
 }
 
+data "aws_cloudfront_distribution" "video_restricted" {
+  id = "EMI4G7HCBMIS7"
+}
+
 data "aws_kms_alias" "sns_sqs" {
   name = "alias/sqs_sns"
 }
@@ -39,6 +43,7 @@ module "λ_broadcast" {
       AWS_NODEJS_CONNECTION_REUSE_ENABLED : "1"
       SnsTopic : data.aws_sns_topic.secondary.arn
       DistributionId : data.aws_cloudfront_distribution.video.id
+      DistributionIdRestricted : data.aws_cloudfront_distribution.video_restricted.id
       ErrorHandler : aws_lambda_alias.λ_error_handler.arn
     }
   }
@@ -70,7 +75,7 @@ data "aws_iam_policy_document" "λ_broadcast" {
 
   statement {
     actions   = ["cloudfront:CreateInvalidation"]
-    resources = [data.aws_cloudfront_distribution.video.arn]
+    resources = [data.aws_cloudfront_distribution.video.arn, data.aws_cloudfront_distribution.video_restricted.arn]
   }
 
   statement {
