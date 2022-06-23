@@ -35,7 +35,7 @@ module "λ_broadcast" {
   s3_bucket                          = module.s3_λ_source.s3_bucket_id
   s3_key                             = local.broadcast_s3_key
   s3_object_version                  = aws_s3_bucket_object.λ_broadcast.version_id
-  timeout                            = 120
+  timeout                            = 900
   tracing_config_mode                = "Active"
 
   environment = {
