@@ -37,7 +37,7 @@ exports.handler = async (event) => {
     region: process.env.AWS_REGION
   });
 
-  const cloudFront = new AWS.CloudFront({maxRetries: 10});
+  const cloudFront = new AWS.CloudFront({maxRetries: 20});
 
   const invalidate = async () => {
     let invalidations = [process.env.DistributionId, process.env.DistributionIdRestricted].map(async (distributionId) => {
