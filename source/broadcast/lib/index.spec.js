@@ -67,7 +67,7 @@ describe('#BROADCAST::', () => {
     AWS.mock("SSM", "getParameters", Promise.resolve(ssmFixture));
 
     const scope = nock('https://www.example.com')
-      .get(`/api/beta/mediaLibrary/${mediaId}/incomingDocumentReferences`)
+      .get(`/api/v1/mediaLibrary/${mediaId}/incomingDocumentReferences`)
       .reply(200, [{id: 987654321}]);
 
     await lambda.handler(eventFixture);
@@ -89,7 +89,7 @@ describe('#BROADCAST::', () => {
     AWS.mock("SSM", "getParameters", Promise.resolve(ssmFixture));
 
     const scope = nock('https://www.example.com')
-        .get(`/api/beta/mediaLibrary/${mediaId}/incomingDocumentReferences`)
+        .get(`/api/v1/mediaLibrary/${mediaId}/incomingDocumentReferences`)
         .reply(200, [{id: 987654321}]);
 
     await lambda.handler(eventFixture);
@@ -119,7 +119,7 @@ describe('#BROADCAST::', () => {
     AWS.mock('SNS', 'publish', Promise.reject('SNS ERROR'));
 
     const scope = nock('https://www.example.com')
-        .get(`/api/beta/mediaLibrary/${mediaId}/incomingDocumentReferences`)
+        .get(`/api/v1/mediaLibrary/${mediaId}/incomingDocumentReferences`)
         .reply(200, [{id: 987654321}]);
 
     await lambda.handler(eventFixture)

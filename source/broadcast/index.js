@@ -74,7 +74,7 @@ exports.handler = async (event) => {
         'Accept': 'application/json',
         'Accept-Encoding': 'gzip'
       },
-      url: `${host}/api/beta/mediaLibrary/${event.cmsId}/incomingDocumentReferences`,
+      url: `${host}/api/v1/mediaLibrary/${event.cmsId}/incomingDocumentReferences`,
       method: 'GET'
     };
 
