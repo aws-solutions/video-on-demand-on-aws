@@ -8,7 +8,8 @@ locals {
     "http://localhost:3000",
     "http://local.t-online.de:3000",
     "https://local.t-online.de",
-    "https://editor-production.livingdocs.stroeerws.de"
+    "https://editor-production.livingdocs.stroeerws.de",
+    "https://sib.beta.t-online.de"
   ]
 }
 
