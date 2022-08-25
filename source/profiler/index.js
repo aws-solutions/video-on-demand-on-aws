@@ -13,6 +13,7 @@
 
 const AWS = require('aws-sdk');
 const error = require('./lib/error.js');
+const Path = require('path');
 
 exports.handler = async (event) => {
     console.log(`REQUEST:: ${JSON.stringify(event, null, 2)}`);
@@ -38,6 +39,10 @@ exports.handler = async (event) => {
         });
 
         let mediaInfo = JSON.parse(event.srcMediainfo);
+        // in case we want to preserve the original file path
+        const {dir: srcDir, name: srcName} = Path.parse(mediaInfo.filename)
+        event.destPathPreserved = `${srcDir}/${srcName}`
+
         event.srcHeight = mediaInfo.video[0].height;
         event.srcWidth = mediaInfo.video[0].width;
 

@@ -41,7 +41,8 @@ exports.handler = async (event) => {
             inputRotate: process.env.InputRotate,
             acceleratedTranscoding: process.env.AcceleratedTranscoding,
             enableSns:JSON.parse(process.env.EnableSns),
-            enableSqs:JSON.parse(process.env.EnableSqs)
+            enableSqs:JSON.parse(process.env.EnableSqs),
+            preserveFilePathInOutput: JSON.parse(process.env.PreserveFilePathInOutput)
         };
 
         switch (event.workflowTrigger) {
