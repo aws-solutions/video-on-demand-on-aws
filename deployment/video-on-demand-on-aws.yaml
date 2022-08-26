@@ -73,6 +73,14 @@ Parameters:
       - Yes
       - No
 
+  InputS3Bucket:
+    Description: Name of the video input S3 bucket
+    Type: String
+
+  OutputS3Bucket:
+    Description: Name of the video output S3 bucket
+    Type: String
+
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
@@ -86,6 +94,8 @@ Metadata:
           - EnableSns
           - EnableSqs
           - PreserveFilePathInOutput
+          - InputS3Bucket
+          - OutputS3Bucket
       -
         Label:
           default: "AWS Elemental MediaConvert"
@@ -116,6 +126,10 @@ Metadata:
         default: Enable SQS Messaging
       PreserveFilePathInOutput:
         default: Preserve file path on output
+      InputS3Bucket:
+        default: Name of the video input S3 bucket
+      OutputS3Bucket:
+        default: Name of the video output S3 bucket
 
 Mappings:
   SourceCode:
@@ -412,6 +426,7 @@ Resources:
     UpdateReplacePolicy: Retain
     Type: AWS::S3::Bucket
     Properties:
+      BucketName: !Ref InputS3Bucket
       LoggingConfiguration:
         DestinationBucketName: !Ref Logs
         LogFilePrefix: s3-access/
@@ -453,6 +468,7 @@ Resources:
     UpdateReplacePolicy: Retain
     Type: AWS::S3::Bucket
     Properties:
+      BucketName: !Ref OutputS3Bucket
       LoggingConfiguration:
         DestinationBucketName: !Ref Logs
         LogFilePrefix: s3-access/
