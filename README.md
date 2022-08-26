@@ -52,9 +52,10 @@ The workflow configuration is set at deployment and is defined as environment va
 * **MediaConvert_Template_720p:**	The name of the SD template in MediaConvert
 * **Source:**	The name of the source S3 bucket
 * **WorkflowName:**	Used to tag all of the MediaConvert encoding jobs
-* **acceleratedTranscoding** Enabled Accelerated Transocding in MediaConvert. options include ENABLE, DISABLE, PREFERRED. for more detials please see: 
+* **acceleratedTranscoding** Enabled Accelerated Transocding in MediaConvert. options include ENABLE, DISABLE, PREFERRED. for more detials please see:
 * **enableSns** Send SNS notifications for the workflow results.
 * **enableSqs** Send the workflow results to an SQS queue
+* ***PreserveFilePathInOutput*** preserves the input file's path in the output folder
 
 ### WorkFlow Triggers
 
@@ -134,7 +135,7 @@ AWS MediaConvert Quality-defined Variable Bit-Rate (QVBR) control mode gets the 
 
 For more detail please see [QVBR and MediaConvert](https://docs.aws.amazon.com/mediaconvert/latest/ug/cbr-vbr-qvbr.html).
 
-## Accelerated Transcoding 
+## Accelerated Transcoding
 Version 5.1.0 introduces support for accelerated transcoding which is a pro tier  feature of AWS Elemental MediaConvert. This feature can be configured when launching the template with one of the following options:
 
 * **ENABLED** All files upload will have acceleration enabled. Files that are not supported will not be processed and the workflow will fail
@@ -186,7 +187,7 @@ aws s3 mb s3://my-bucket-us-east-1
 ```
 
 ### 3. Build MediaInfo
-Build MediaInfo using the following commands on an [EC2 instance](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EC2_GetStarted.html) running an Amazon Linux AMI. 
+Build MediaInfo using the following commands on an [EC2 instance](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EC2_GetStarted.html) running an Amazon Linux AMI.
 
 ```console
 sudo yum update -y
@@ -205,12 +206,12 @@ cd MediaInfo/Project/GNU/CLI/
 ```
 Copy the mediainfo binary into the `source/mediainfo/bin` directory of your cloned respository.
 
-If you'd like to use a precompiled MediaInfo binary for Lambda built by the MediaArea team, you can download it [here](https://mediaarea.net/en/MediaInfo/Download/Lambda). 
+If you'd like to use a precompiled MediaInfo binary for Lambda built by the MediaArea team, you can download it [here](https://mediaarea.net/en/MediaInfo/Download/Lambda).
 For more information, check out the [MediaInfo site](https://mediaarea.net/en/MediaInfo).
 
 
 ### 4. Create the deployment packages
-First change directory into the deployment directory. 
+First change directory into the deployment directory.
 Run the following commands to build the distribution.
 ```
 chmod +x ./build-s3-dist.sh
@@ -219,7 +220,7 @@ chmod +x ./build-s3-dist.sh
 
 > **Notes**: The _build-s3-dist_ script expects the bucket name as one of its parameters, and this value should not include the region suffix.
 
-Run this command to ensure that you are an owner of the AWS S3 bucket you are uploading files to. 
+Run this command to ensure that you are an owner of the AWS S3 bucket you are uploading files to.
 ```
 aws s3api head-bucket --bucket my-bucket-us-east-1 --expected-bucket-owner <YOUR-AWS-ACCOUNT-ID>
 ```
