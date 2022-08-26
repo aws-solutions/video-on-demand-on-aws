@@ -28,6 +28,7 @@ describe('#INPUT VALIDATE::', () => {
     process.env.AcceleratedTranscoding = 'DISABLED'
     process.env.EnableSns = 'true';
     process.env.EnableSqs = 'true';
+    process.env.PreserveFilePathInOutput = 'true';
 
     const _video = {
         workflowTrigger: 'Video',
