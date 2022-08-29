@@ -15,6 +15,11 @@ const AWS = require('aws-sdk');
 const error = require('./lib/error.js');
 const _ = require('lodash');
 
+// if we intend to only generate thumbnail, capture only one frame (first frame)
+const GENERATE_THUMBNAIL_ONLY = true
+const MAX_FRAME_CAPTURE = GENERATE_THUMBNAIL_ONLY ? 1 : 10000000
+
+
 const getMp4Group = (outputPath) => ({
     Name: 'File Group',
     OutputGroupSettings: {
@@ -104,7 +109,7 @@ const getFrameGroup = (event, outputPath) => ({
             AntiAlias: 'ENABLED',
             CodecSettings: {
                 FrameCaptureSettings: {
-                    MaxCaptures: 10000000,
+                    MaxCaptures: MAX_FRAME_CAPTURE,
                     Quality: 80,
                     FramerateDenominator: 5,
                     FramerateNumerator: 1
@@ -130,7 +135,8 @@ exports.handler = async (event) => {
 
     try {
         const inputPath = `s3://${event.srcBucket}/${event.srcVideo}`;
-        const outputPath = `s3://${event.destBucket}/${event.guid}`;
+        const subFolder = event.preserveFilePathInOutput ? event.destPathPreserved : event.guid;
+        const outputPath = `s3://${event.destBucket}/${subFolder}`
 
         // Baseline for the job parameters
         let job = {

@@ -27,7 +27,7 @@ Parameters:
   FrameCapture:
     Description: If enabled, frame capture is added to the job submitted to MediaConvert
     Type: String
-    Default: No
+    Default: Yes
     AllowedValues:
       - Yes
       - No
@@ -46,15 +46,15 @@ Parameters:
     Default: Yes
     AllowedValues:
       - Yes
-      - No    
-  
+      - No
+
   EnableSqs:
     Description: Publish the workflow results to an SQS queue to ingest upstream
     Type: String
     Default: Yes
     AllowedValues:
       - Yes
-      - No  
+      - No
 
   AcceleratedTranscoding:
     Description: Enable accelerated transcoding in AWS Elemental MediaConvert. PREFERRED will only use acceleration if the input files are supported. ENABLED acceleration is applied to all files (this will fail for unsupported file types) see MediaConvert Documentation for more detail https://docs.aws.amazon.com/mediaconvert/latest/ug/accelerated-transcoding.html
@@ -64,6 +64,22 @@ Parameters:
       - ENABLED
       - DISABLED
       - PREFERRED
+
+  PreserveFilePathInOutput:
+    Description: If true, preserves the input file's path in the output folder. For example, input file in s3://inputBucket/path1/path2/file1.mp4 will generate output s3://outputBucket/path1/path2/file1/mp4/file1.mp4 and s3://outputBucket/path1/path2/file1/mp4/hls
+    Type: String
+    Default: Yes
+    AllowedValues:
+      - Yes
+      - No
+
+  InputS3Bucket:
+    Description: Name of the video input S3 bucket
+    Type: String
+
+  OutputS3Bucket:
+    Description: Name of the video output S3 bucket
+    Type: String
 
 Metadata:
   AWS::CloudFormation::Interface:
@@ -77,6 +93,9 @@ Metadata:
           - Glacier
           - EnableSns
           - EnableSqs
+          - PreserveFilePathInOutput
+          - InputS3Bucket
+          - OutputS3Bucket
       -
         Label:
           default: "AWS Elemental MediaConvert"
@@ -105,6 +124,12 @@ Metadata:
         default: Enable SNS Notifications
       EnableSqs:
         default: Enable SQS Messaging
+      PreserveFilePathInOutput:
+        default: Preserve file path on output
+      InputS3Bucket:
+        default: Name of the video input S3 bucket
+      OutputS3Bucket:
+        default: Name of the video output S3 bucket
 
 Mappings:
   SourceCode:
@@ -366,7 +391,7 @@ Resources:
     Type: AWS::DynamoDB::Table
     Properties:
       BillingMode: PAY_PER_REQUEST
-      PointInTimeRecoverySpecification: 
+      PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: true
       AttributeDefinitions:
         - AttributeName: guid
@@ -401,6 +426,7 @@ Resources:
     UpdateReplacePolicy: Retain
     Type: AWS::S3::Bucket
     Properties:
+      BucketName: !Ref InputS3Bucket
       LoggingConfiguration:
         DestinationBucketName: !Ref Logs
         LogFilePrefix: s3-access/
@@ -442,6 +468,7 @@ Resources:
     UpdateReplacePolicy: Retain
     Type: AWS::S3::Bucket
     Properties:
+      BucketName: !Ref OutputS3Bucket
       LoggingConfiguration:
         DestinationBucketName: !Ref Logs
         LogFilePrefix: s3-access/
@@ -618,7 +645,7 @@ Resources:
           - id: W89
             reason: "Lambda functions do not need a VPC"
           - id: W92
-            reason: "Lambda do not need ReservedConcurrentExecutions in this case"    
+            reason: "Lambda do not need ReservedConcurrentExecutions in this case"
 
   StepFunctionsRole:
     Type: AWS::IAM::Role
@@ -687,7 +714,7 @@ Resources:
           - id: W89
             reason: "Lambda functions do not need a VPC"
           - id: W92
-            reason: "Lambda do not need ReservedConcurrentExecutions in this case"    
+            reason: "Lambda do not need ReservedConcurrentExecutions in this case"
 
   InputValidateRole:
     Type: AWS::IAM::Role
@@ -744,6 +771,7 @@ Resources:
         Variables:
           AWS_NODEJS_CONNECTION_REUSE_ENABLED: "1"
           ErrorHandler: !GetAtt ErrorHandler.Arn
+
           WorkflowName: !Ref AWS::StackName
           Source: !Ref Source
           Destination: !Ref Destination
@@ -769,6 +797,7 @@ Resources:
           InputRotate: DEGREE_0
           EnableSns: !Ref EnableSns
           EnableSqs: !Ref EnableSqs
+          PreserveFilePathInOutput: !Ref PreserveFilePathInOutput
           AcceleratedTranscoding: !Ref AcceleratedTranscoding
           SOLUTION_IDENTIFIER: "AwsSolution/SO0021/%%VERSION%%"
     Metadata:
@@ -777,7 +806,7 @@ Resources:
           - id: W89
             reason: "Lambda functions do not need a VPC"
           - id: W92
-            reason: "Lambda do not need ReservedConcurrentExecutions in this case"    
+            reason: "Lambda do not need ReservedConcurrentExecutions in this case"
 
   MediainfoRole:
     Type: AWS::IAM::Role
@@ -841,7 +870,7 @@ Resources:
           - id: W89
             reason: "Lambda functions do not need a VPC"
           - id: W92
-            reason: "Lambda do not need ReservedConcurrentExecutions in this case"    
+            reason: "Lambda do not need ReservedConcurrentExecutions in this case"
 
   DynamoUpdateRole:
     Type: AWS::IAM::Role
@@ -906,7 +935,7 @@ Resources:
           - id: W89
             reason: "Lambda functions do not need a VPC"
           - id: W92
-            reason: "Lambda do not need ReservedConcurrentExecutions in this case"    
+            reason: "Lambda do not need ReservedConcurrentExecutions in this case"
 
   ProfilerRole:
     Type: AWS::IAM::Role
@@ -971,7 +1000,7 @@ Resources:
           - id: W89
             reason: "Lambda functions do not need a VPC"
           - id: W92
-            reason: "Lambda do not need ReservedConcurrentExecutions in this case"    
+            reason: "Lambda do not need ReservedConcurrentExecutions in this case"
 
   EncodeRole:
     Type: AWS::IAM::Role
@@ -1043,7 +1072,7 @@ Resources:
           - id: W89
             reason: "Lambda functions do not need a VPC"
           - id: W92
-            reason: "Lambda do not need ReservedConcurrentExecutions in this case"    
+            reason: "Lambda do not need ReservedConcurrentExecutions in this case"
 
   OutputValidateRole:
     Type: AWS::IAM::Role
@@ -1114,7 +1143,7 @@ Resources:
           - id: W89
             reason: "Lambda functions do not need a VPC"
           - id: W92
-            reason: "Lambda do not need ReservedConcurrentExecutions in this case"    
+            reason: "Lambda do not need ReservedConcurrentExecutions in this case"
 
   ArchiveSourceRole:
     Type: AWS::IAM::Role
@@ -1178,7 +1207,7 @@ Resources:
           - id: W89
             reason: "Lambda functions do not need a VPC"
           - id: W92
-            reason: "Lambda do not need ReservedConcurrentExecutions in this case"    
+            reason: "Lambda do not need ReservedConcurrentExecutions in this case"
 
   SqsSendMessageRole:
     Type: AWS::IAM::Role
@@ -1251,7 +1280,7 @@ Resources:
           - id: W89
             reason: "Lambda functions do not need a VPC"
           - id: W92
-            reason: "Lambda do not need ReservedConcurrentExecutions in this case"    
+            reason: "Lambda do not need ReservedConcurrentExecutions in this case"
 
   SnsNotificationRole:
     Type: AWS::IAM::Role
@@ -1282,7 +1311,7 @@ Resources:
                   - !Ref SnsTopic
                 Condition:
                   Bool:
-                    'aws:SecureTransport': 'true'                
+                    'aws:SecureTransport': 'true'
               - Effect: Allow
                 Action:
                   - logs:CreateLogGroup
@@ -1320,7 +1349,7 @@ Resources:
           - id: W89
             reason: "Lambda functions do not need a VPC"
           - id: W92
-            reason: "Lambda do not need ReservedConcurrentExecutions in this case"    
+            reason: "Lambda do not need ReservedConcurrentExecutions in this case"
 
   MediaPackageAssetsRole:
     Type: AWS::IAM::Role
@@ -1391,7 +1420,7 @@ Resources:
           - id: W89
             reason: "Lambda functions do not need a VPC"
           - id: W92
-            reason: "Lambda do not need ReservedConcurrentExecutions in this case"    
+            reason: "Lambda do not need ReservedConcurrentExecutions in this case"
 
   ErrorHandlerRole:
     Type: AWS::IAM::Role
@@ -1459,7 +1488,7 @@ Resources:
           - id: W89
             reason: "Lambda functions do not need a VPC"
           - id: W92
-            reason: "Lambda do not need ReservedConcurrentExecutions in this case"    
+            reason: "Lambda do not need ReservedConcurrentExecutions in this case"
 
   IngestWorkflow:
     Type: AWS::StepFunctions::StateMachine
@@ -1800,7 +1829,7 @@ Outputs:
     Export:
       Name: !Join [":", [!Ref "AWS::StackName", SqsQueue]]
 
-  SqsARN: 
+  SqsARN:
     Description: AmazonSQS Queue ARN
-    Value: 
+    Value:
       !Sub ${SqsQueue.Arn}

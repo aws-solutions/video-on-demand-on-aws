@@ -33,7 +33,7 @@ describe('#PROFILER::', () => {
     const data = {
         Item: {
             guid: '12345678',
-            srcMediainfo: '{ "video": [{ "height": 720, "width": 1280 }] }',
+            srcMediainfo: JSON.stringify({video: [{ "height": 720, "width": 1280 }], filename: 'video.mp4'}),
             jobTemplate_2160p: 'tmpl1',
             jobTemplate_1080p: 'tmpl2',
             jobTemplate_720p: 'tmpl3',
