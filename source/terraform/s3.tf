@@ -1,8 +1,6 @@
 locals {
   cors_allowed_origins = [
     "https://www.t-online.de",
-    "https://beta.t-online.de",
-    "https://beta.stroeer.engineering",
     "https://varnish-eu-west-1.stroeer.engineering",
     "https://paper-eu-west-1.stroeer.engineering",
     "http://localhost:3000",
@@ -102,6 +100,13 @@ module "s3_source_notifications" {
       function_name = module.λ_step_functions.function_name
       events        = ["s3:ObjectCreated:*", "s3:ObjectRemoved:*"]
       filter_suffix = ".mov"
+      qualifier     = aws_lambda_alias.λ_step_functions.name
+    }
+    qt = {
+      function_arn  = aws_lambda_alias.λ_step_functions.arn
+      function_name = module.λ_step_functions.function_name
+      events        = ["s3:ObjectCreated:*", "s3:ObjectRemoved:*"]
+      filter_suffix = ".qt" # alternative/deprecated extension for .mov
       qualifier     = aws_lambda_alias.λ_step_functions.name
     }
     m2ts = {
