@@ -78,7 +78,12 @@ const create = async (properties) => {
     const mediaPackageVod = new AWS.MediaPackageVod({customUserAgent: process.env.SOLUTION_IDENTIFIER});
     const randomId = crypto.randomBytes(8).toString('hex');
 
-    const packagingGroup = await mediaPackageVod.createPackagingGroup({ Id: properties.GroupId }).promise();
+    let groupParams = {
+        Id: properties.GroupId,
+        Tags: {'SolutionId': 'SO0021'}
+    };
+    
+    const packagingGroup = await mediaPackageVod.createPackagingGroup(groupParams).promise();
     let created = false;
 
     const configurations = Array.from(new Set(properties.PackagingConfigurations.split(',')));
@@ -109,6 +114,7 @@ const create = async (properties) => {
         }
 
         if (params) {
+            params.Tags = {'SolutionId': 'SO0021'};
             console.log(`Creating configuration:: ${JSON.stringify(params, null, 2)}`);
             await mediaPackageVod.createPackagingConfiguration(params).promise();
             created = true;

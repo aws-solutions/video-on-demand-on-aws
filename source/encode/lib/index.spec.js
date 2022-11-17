@@ -71,7 +71,7 @@ describe('#ENCODE::', () => {
 
         const response = await lambda.handler(_event);
         expect(response.encodeJobId).to.equal('12345');
-        expect(response.encodingJob.Settings.OutputGroups[0].Name).to.equal('HLS Group');
+        expect(response.encodingJob.Settings.OutputGroups[0].OutputGroupSettings.Type).to.equal('HLS_GROUP_SETTINGS');
     });
 
     it('should succeed when FrameCapture is enabled', async () => {
@@ -124,8 +124,8 @@ describe('#ENCODE::', () => {
         const settings = output.OutputGroupSettings.HlsGroupSettings;
 
         expect(settings).not.to.be.null;
-        expect(settings.SegmentLength).to.equal(5);
-        expect(settings.MinSegmentLength).to.equal(0);
+        expect(settings.SegmentLength).to.equal(10);
+        expect(settings.MinSegmentLength).to.equal(2);
     });
 
     it('should fail when getJobTemplate throws an exception', async () => {

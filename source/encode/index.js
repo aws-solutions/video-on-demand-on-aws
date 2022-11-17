@@ -181,35 +181,37 @@ exports.handler = async (event) => {
         tmpl.JobTemplate.Settings.OutputGroups.forEach(group => {
             let found = false, defaultGroup = {};
 
-            if (group.OutputGroupSettings.Type === 'FILE_GROUP_SETTINGS') {
-                found = true;
-                defaultGroup = mp4;
-            }
+            switch (group.OutputGroupSettings.Type) {
+                case 'FILE_GROUP_SETTINGS':
+                    found = true;
+                    defaultGroup = mp4;
+                    break;
 
-            if (group.OutputGroupSettings.Type === 'HLS_GROUP_SETTINGS') {
-                found = true;
-                defaultGroup = hls;
-            }
+                case 'HLS_GROUP_SETTINGS':
+                    found = true;
+                    defaultGroup = hls;
+                    break;
 
-            if (group.OutputGroupSettings.Type === 'DASH_ISO_GROUP_SETTINGS') {
-                found = true;
-                defaultGroup = dash;
-            }
+                case 'DASH_ISO_GROUP_SETTINGS':
+                    found = true;
+                    defaultGroup = dash;
+                    break;
 
-            if (group.OutputGroupSettings.Type === 'MS_SMOOTH_GROUP_SETTINGS') {
-                found = true;
-                defaultGroup = mss;
-            }
+                case 'MS_SMOOTH_GROUP_SETTINGS':
+                    found = true;
+                    defaultGroup = mss;
+                    break;
 
-            if (group.OutputGroupSettings.Type === 'CMAF_GROUP_SETTINGS') {
-                found = true;
-                defaultGroup = cmaf;
+                case 'CMAF_GROUP_SETTINGS':
+                    found = true;
+                    defaultGroup = cmaf;
+                    break;
             }
 
             if (found) {
-                console.log(`${group.Name} found in Job Template`);
+                console.log(`${defaultGroup.Name} found in Job Template`);
                 // PR: https://github.com/awslabs/video-on-demand-on-aws/pull/107
-                const outputGroup = mergeSettingsWithDefault(event.isCustomTemplate, defaultGroup, group);
+                const outputGroup = mergeSettingsWithDefault(defaultGroup, group);
                 job.Settings.OutputGroups.push(outputGroup);
             }
         });
@@ -225,7 +227,8 @@ exports.handler = async (event) => {
             job.Settings.TimecodeConfig = {"Source" : "ZEROBASED"}
             job.Settings.Inputs[0].TimecodeSource = "ZEROBASED"
         }
-
+        job.Tags = {'SolutionId': 'SO0021'};
+        
         let data = await mediaconvert.createJob(job).promise();
         event.encodingJob = job;
         event.encodeJobId = data.Job.Id;

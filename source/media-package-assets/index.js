@@ -60,6 +60,7 @@ const handler = async (event) => {
             SourceRoleArn: process.env.MediaPackageVodRole,
             ResourceId: randomId
         };
+        params.Tags = {'SolutionId': 'SO0021'};
 
         console.log(`Ingesting asset:: ${JSON.stringify(params, null, 2)}`);
         const response = await mediaPackageVod.createAsset(params).promise();

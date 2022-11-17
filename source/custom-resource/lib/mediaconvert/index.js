@@ -173,6 +173,7 @@ const _createTemplates = async (instance, templates, stackName) => {
         // Load template and set unique template name
         let params = JSON.parse(fs.readFileSync(tmpl.file, 'utf8'));
         params.Name = stackName + params.Name;
+        params.Tags = {'SolutionId': 'SO0021'};
 
         await instance.createJobTemplate(params).promise();
         console.log(`template created:: ${params.Name}`);
@@ -245,8 +246,6 @@ const Delete = async (config) => {
     });
 
     try {
-        let templates = [];
-
         await _deleteTemplates(mediaconvert, mediaPackageTemplatesNoPreset, config.StackName);
         await _deleteTemplates(mediaconvert, qvbrTemplatesNoPreset, config.StackName);
 

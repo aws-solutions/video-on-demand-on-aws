@@ -12,7 +12,7 @@
  *********************************************************************************************************************/
 
 const AWS = require('aws-sdk');
-const uuidv4 = require('uuid/v4');
+const { v4: uuidv4 } = require('uuid');
 const error = require('./lib/error.js');
 
 exports.handler = async (event) => {

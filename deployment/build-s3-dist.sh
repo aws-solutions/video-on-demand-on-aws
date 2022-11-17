@@ -1,63 +1,64 @@
 #!/bin/bash
 #
-# This assumes all of the OS-level configuration has been completed and git repo has already been cloned
+# This script will perform the following tasks:
+#   1. Remove any old dist files from previous runs.
+#   2. Install dependencies for the cdk-solution-helper; responsible for
+#      converting standard 'cdk synth' output into solution assets.
+#   3. Build and synthesize your CDK project.
+#   4. Run the cdk-solution-helper on template outputs and organize
+#      those outputs into the /global-s3-assets folder.
+#   5. Organize source code artifacts into the /regional-s3-assets folder.
+#   6. Remove any temporary files used for staging.
 #
 # This script should be run from the repo's deployment directory
 # cd deployment
-# ./build-s3-dist.sh source-bucket-base-name trademarked-solution-name version-code
+# ./build-s3-dist.sh source-bucket-base-name solution-name version-code template-bucket-name
 #
-# Paramenters:
+# Parameters:
 #  - source-bucket-base-name: Name for the S3 bucket location where the template will source the Lambda
 #    code from. The template will append '-[region_name]' to this bucket name.
 #    For example: ./build-s3-dist.sh solutions my-solution v1.0.0
 #    The template will then expect the source code to be located in the solutions-[region_name] bucket
-#
-#  - trademarked-solution-name: name of the solution for consistency
-#
+#  - solution-name: name of the solution for consistency
 #  - version-code: version of the package
+[ "$DEBUG" == 'true' ] && set -x
+set -e
 
 # Check to see if input has been provided:
 if [ -z "$1" ] || [ -z "$2" ] || [ -z "$3" ]; then
-    echo "Please provide the base source bucket name, trademark approved solution name and version where the lambda code will eventually reside."
+    echo "Please provide all required parameters for the build script"
     echo "For example: ./build-s3-dist.sh solutions trademarked-solution-name v1.0.0"
     exit 1
 fi
 
-set -e
+bucket_name="$1"
+solution_name="$2"
+solution_version="$3"
 
 # Get reference for all important folders
 template_dir="$PWD"
+staging_dist_dir="$template_dir/staging"
 template_dist_dir="$template_dir/global-s3-assets"
 build_dist_dir="$template_dir/regional-s3-assets"
 source_dir="$template_dir/../source"
 
 echo "------------------------------------------------------------------------------"
-echo "Rebuild distribution"
+echo "[Init] Remove any old dist files from previous runs"
 echo "------------------------------------------------------------------------------"
 rm -rf $template_dist_dir
 mkdir -p $template_dist_dir
+
 rm -rf $build_dist_dir
 mkdir -p $build_dist_dir
 
+rm -rf $staging_dist_dir
+mkdir -p $staging_dist_dir
+
 echo "------------------------------------------------------------------------------"
-echo "CloudFormation Template"
+echo "[Init] Install dependencies for the cdk-solution-helper"
 echo "------------------------------------------------------------------------------"
-cp $template_dir/video-on-demand-on-aws.yaml $template_dist_dir/video-on-demand-on-aws.template
-
-replace="s/%%BUCKET_NAME%%/$1/g"
-echo "sed -i -e $replace"
-sed -i -e $replace $template_dist_dir/video-on-demand-on-aws.template
-
-replace="s/%%SOLUTION_NAME%%/$2/g"
-echo "sed -i -e $replace"
-sed -i -e $replace $template_dist_dir/video-on-demand-on-aws.template
-
-replace="s/%%VERSION%%/$3/g"
-echo "sed -i -e $replace"
-sed -i -e $replace $template_dist_dir/video-on-demand-on-aws.template
-sed -i -e $replace $template_dir/../README.md
-
-cp $template_dist_dir/video-on-demand-on-aws.template $build_dist_dir/
+cd $template_dir/cdk-solution-helper
+npm install --production
 
 echo "------------------------------------------------------------------------------"
 echo "Download mediainfo binary for AWS Lambda"
@@ -70,33 +71,76 @@ mv LICENSE bin/
 chmod +x ./bin/mediainfo
 rm -r MediaInfo_CLI_20.09_Lambda.zip
 
-cd $source_dir/
 echo "------------------------------------------------------------------------------"
-echo "Lambda Functions"
+echo "[Synth] CDK Project"
 echo "------------------------------------------------------------------------------"
+# Make sure user has the newest CDK version
+npm uninstall -g aws-cdk && npm install -g aws-cdk@2
 
-for folder in */ ; do
-    cd "$folder"
+cd $source_dir/cdk
+npm install
+cdk synth --output=$staging_dist_dir
+if [ $? -ne 0 ]
+then
+    echo "******************************************************************************"
+    echo "cdk-nag found errors"
+    echo "******************************************************************************"
+    exit 1
+fi
 
-    function_name=${PWD##*/}
-    zip_path="$build_dist_dir/$function_name.zip"
+cd $staging_dist_dir
+rm tree.json manifest.json cdk.out
 
-    echo "Creating deployment package for $function_name at $zip_path"
+echo "------------------------------------------------------------------------------"
+echo "Run Cdk Helper and update template placeholders"
+echo "------------------------------------------------------------------------------"
+mv VideoOnDemand.template.json $template_dist_dir/$solution_name.template
 
-    if [ -e "package.json" ]; then
-        rm -rf node_modules/
-        npm i --production
+node $template_dir/cdk-solution-helper/index
 
-        zip -q -r9 $zip_path .
-    elif [ -e "setup.py" ]; then
-        # If you're running this command on macOS and Python3 has been installed using Homebrew, you might see this issue:
-        #    DistutilsOptionError: must supply either home or prefix/exec-prefix
-        # Please follow the workaround suggested on this StackOverflow answer: https://stackoverflow.com/a/4472877
-        python3 setup.py build_pkg --zip-path=$zip_path
-    fi
+for file in $template_dist_dir/*.template
+do
+    replace="s/%%BUCKET_NAME%%/$bucket_name/g"
+    sed -i -e $replace $file
 
-    cd ..
+    replace="s/%%SOLUTION_NAME%%/$solution_name/g"
+    sed -i -e $replace $file
+
+    replace="s/%%VERSION%%/$solution_version/g"
+    sed -i -e $replace $file
 done
+
+echo "------------------------------------------------------------------------------"
+echo "[Packing] Source code artifacts"
+echo "------------------------------------------------------------------------------"
+# ... For each asset.* source code artifact in the temporary /staging folder...
+cd $staging_dist_dir
+for d in `find . -mindepth 1 -maxdepth 1 -type d`; do
+    # Rename the artifact, removing the period for handler compatibility
+    pfname="$(basename -- $d)"
+    fname="$(echo $pfname | sed -e 's/\.//g')"
+    mv $d $fname
+
+    # Zip artifacts from asset folder
+    cd $fname
+    rm -rf node_modules/
+    #rm -rf coverage/
+    if [ -f "package.json" ]
+    then
+        npm ci --production
+    fi
+    zip -rq ../$fname.zip *
+    cd ..
+
+    # Copy the zipped artifact from /staging to /regional-s3-assets
+    mv $fname.zip $build_dist_dir
+done
+
+echo "------------------------------------------------------------------------------"
+echo "[Cleanup]  Remove temporary files"
+echo "------------------------------------------------------------------------------"
+rm -rf $staging_dist_dir
+rm -f $template_dist_dir/*.template-e
 
 echo "------------------------------------------------------------------------------"
 echo "S3 Packaging Complete"

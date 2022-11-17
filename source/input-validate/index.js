@@ -62,7 +62,7 @@ exports.handler = async (event) => {
                 // https://github.com/awslabs/video-on-demand-on-aws/pull/23
                 // Normalize key in order to support different casing
                 Object.keys(metadataFile).forEach((key) => {
-                    const normalizedKey = key.charAt(0).toLowerCase() + key.substr(1);
+                    const normalizedKey = key.charAt(0).toLowerCase() + key.substring(1);
                     data[normalizedKey] = metadataFile[key];
                 });
 

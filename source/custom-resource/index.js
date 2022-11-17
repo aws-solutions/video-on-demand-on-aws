@@ -11,7 +11,7 @@
  *  and limitations under the License.                                                                                *
  *********************************************************************************************************************/
 
-const uuidv4 = require('uuid/v4');
+const { v4: uuidv4 } = require('uuid');
 const cfn = require('./lib/cfn');
 const Metrics = require('./lib/metrics');
 const S3 = require('./lib/s3');

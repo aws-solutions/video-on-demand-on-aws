@@ -4,6 +4,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.0.0] - 2022-10-17
+### Added
+- Added cdk infrastructure in source/cdk directory
+- Defined resources for cdk stack in source/cdk/lib/vod-stack.ts
+- Added snapshot test to source/cdk/test directory
+- Added SolutionId tag to resources
+- Added cdk nag rule suppressions
+- Added Service Catalog AppRegistry configuration
+
+### Changed
+- Removed CloudFormation template video-on-demand-on-aws.yaml
+- Upgrade path from old versions require a delete and re-deploy since moving to CDK
+- Use CachePolicy instead of ForwardedValues(deprecated) for cloudfront distribution
+- Use @aws-solutions-constructs/aws-cloudfront-s3 construct for cloudfront distribution and destination bucket origin
+- Updated deployment/build-s3-dist.sh to output cdk nag errors
+- Updated to uuid v9
+
+### Fixed
+- Fixed mergeSettingsWithDefault arguments. Closes this issue (https://github.com/aws-solutions/video-on-demand-on-aws/issues/137)
+
+### Contributors
+* @sandimciin
+
 ## [5.3.1] - 2021-12-16
 ### Fixed
 - Fixed spelling errors in CloudFormation template.
