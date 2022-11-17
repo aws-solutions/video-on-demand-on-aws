@@ -64,7 +64,7 @@ echo "Download mediainfo binary for AWS Lambda"
 echo "------------------------------------------------------------------------------"
 cd $source_dir/mediainfo/
 rm -rf bin/*
-curl -O http://mediaarea.net/download/binary/mediainfo/20.09/MediaInfo_CLI_20.09_Lambda.zip
+curl -O https://mediaarea.net/download/binary/mediainfo/20.09/MediaInfo_CLI_20.09_Lambda.zip
 unzip MediaInfo_CLI_20.09_Lambda.zip 
 mv LICENSE bin/
 chmod +x ./bin/mediainfo
