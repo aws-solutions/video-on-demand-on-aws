@@ -124,7 +124,7 @@ for d in `find . -mindepth 1 -maxdepth 1 -type d`; do
     # Zip artifacts from asset folder
     cd $fname
     rm -rf node_modules/
-    #rm -rf coverage/
+    rm -rf coverage/
     if [ -f "package.json" ]
     then
         npm install --production
