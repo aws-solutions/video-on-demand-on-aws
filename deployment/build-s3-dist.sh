@@ -127,7 +127,7 @@ for d in `find . -mindepth 1 -maxdepth 1 -type d`; do
     #rm -rf coverage/
     if [ -f "package.json" ]
     then
-        npm ci --production
+        npm install --production
     fi
     zip -rq ../$fname.zip *
     cd ..
