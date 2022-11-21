@@ -14,11 +14,16 @@
 
 import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
+import { DefaultStackSynthesizer, Stack } from 'aws-cdk-lib';
 import { VideoOnDemand } from '../lib/vod-stack';
 import { AwsSolutionsChecks } from 'cdk-nag';
 
 const app = new cdk.App();
-new VideoOnDemand(app, 'VideoOnDemand'); // NOSONAR
+new VideoOnDemand(app, 'VideoOnDemand', { // NOSONAR
+    synthesizer: new DefaultStackSynthesizer({
+      generateBootstrapVersionRule: false
+    })
+  }); // NOSONAR
 
 //cdk nag
 cdk.Aspects.of(app).add(new AwsSolutionsChecks({ verbose: true }));
