@@ -6,7 +6,7 @@ locals {
 
 module "λ_error_handler" {
   source  = "registry.terraform.io/moritzzimmer/lambda/aws"
-  version = "6.1.0"
+  version = "~> 6.7"
 
   cloudwatch_lambda_insights_enabled = true
   function_name                      = "${local.project}-${local.error_handler_function_name}"
@@ -132,8 +132,8 @@ resource "aws_lambda_alias" "λ_error_handler" {
 }
 
 module "λ_error_handler_deployment" {
-  source  = "moritzzimmer/lambda/aws//modules/deployment"
-  version = "6.0.0"
+  source  = "registry.terraform.io/moritzzimmer/lambda/aws//modules/deployment"
+  version = "6.7.0"
 
   alias_name                         = aws_lambda_alias.λ_error_handler.name
   codestar_notifications_target_arn  = data.aws_sns_topic.codestar_notifications.arn

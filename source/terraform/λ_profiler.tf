@@ -5,8 +5,8 @@ locals {
 }
 
 module "λ_profiler" {
-  source  = "moritzzimmer/lambda/aws"
-  version = "6.1.0"
+  source  = "registry.terraform.io/moritzzimmer/lambda/aws"
+  version = "~> 6.7"
 
   cloudwatch_lambda_insights_enabled = true
   function_name                      = "${local.project}-${local.profiler_function_name}"
@@ -87,8 +87,8 @@ resource "aws_lambda_alias" "λ_profiler" {
 }
 
 module "λ_profiler_deployment" {
-  source  = "moritzzimmer/lambda/aws//modules/deployment"
-  version = "6.0.0"
+  source  = "registry.terraform.io/moritzzimmer/lambda/aws//modules/deployment"
+  version = "6.7.0"
 
   alias_name                         = aws_lambda_alias.λ_profiler.name
   codestar_notifications_target_arn  = data.aws_sns_topic.codestar_notifications.arn

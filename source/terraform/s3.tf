@@ -14,8 +14,8 @@ locals {
 }
 
 module "s3_source" {
-  source  = "terraform-aws-modules/s3-bucket/aws"
-  version = "~> 2.0"
+  source  = "registry.terraform.io/terraform-aws-modules/s3-bucket/aws"
+  version = "~> 3.6"
 
   acl           = "private"
   bucket        = "${local.project}-master-videos-${data.aws_caller_identity.current.account_id}-${data.aws_region.current.name}"
@@ -71,7 +71,7 @@ module "s3_source" {
 // https://github.com/terraform-aws-modules/terraform-aws-s3-bucket/tree/master/examples/notification
 module "s3_source_notifications" {
   source  = "registry.terraform.io/terraform-aws-modules/s3-bucket/aws//modules/notification"
-  version = "~> 2.0"
+  version = "~> 3.6"
 
   bucket = module.s3_source.s3_bucket_id
 
@@ -123,7 +123,7 @@ module "s3_source_notifications" {
 
 module "s3_destination" {
   source  = "registry.terraform.io/terraform-aws-modules/s3-bucket/aws"
-  version = "~> 2.0"
+  version = "~> 3.6"
 
   acl           = "private"
   bucket        = "${local.project}-transcoded-videos-${data.aws_caller_identity.current.account_id}-${data.aws_region.current.name}"
@@ -147,6 +147,14 @@ module "s3_destination" {
     }
   ]
 
+  server_side_encryption_configuration = {
+    rule = {
+      apply_server_side_encryption_by_default = {
+        sse_algorithm = "AES256"
+      }
+    }
+  }
+
   versioning = {
     enabled = false
   }
@@ -154,7 +162,7 @@ module "s3_destination" {
 
 module "s3_destination_for_restricted_videos" {
   source  = "registry.terraform.io/terraform-aws-modules/s3-bucket/aws"
-  version = "~> 2.0"
+  version = "~> 3.6"
 
   acl           = "private"
   bucket        = "${local.project}-transcoded-restricted-videos-${data.aws_caller_identity.current.account_id}-${data.aws_region.current.name}"
@@ -178,6 +186,13 @@ module "s3_destination_for_restricted_videos" {
     }
   ]
 
+  server_side_encryption_configuration = {
+    rule = {
+      apply_server_side_encryption_by_default = {
+        sse_algorithm = "AES256"
+      }
+    }
+  }
 
   versioning = {
     enabled = false
@@ -231,7 +246,7 @@ resource "aws_s3_bucket_object" "test_pixel_restricted" {
 
 module "s3_λ_source" {
   source  = "registry.terraform.io/terraform-aws-modules/s3-bucket/aws"
-  version = "~> 2.0"
+  version = "~> 3.6"
 
   acl           = "private"
   bucket        = "${local.project}-lambda-source-${data.aws_caller_identity.current.account_id}-${data.aws_region.current.name}"
