@@ -40,7 +40,7 @@ module "s3_source" {
       id      = "${local.project}-source-archive"
       enabled = true
       tags = {
-        "${local.project}" = "GLACIER"
+        (local.project) = "GLACIER"
       }
       transition = [
         {
@@ -52,7 +52,7 @@ module "s3_source" {
       id      = "${local.project}-source-deep-archive"
       enabled = true
       tags = {
-        "${local.project}" = "DEEP_ARCHIVE"
+        (local.project) = "DEEP_ARCHIVE"
       }
       transition = [
         {

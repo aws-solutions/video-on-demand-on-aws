@@ -24,4 +24,6 @@ variable "glacier" {
   description = "If enabled, source assets will be tagged for archiving to Glacier or Glacier Deep Archive once the workflow is complete."
 }
 
-variable "region" {}
+variable "region" {
+  type = string
+}
