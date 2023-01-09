@@ -15,6 +15,8 @@ const axios = require('axios');
 const AWS = require('aws-sdk');
 const logger = require('./lib/logger');
 
+const WORKFLOW_STATUS_TO_NOTIFY = ['ABORTED', 'TIMED_OUT', 'FAILED', 'Error'];
+
 const send_slack = async (guid, msg, url) => {
   await Promise.all(process.env.SlackHook.split(",").map(async hook => {
     return await axios.post(hook, {
@@ -23,7 +25,7 @@ const send_slack = async (guid, msg, url) => {
           "type": "header",
           "text": {
             "type": "plain_text",
-            "text": `☠📼☠ Workflow Status:: Error: ${guid} ☠📼☠`,
+            "text": `☠📼☠ Workflow Status:: Error: ${guid} ☠📼:surprised_pikachu_face:`,
             "emoji": true
           }
         },
@@ -77,7 +79,7 @@ const send_ops_genie = async (msg) => {
         headers: {Authorization: `GenieKey ${process.env.GenieKey}`}
       });
   }
-  if (!alert_exists && ["ABORTED", "TIMED_OUT", "FAILED"].includes(msg.workflowStatus)) {
+  if (!alert_exists && WORKFLOW_STATUS_TO_NOTIFY.includes(msg.workflowStatus)) {
     // create alert
     logger.info(`creating open alert for id=${msg.guid}`);
     return axios.post('https://api.opsgenie.com/v2/alerts', {
@@ -176,7 +178,7 @@ exports.handler = async (event) => {
 
   logger.info({msg});
 
-  if (["ABORTED", "TIMED_OUT", "FAILED", 'Error'].includes(msg.workflowStatus)) {
+  if (WORKFLOW_STATUS_TO_NOTIFY.includes(msg.workflowStatus)) {
 
     // Update DynamoDB
     let params = {
@@ -186,7 +188,9 @@ exports.handler = async (event) => {
       ExpressionAttributeValues: values
     };
 
-    try { await dynamo.update(params).promise();} catch (e) {
+    try {
+      await dynamo.update(params).promise();
+    } catch (e) {
       logger.error("Error updating dynamodb.", e);
       // throw e;
     }
