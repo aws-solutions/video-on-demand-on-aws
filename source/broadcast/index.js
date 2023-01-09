@@ -91,7 +91,17 @@ exports.handler = async (event) => {
         let snsParams = {
           Message: message,
           Subject: message,
-          TargetArn: topic_arn
+          TargetArn: topic_arn,
+          MessageAttributes: {
+            event_type: {
+              DataType: 'String',
+              StringValue: 'buzzhub:usage'
+            },
+            event_source_id: {
+              DataType: 'String',
+              StringValue: event.cmsId
+            }
+          }
         };
         if (topic_arn.endsWith(".fifo")) {
           snsParams = {...snsParams,

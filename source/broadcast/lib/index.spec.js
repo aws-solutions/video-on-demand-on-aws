@@ -75,7 +75,18 @@ describe('#BROADCAST::', () => {
     expect(snsSpy).to.have.been.called.with({
       "Message": "987654321",
       "Subject": "987654321",
-      "TargetArn": process.env.SnsTopic
+      "TargetArn": process.env.SnsTopic,
+      "MessageAttributes": {
+        "event_type": {
+          "DataType": 'String',
+          "StringValue": 'buzzhub:usage'
+        },
+        "event_source_id": {
+          "DataType": 'String',
+          "StringValue": mediaId
+        }
+      }
+
     });
     scope.isDone();
   });
