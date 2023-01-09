@@ -25,6 +25,34 @@ data "aws_iam_policy_document" "s3_policy_videos" {
       identifiers = [data.aws_cloudfront_origin_access_identity.videos.iam_arn]
     }
   }
+
+
+  statement {
+    sid    = "denyInsecureTransport"
+    effect = "Deny"
+
+    actions = [
+      "s3:*",
+    ]
+
+    resources = [
+      module.s3_destination.s3_bucket_arn,
+     "${module.s3_destination.s3_bucket_arn}/*",
+    ]
+
+    principals {
+      type        = "*"
+      identifiers = ["*"]
+    }
+
+    condition {
+      test     = "Bool"
+      variable = "aws:SecureTransport"
+      values = [
+        "false"
+      ]
+    }
+  }
 }
 
 ##############################################
@@ -52,6 +80,33 @@ data "aws_iam_policy_document" "s3_policy_restricted_videos" {
     principals {
       type        = "AWS"
       identifiers = [data.aws_cloudfront_origin_access_identity.restricted_videos.iam_arn]
+    }
+  }
+
+  statement {
+    sid    = "denyInsecureTransport"
+    effect = "Deny"
+
+    actions = [
+      "s3:*",
+    ]
+
+    resources = [
+      module.s3_destination_for_restricted_videos.s3_bucket_arn,
+      "${module.s3_destination_for_restricted_videos.s3_bucket_arn}/*",
+    ]
+
+    principals {
+      type        = "*"
+      identifiers = ["*"]
+    }
+
+    condition {
+      test     = "Bool"
+      variable = "aws:SecureTransport"
+      values = [
+        "false"
+      ]
     }
   }
 }
