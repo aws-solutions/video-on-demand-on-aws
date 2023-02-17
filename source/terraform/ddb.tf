@@ -1,3 +1,5 @@
+# we're using the AWS-owned key (shown as DEFAULT in the AWS console) here, see https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/dynamodb_table#server_side_encryption
+#tfsec:ignore:aws-dynamodb-enable-at-rest-encryption
 resource "aws_dynamodb_table" "this" {
   name         = local.project
   billing_mode = "PAY_PER_REQUEST"

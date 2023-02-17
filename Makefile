@@ -26,8 +26,8 @@ build :: check-node-version clean
 export TF_VAR_region
 tf ::
 	rm -f source/terraform/.terraform/terraform.tfstate || true
-	if [ "true" == "$(DO_TF_UPGRADE)" ]; then terraform -chdir=source/terraform providers lock -platform=darwin_amd64 -platform=linux_amd64; fi
 	terraform -chdir=source/terraform init -upgrade=$(DO_TF_UPGRADE) $(TF_BACKEND_CFG)
+	if [ "true" == "$(DO_TF_UPGRADE)" ]; then terraform -chdir=source/terraform providers lock -platform=darwin_amd64 -platform=linux_amd64; fi
 	terraform -chdir=source/terraform $(MODE)
 
 LAMBDA_NODE_VER=14

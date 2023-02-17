@@ -6,21 +6,19 @@ locals {
 
 module "λ_step_functions" {
   source  = "registry.terraform.io/moritzzimmer/lambda/aws"
-  version = "~> 6.7"
+  version = "6.10.0"
 
-  cloudwatch_lambda_insights_enabled = true
-  function_name                      = "${local.project}-${local.step_functions_function_name}"
-  description                        = "Creates a unique identifier (GUID) and executes the Ingest StateMachine"
-  handler                            = "index.handler"
-  ignore_external_function_updates   = true
-  layers                             = [local.lambda_insights_arn]
-  publish                            = true
-  runtime                            = "nodejs14.x"
-  s3_bucket                          = module.s3_λ_source.s3_bucket_id
-  s3_key                             = local.step_functions_s3_key
-  s3_object_version                  = aws_s3_bucket_object.λ_step_functions.version_id
-  timeout                            = 120
-  tracing_config_mode                = "Active"
+  cloudwatch_logs_retention_in_days = local.cloudwatch_logs_retention_in_days
+  function_name                     = "${local.project}-${local.step_functions_function_name}"
+  description                       = "Creates a unique identifier (GUID) and executes the Ingest StateMachine"
+  handler                           = "index.handler"
+  ignore_external_function_updates  = true
+  publish                           = true
+  runtime                           = "nodejs14.x"
+  s3_bucket                         = module.s3_λ_source.s3_bucket_id
+  s3_key                            = local.step_functions_s3_key
+  s3_object_version                 = aws_s3_bucket_object.λ_step_functions.version_id
+  timeout                           = 120
 
   cloudwatch_event_rules = {
     media_convert_completed = {
@@ -122,12 +120,13 @@ resource "aws_lambda_alias" "λ_step_functions" {
 
 module "λ_step_functions_deployment" {
   source  = "registry.terraform.io/moritzzimmer/lambda/aws//modules/deployment"
-  version = "6.7.0"
+  version = "6.10.0"
 
-  alias_name                         = aws_lambda_alias.λ_step_functions.name
-  codestar_notifications_target_arn  = data.aws_sns_topic.codestar_notifications.arn
-  codepipeline_artifact_store_bucket = module.s3_λ_source.s3_bucket_id
-  s3_bucket                          = module.s3_λ_source.s3_bucket_id
-  s3_key                             = local.step_functions_s3_key
-  function_name                      = module.λ_step_functions.function_name
+  alias_name                                  = aws_lambda_alias.λ_step_functions.name
+  codebuild_cloudwatch_logs_retention_in_days = local.codebuild_cloudwatch_logs_retention_in_days
+  codestar_notifications_target_arn           = data.aws_sns_topic.codestar_notifications.arn
+  codepipeline_artifact_store_bucket          = module.s3_λ_source.s3_bucket_id
+  s3_bucket                                   = module.s3_λ_source.s3_bucket_id
+  s3_key                                      = local.step_functions_s3_key
+  function_name                               = module.λ_step_functions.function_name
 }

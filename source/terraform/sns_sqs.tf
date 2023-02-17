@@ -1,8 +1,10 @@
+#tfsec:ignore:aws-sns-topic-encryption-use-cmk
 resource "aws_sns_topic" "notifications" {
   kms_master_key_id = "alias/aws/sns"
   name              = "${local.project}-notifications"
 }
 
+#tfsec:ignore:aws-sqs-queue-encryption-use-cmk
 resource "aws_sqs_queue" "notifications" {
   visibility_timeout_seconds        = 120
   name                              = "${local.project}-notfications"
@@ -15,6 +17,7 @@ resource "aws_sqs_queue" "notifications" {
   })
 }
 
+#tfsec:ignore:aws-sqs-queue-encryption-use-cmk
 resource "aws_sqs_queue" "notifications_dlq" {
   visibility_timeout_seconds        = 120
   name                              = "${local.project}-notfications-dlq"

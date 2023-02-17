@@ -37,7 +37,7 @@ data "aws_iam_policy_document" "s3_policy_videos" {
 
     resources = [
       module.s3_destination.s3_bucket_arn,
-     "${module.s3_destination.s3_bucket_arn}/*",
+      "${module.s3_destination.s3_bucket_arn}/*",
     ]
 
     principals {

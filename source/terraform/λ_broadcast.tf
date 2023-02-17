@@ -22,21 +22,19 @@ data "aws_kms_alias" "sns_sqs" {
 
 module "λ_broadcast" {
   source  = "registry.terraform.io/moritzzimmer/lambda/aws"
-  version = "~> 6.7"
+  version = "6.10.0"
 
-  cloudwatch_lambda_insights_enabled = true
-  function_name                      = "${local.project}-${local.broadcast_function_name}"
-  description                        = "update articles that depend on the video being processed."
-  handler                            = "index.handler"
-  ignore_external_function_updates   = true
-  layers                             = [local.lambda_insights_arn]
-  publish                            = true
-  runtime                            = "nodejs14.x"
-  s3_bucket                          = module.s3_λ_source.s3_bucket_id
-  s3_key                             = local.broadcast_s3_key
-  s3_object_version                  = aws_s3_bucket_object.λ_broadcast.version_id
-  timeout                            = 900
-  tracing_config_mode                = "Active"
+  cloudwatch_logs_retention_in_days = local.cloudwatch_logs_retention_in_days
+  function_name                     = "${local.project}-${local.broadcast_function_name}"
+  description                       = "update articles that depend on the video being processed."
+  handler                           = "index.handler"
+  ignore_external_function_updates  = true
+  publish                           = true
+  runtime                           = "nodejs14.x"
+  s3_bucket                         = module.s3_λ_source.s3_bucket_id
+  s3_key                            = local.broadcast_s3_key
+  s3_object_version                 = aws_s3_bucket_object.λ_broadcast.version_id
+  timeout                           = 900
 
   environment = {
     variables = {
@@ -136,12 +134,13 @@ resource "aws_lambda_alias" "λ_broadcast" {
 
 module "λ_broadcast_deployment" {
   source  = "registry.terraform.io/moritzzimmer/lambda/aws//modules/deployment"
-  version = "6.7.0"
+  version = "6.10.0"
 
-  alias_name                         = aws_lambda_alias.λ_broadcast.name
-  codestar_notifications_target_arn  = data.aws_sns_topic.codestar_notifications.arn
-  function_name                      = module.λ_broadcast.function_name
-  codepipeline_artifact_store_bucket = module.s3_λ_source.s3_bucket_id
-  s3_bucket                          = module.s3_λ_source.s3_bucket_id
-  s3_key                             = local.broadcast_s3_key
+  alias_name                                  = aws_lambda_alias.λ_broadcast.name
+  codebuild_cloudwatch_logs_retention_in_days = local.codebuild_cloudwatch_logs_retention_in_days
+  codestar_notifications_target_arn           = data.aws_sns_topic.codestar_notifications.arn
+  function_name                               = module.λ_broadcast.function_name
+  codepipeline_artifact_store_bucket          = module.s3_λ_source.s3_bucket_id
+  s3_bucket                                   = module.s3_λ_source.s3_bucket_id
+  s3_key                                      = local.broadcast_s3_key
 }
