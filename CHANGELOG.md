@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Changed AppRegistry Attribute Group name to Region-StackName
 - Updated AppRegistry attribute and tag names
 
+### Fixed
+- #155 appRegistry associateStack has been deprecated
+
 ## [6.0.0] - 2022-10-17
 ### Added
 - Added cdk infrastructure in source/cdk directory
