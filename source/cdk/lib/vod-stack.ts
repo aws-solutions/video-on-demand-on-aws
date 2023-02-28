@@ -26,7 +26,6 @@ import * as tasks from 'aws-cdk-lib/aws-stepfunctions-tasks';
 import * as events from 'aws-cdk-lib/aws-events';
 import * as targets from 'aws-cdk-lib/aws-events-targets';
 import * as appreg from '@aws-cdk/aws-servicecatalogappregistry-alpha';
-import * as appinsights from 'aws-cdk-lib/aws-applicationinsights';
 import { CloudFrontToS3 } from '@aws-solutions-constructs/aws-cloudfront-s3';
 import { NagSuppressions } from 'cdk-nag';
 
@@ -2296,27 +2295,26 @@ export class VideoOnDemand extends cdk.Stack {
     /**
      * AppRegistry
      */
-    const applicationName = `video-on-demand-on-aws-${cdk.Aws.STACK_NAME}`;
+    const applicationName = `video-on-demand-on-aws-${cdk.Aws.REGION}-${cdk.Aws.ACCOUNT_ID}-${cdk.Aws.STACK_NAME}`;
     const attributeGroup = new appreg.AttributeGroup(this, 'AppRegistryAttributeGroup', {
-      attributeGroupName: cdk.Aws.STACK_NAME,
+      attributeGroupName: `${cdk.Aws.REGION}-${cdk.Aws.STACK_NAME}`,
       description: 'Attribute group for solution information',
       attributes: {
-        ApplicationType: 'AWS-Solutions',
-        SolutionVersion: '%%VERSION%%',
-        SolutionID: solutionId,
-        SolutionName: solutionName
+        applicationType: 'AWS-Solutions',
+        version: '%%VERSION%%',
+        solutionID: solutionId,
+        solutionName: solutionName
       }
     });
     const appRegistry = new appreg.Application(this, 'AppRegistryApp', {
       applicationName: applicationName,
       description: `Service Catalog application to track and manage all your resources. The SolutionId is ${solutionId} and SolutionVersion is %%VERSION%%.`
     });
-    appRegistry.associateStack(this);
-    cdk.Tags.of(appRegistry).add('solutionId', solutionId);
-    cdk.Tags.of(appRegistry).add('SolutionName', solutionName);
-    cdk.Tags.of(appRegistry).add('SolutionDomain', 'CloudFoundations');
-    cdk.Tags.of(appRegistry).add('SolutionVersion', '%%VERSION%%');
-    cdk.Tags.of(appRegistry).add('ApplicationType', 'AWS-Solutions');
+    appRegistry.associateApplicationWithStack(this);
+    cdk.Tags.of(appRegistry).add('Solutions:SolutionID', solutionId);
+    cdk.Tags.of(appRegistry).add('Solutions:SolutionName', solutionName);
+    cdk.Tags.of(appRegistry).add('Solutions:SolutionVersion', '%%VERSION%%');
+    cdk.Tags.of(appRegistry).add('Solutions:ApplicationType', 'AWS-Solutions');
 
     appRegistry.node.addDependency(attributeGroup);
     appRegistry.associateAttributeGroup(attributeGroup);
