@@ -134,6 +134,7 @@ exports.handler = async (event) => {
 
         // Baseline for the job parameters
         let job = {
+            Queue: process.env.QueueArn,
             JobTemplate: event.jobTemplate,
             Role: process.env.MediaConvertRole,
             UserMetadata: {

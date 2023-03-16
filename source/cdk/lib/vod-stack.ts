@@ -90,6 +90,12 @@ export class VideoOnDemand extends cdk.Stack {
       default: 'PREFERRED',
       allowedValues: ['ENABLED', 'DISABLED', 'PREFERRED']
     });
+    const queueArn = new cdk.CfnParameter(this, 'QueueArn', {
+      type: 'String',
+      description: 'Description: Leave this field empty to use Default MediaConvert queue. Alternatively, enter an AWS MediaConvert queue ARN in the format arn:aws:mediaconvert:<region>:<account_id>:queues/<queue_name>. Example: arn:aws:mediaconvert:us-east-1:123456789012:queues/my-queue.',
+      default: '',
+      allowedPattern: '(?:^$|^arn:(?:aws|aws-cn|aws-us-gov|aws-iso|aws-iso-b):mediaconvert:[^:]*:(?:[0-9]{12}|aws)+:queues\/[a-zA-Z0-9/-]+$)'
+    });
     /**
      * Template metadata
      */
@@ -110,7 +116,8 @@ export class VideoOnDemand extends cdk.Stack {
             Label: { default: 'AWS Elemental MediaConvert' },
             Parameters: [
               frameCapture.logicalId,
-              acceleratedTranscoding.logicalId
+              acceleratedTranscoding.logicalId,
+              queueArn.logicalId
             ]
           },
           {
@@ -136,6 +143,9 @@ export class VideoOnDemand extends cdk.Stack {
           },
           AcceleratedTranscoding: {
             default: 'Accelerated Transcoding'
+          },
+          QueueArn: {
+            default: 'MediaConvert Queue ARN'
           },
           EnableSns: {
             default: 'Enable SNS Notifications'
@@ -171,7 +181,9 @@ export class VideoOnDemand extends cdk.Stack {
     const conditionEnableSqs = new cdk.CfnCondition(this, 'EnableSqsCondition', {
       expression: cdk.Fn.conditionEquals(enableSqs.valueAsString, 'Yes')
     });
-
+    const conditionDefaultQueue = new cdk.CfnCondition(this, 'UseDefaultQueueCondition', {
+      expression: cdk.Fn.conditionEquals(queueArn.valueAsString, '')
+    });
 
     /**
      * Resources
@@ -1331,7 +1343,12 @@ export class VideoOnDemand extends cdk.Stack {
         AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
         ErrorHandler: errorHandlerLambda.functionArn,
         MediaConvertRole: mediaConvertRole.roleArn,
-        EndPoint: mediaConvertEndpoint.getAttString('EndpointUrl')
+        EndPoint: mediaConvertEndpoint.getAttString('EndpointUrl'),
+        QueueArn: `${cdk.Fn.conditionIf(
+          conditionEnableMediaPackage.logicalId,
+          `arn:${cdk.Aws.PARTITION}:mediaconvert:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:queues/Default`, 
+          queueArn.valueAsString
+        )}`
       },
       role: encodeRole,
       code: lambda.Code.fromAsset('../encode'),
