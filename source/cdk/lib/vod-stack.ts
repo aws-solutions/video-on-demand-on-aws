@@ -92,7 +92,7 @@ export class VideoOnDemand extends cdk.Stack {
     });
     const queueArn = new cdk.CfnParameter(this, 'QueueArn', {
       type: 'String',
-      description: 'Description: Leave this field empty to use Default MediaConvert queue. Alternatively, enter an AWS MediaConvert queue ARN in the format arn:aws:mediaconvert:<region>:<account_id>:queues/<queue_name>. Example: arn:aws:mediaconvert:us-east-1:123456789012:queues/my-queue.',
+      description: 'Leave this field empty to use Default MediaConvert queue. Alternatively, enter an AWS MediaConvert queue ARN in the format arn:aws:mediaconvert:<region>:<account_id>:queues/<queue_name>. Example: arn:aws:mediaconvert:us-east-1:123456789012:queues/my-queue.',
       default: '',
       allowedPattern: '(?:^$|^arn:(?:aws|aws-cn|aws-us-gov|aws-iso|aws-iso-b):mediaconvert:[^:]*:(?:[0-9]{12}|aws)+:queues\/[a-zA-Z0-9/-]+$)'
     });
