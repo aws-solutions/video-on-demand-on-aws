@@ -87,7 +87,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Default encryption to SNS topic
 - Environment variable to configure the AWS SDK to reuse TCP connections (https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/node-reusing-connections.html)
 - SQS queue options at deployment to capture workflow outputs
-- Support for accelerated transcoding in Elemental MediaCoonvert: https://aws.amazon.com/about-aws/whats-new/2019/10/announcing-new-aws-elemental-mediaconvert-features-for-accelerated-transcoding-dash-and-avc-video-quality/
+- Support for accelerated transcoding in Elemental MediaConvert: https://aws.amazon.com/about-aws/whats-new/2019/10/announcing-new-aws-elemental-mediaconvert-features-for-accelerated-transcoding-dash-and-avc-video-quality/
 - support for Glacier deep archive
 
 ### Changed
