@@ -14,6 +14,11 @@ terraform {
       source  = "hashicorp/external"
       version = "~> 2.1"
     }
+
+    opensearch = {
+      source  = "opensearch-project/opensearch"
+      version = "1.0.0-beta.2"
+    }
   }
 
   required_version = "~> 1.0"

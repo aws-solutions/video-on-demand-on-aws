@@ -10,9 +10,8 @@ data "external" "mediaconvert_endpoint" {
 
 module "λ_encode" {
   source  = "registry.terraform.io/moritzzimmer/lambda/aws"
-  version = "6.10.0"
+  version = "6.11.0"
 
-  cloudwatch_logs_retention_in_days = local.cloudwatch_logs_retention_in_days
   function_name                     = "${local.project}-${local.encode_function_name}"
   description                       = "Creates a MediaConvert encode job"
   handler                           = "index.handler"
@@ -24,6 +23,10 @@ module "λ_encode" {
   s3_object_version                 = aws_s3_bucket_object.λ_encode.version_id
   timeout                           = 120
 
+  cloudwatch_logs_enabled = false
+  layers = [
+    "arn:aws:lambda:eu-west-1:053041861227:layer:CustomLoggingExtensionOpenSearch-Amd64:9"
+  ]
   environment = {
     variables = {
       AWS_NODEJS_CONNECTION_REUSE_ENABLED : "1"
@@ -32,14 +35,19 @@ module "λ_encode" {
       Destination : module.s3_destination.s3_bucket_id
       DestinationRestricted : module.s3_destination_for_restricted_videos.s3_bucket_id
       ErrorHandler : aws_lambda_alias.λ_error_handler.arn
+      LOG_EXT_OPEN_SEARCH_URL = "https://logs.stroeer.engineering"
     }
   }
 
-  cloudwatch_log_subscription_filters = {
-    opensearch = {
-      destination_arn = data.aws_lambda_function.log_streaming.arn
-    }
+  vpc_config = {
+    security_group_ids = [
+      data.aws_security_group.vpc_endpoints.id,
+      data.aws_security_group.all_outbound.id,
+      data.aws_security_group.lambda.id
+    ]
+    subnet_ids         = data.aws_subnets.selected.ids
   }
+
 }
 
 data "aws_iam_policy_document" "λ_encode" {
@@ -97,7 +105,7 @@ resource "aws_lambda_alias" "λ_encode" {
 
 module "λ_encode_deployment" {
   source  = "registry.terraform.io/moritzzimmer/lambda/aws//modules/deployment"
-  version = "6.10.0"
+  version = "6.11.0"
 
   alias_name                                  = aws_lambda_alias.λ_encode.name
   codebuild_cloudwatch_logs_retention_in_days = local.codebuild_cloudwatch_logs_retention_in_days
@@ -106,4 +114,20 @@ module "λ_encode_deployment" {
   codepipeline_artifact_store_bucket          = module.s3_λ_source.s3_bucket_id
   s3_bucket                                   = module.s3_λ_source.s3_bucket_id
   s3_key                                      = local.encode_s3_key
+}
+
+resource "opensearch_role" "λ_encode" {
+  role_name           = "${local.project}-${local.encode_function_name}"
+  description         = "Write access for ${local.project}-${local.encode_function_name} lambda"
+  cluster_permissions = ["indices:data/write/bulk"]
+
+  index_permissions {
+    index_patterns  = ["${local.project}-${local.encode_function_name}-lambda-*"]
+    allowed_actions = ["write", "create_index"]
+  }
+}
+
+resource "opensearch_roles_mapping" "λ_encode" {
+  role_name     = opensearch_role.λ_encode.role_name
+  backend_roles = [module.λ_encode.role_arn]
 }

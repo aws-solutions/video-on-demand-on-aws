@@ -65,3 +65,11 @@ provider "registry.terraform.io/hashicorp/null" {
     "zh:fca01a623d90d0cad0843102f9b8b9fe0d3ff8244593bd817f126582b52dd694",
   ]
 }
+
+provider "registry.terraform.io/opensearch-project/opensearch" {
+  version     = "1.0.0-beta.2"
+  constraints = "1.0.0-beta.2"
+  hashes = [
+    "h1:nFbygatyqqJX2pRvNO6GzNq7Z5brOXgzjA69sUOMTC0=",
+  ]
+}

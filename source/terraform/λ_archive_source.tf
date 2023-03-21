@@ -6,9 +6,8 @@ locals {
 
 module "λ_archive_source" {
   source  = "registry.terraform.io/moritzzimmer/lambda/aws"
-  version = "6.10.0"
+  version = "6.11.0"
 
-  cloudwatch_logs_retention_in_days = local.cloudwatch_logs_retention_in_days
   function_name                     = "${local.project}-${local.archive_source_function_name}"
   description                       = "Updates tags on source files to enable Glacier"
   handler                           = "index.handler"
@@ -20,18 +19,26 @@ module "λ_archive_source" {
   s3_object_version                 = aws_s3_bucket_object.λ_archive_source.version_id
   timeout                           = 120
 
+  cloudwatch_logs_enabled = false
+  layers = [
+    "arn:aws:lambda:eu-west-1:053041861227:layer:CustomLoggingExtensionOpenSearch-Amd64:9"
+  ]
+
   environment = {
     variables = {
       AWS_NODEJS_CONNECTION_REUSE_ENABLED : "1"
       ErrorHandler : aws_lambda_alias.λ_error_handler.arn
+      LOG_EXT_OPEN_SEARCH_URL = "https://logs.stroeer.engineering"
     }
+  }
+  vpc_config = {
+    security_group_ids = [
+      data.aws_security_group.vpc_endpoints.id,
+      data.aws_security_group.lambda.id
+    ]
+    subnet_ids         = data.aws_subnets.selected.ids
   }
 
-  cloudwatch_log_subscription_filters = {
-    opensearch = {
-      destination_arn = data.aws_lambda_function.log_streaming.arn
-    }
-  }
 }
 
 data "aws_iam_policy_document" "λ_archive_source" {
@@ -94,7 +101,7 @@ resource "aws_lambda_alias" "λ_archive_source" {
 
 module "λ_archive_source_deployment" {
   source  = "registry.terraform.io/moritzzimmer/lambda/aws//modules/deployment"
-  version = "6.10.0"
+  version = "6.11.0"
 
   alias_name                                  = aws_lambda_alias.λ_archive_source.name
   codebuild_cloudwatch_logs_retention_in_days = local.codebuild_cloudwatch_logs_retention_in_days
@@ -103,4 +110,20 @@ module "λ_archive_source_deployment" {
   codepipeline_artifact_store_bucket          = module.s3_λ_source.s3_bucket_id
   s3_bucket                                   = module.s3_λ_source.s3_bucket_id
   s3_key                                      = local.archive_source_s3_key
+}
+
+resource "opensearch_role" "λ_archive_source" {
+  role_name           = "${local.project}-${local.archive_source_function_name}"
+  description         = "Write access for ${local.project}-${local.archive_source_function_name} lambda"
+  cluster_permissions = ["indices:data/write/bulk"]
+
+  index_permissions {
+    index_patterns  = ["${local.project}-${local.archive_source_function_name}-lambda-*"]
+    allowed_actions = ["write", "create_index"]
+  }
+}
+
+resource "opensearch_roles_mapping" "λ_archive_source" {
+  role_name     = opensearch_role.λ_archive_source.role_name
+  backend_roles = [module.λ_archive_source.role_arn]
 }

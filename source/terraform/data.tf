@@ -1,5 +1,4 @@
 locals {
-  cloudwatch_logs_retention_in_days           = 1
   codebuild_cloudwatch_logs_retention_in_days = 7
   project                                     = "buzzhub"
   environment                                 = "production"
@@ -26,6 +25,29 @@ data "aws_sns_topic" "error_notifications" {
   name = "cloudwatch-notifications"
 }
 
-data "aws_lambda_function" "log_streaming" {
-  function_name = "lambda-logs-to-opensearch"
+data "aws_vpc" "selected" {
+  tags = {
+    Name = "main"
+  }
+}
+
+data "aws_subnets" "selected" {
+  filter {
+    name   = "vpc-id"
+    values = [data.aws_vpc.selected.id]
+  }
+
+  tags = {
+    Tier = "private"
+  }
+}
+
+data "aws_security_group" "vpc_endpoints" {
+  name = "vpc-endpoint-access"
+}
+data "aws_security_group" "all_outbound" {
+  name = "allow-outbound-tcp"
+}
+data "aws_security_group" "lambda" {
+  name = "lambda-default"
 }

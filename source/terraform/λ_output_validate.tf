@@ -6,9 +6,8 @@ locals {
 
 module "λ_output_validate" {
   source  = "registry.terraform.io/moritzzimmer/lambda/aws"
-  version = "6.10.0"
+  version = "6.11.0"
 
-  cloudwatch_logs_retention_in_days = local.cloudwatch_logs_retention_in_days
   function_name                     = "${local.project}-${local.output_validate_function_name}"
   description                       = "Parses MediaConvert job output"
   handler                           = "index.handler"
@@ -20,6 +19,11 @@ module "λ_output_validate" {
   s3_object_version                 = aws_s3_bucket_object.λ_output_validate.version_id
   timeout                           = 300
 
+  cloudwatch_logs_enabled = false
+  layers = [
+    "arn:aws:lambda:eu-west-1:053041861227:layer:CustomLoggingExtensionOpenSearch-Amd64:9"
+  ]
+
   environment = {
     variables = {
       AWS_NODEJS_CONNECTION_REUSE_ENABLED : "1"
@@ -30,14 +34,18 @@ module "λ_output_validate" {
       CloudFrontRestricted : "de.videos.t-online.de"
       ErrorHandler : aws_lambda_alias.λ_error_handler.arn
       EndPoint : data.external.mediaconvert_endpoint.result.Url
+      LOG_EXT_OPEN_SEARCH_URL = "https://logs.stroeer.engineering"
     }
   }
 
-  cloudwatch_log_subscription_filters = {
-    opensearch = {
-      destination_arn = data.aws_lambda_function.log_streaming.arn
-    }
+  vpc_config = {
+    security_group_ids = [
+      data.aws_security_group.vpc_endpoints.id,
+      data.aws_security_group.lambda.id
+    ]
+    subnet_ids         = data.aws_subnets.selected.ids
   }
+
 }
 
 data "aws_iam_policy_document" "λ_output_validate" {
@@ -114,7 +122,7 @@ resource "aws_lambda_alias" "λ_output_validate" {
 
 module "λ_output_validate_deployment" {
   source  = "registry.terraform.io/moritzzimmer/lambda/aws//modules/deployment"
-  version = "6.10.0"
+  version = "6.11.0"
 
   alias_name                                  = aws_lambda_alias.λ_output_validate.name
   codebuild_cloudwatch_logs_retention_in_days = local.codebuild_cloudwatch_logs_retention_in_days
@@ -123,4 +131,20 @@ module "λ_output_validate_deployment" {
   codepipeline_artifact_store_bucket          = module.s3_λ_source.s3_bucket_id
   s3_bucket                                   = module.s3_λ_source.s3_bucket_id
   s3_key                                      = local.output_validate_s3_key
+}
+
+resource "opensearch_role" "λ_output_validate" {
+  role_name           = "${local.project}-${local.output_validate_function_name}"
+  description         = "Write access for ${local.project}-${local.output_validate_function_name} lambda"
+  cluster_permissions = ["indices:data/write/bulk"]
+
+  index_permissions {
+    index_patterns  = ["${local.project}-${local.output_validate_function_name}-lambda-*"]
+    allowed_actions = ["write", "create_index"]
+  }
+}
+
+resource "opensearch_roles_mapping" "λ_output_validate" {
+  role_name     = opensearch_role.λ_output_validate.role_name
+  backend_roles = [module.λ_output_validate.role_arn]
 }

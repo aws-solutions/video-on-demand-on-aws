@@ -7,3 +7,9 @@ provider "aws" {
 }
 
 provider "external" {}
+
+provider "opensearch" {
+  aws_region  = data.aws_region.current.name
+  healthcheck = true
+  url         = "https://logs.stroeer.engineering"
+}
