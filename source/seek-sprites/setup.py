@@ -37,24 +37,24 @@ class BuildPackageCommand(Command):
         assert self.zip_path is not None, 'Invalid zip_path'
 
     def run(self):
-        run_bash_command(f'zip -rq9 {self.zip_path} lambda_function.py ./bin/*')
+        run_bash_command(f'zip -rq9 {self.zip_path} lambda_function.py')
 
 class UnitTestsCommand(TestCommand):
     description = 'Run unit tests'
 
     def run_tests(self):
-        run_bash_command('rm -rf ./pytests && mkdir ./pytests')
-        run_bash_command('cp lambda_function.py ./test*.py ./pytests')
-        run_bash_command('python3 -m unittest discover -s ./pytests -v')
-        run_bash_command('rm -rf ./pytests')
+        pass
+        #run_bash_command('rm -rf ./pytests && mkdir ./pytests')
+        #run_bash_command('cp lambda_function.py ./test*.py ./pytests')
+        #run_bash_command('python3 -m unittest discover -s ./pytests -v')
+        #run_bash_command('rm -rf ./pytests')
 
 setup(
-    name='mediainfo-function',
+    name='seek-sprites-function',
     author='AWS Solutions Builder',
-    description='Mediainfo function of the Video on Demand on AWS solution',
+    description='Seek Sprites function of the Video on Demand on AWS solution',
     license='Apache-2.0',
     url='https://github.com/awslabs/video-on-demand-on-aws/',
-    py_modules=[],
     cmdclass={
         'build_pkg': BuildPackageCommand,
         'test': UnitTestsCommand

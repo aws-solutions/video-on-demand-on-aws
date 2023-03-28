@@ -12,18 +12,20 @@ module "λ_encode" {
   source  = "registry.terraform.io/moritzzimmer/lambda/aws"
   version = "6.11.0"
 
-  function_name                     = "${local.project}-${local.encode_function_name}"
-  description                       = "Creates a MediaConvert encode job"
-  handler                           = "index.handler"
-  ignore_external_function_updates  = true
-  publish                           = true
-  runtime                           = "nodejs14.x"
-  s3_bucket                         = module.s3_λ_source.s3_bucket_id
-  s3_key                            = local.encode_s3_key
-  s3_object_version                 = aws_s3_bucket_object.λ_encode.version_id
-  timeout                           = 120
+  function_name                    = "${local.project}-${local.encode_function_name}"
+  description                      = "Creates a MediaConvert encode job"
+  handler                          = "index.handler"
+  ignore_external_function_updates = true
+  publish                          = true
+  runtime                          = "nodejs14.x"
+  s3_bucket                        = module.s3_λ_source.s3_bucket_id
+  s3_key                           = local.encode_s3_key
+  s3_object_version                = aws_s3_bucket_object.λ_encode.version_id
+  timeout                          = 120
 
-  cloudwatch_logs_enabled = false
+  cloudwatch_logs_enabled           = false
+  cloudwatch_logs_retention_in_days = 0
+
   layers = [
     "arn:aws:lambda:eu-west-1:053041861227:layer:CustomLoggingExtensionOpenSearch-Amd64:9"
   ]
@@ -45,15 +47,17 @@ module "λ_encode" {
       data.aws_security_group.all_outbound.id,
       data.aws_security_group.lambda.id
     ]
-    subnet_ids         = data.aws_subnets.selected.ids
+    subnet_ids = data.aws_subnets.selected.ids
   }
 
 }
 
 data "aws_iam_policy_document" "λ_encode" {
   statement {
-    actions   = ["mediaconvert:CreateJob", "mediaconvert:GetJobTemplate", "mediaconvert:TagResource"]
-    resources = ["arn:aws:mediaconvert:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:*"]
+    actions = ["mediaconvert:CreateJob", "mediaconvert:GetJobTemplate", "mediaconvert:TagResource"]
+    resources = [
+      "arn:aws:mediaconvert:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:*"
+    ]
   }
   statement {
     actions   = ["iam:PassRole"]

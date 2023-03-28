@@ -8,18 +8,19 @@ module "λ_profiler" {
   source  = "registry.terraform.io/moritzzimmer/lambda/aws"
   version = "6.11.0"
 
-  function_name                     = "${local.project}-${local.profiler_function_name}"
-  description                       = "Sets an EncodeProfile based on mediainfo output"
-  handler                           = "index.handler"
-  ignore_external_function_updates  = true
-  publish                           = true
-  runtime                           = "nodejs14.x"
-  s3_bucket                         = module.s3_λ_source.s3_bucket_id
-  s3_key                            = local.profiler_s3_key
-  s3_object_version                 = aws_s3_bucket_object.λ_profiler.version_id
-  timeout                           = 120
+  function_name                    = "${local.project}-${local.profiler_function_name}"
+  description                      = "Sets an EncodeProfile based on mediainfo output"
+  handler                          = "index.handler"
+  ignore_external_function_updates = true
+  publish                          = true
+  runtime                          = "nodejs14.x"
+  s3_bucket                        = module.s3_λ_source.s3_bucket_id
+  s3_key                           = local.profiler_s3_key
+  s3_object_version                = aws_s3_bucket_object.λ_profiler.version_id
+  timeout                          = 120
 
-  cloudwatch_logs_enabled = false
+  cloudwatch_logs_enabled           = false
+  cloudwatch_logs_retention_in_days = 0
   layers = [
     "arn:aws:lambda:eu-west-1:053041861227:layer:CustomLoggingExtensionOpenSearch-Amd64:9"
   ]
@@ -38,7 +39,7 @@ module "λ_profiler" {
       data.aws_security_group.vpc_endpoints.id,
       data.aws_security_group.lambda.id
     ]
-    subnet_ids         = data.aws_subnets.selected.ids
+    subnet_ids = data.aws_subnets.selected.ids
   }
 
 }
