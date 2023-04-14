@@ -4,7 +4,7 @@ phases:
   install:
     runtime-versions:
       nodejs: 16
-      python: 3.8
+      python: 3.10
   pre_build:
     commands:
       - echo "Installing dependencies and executing unit tests - `pwd`"
