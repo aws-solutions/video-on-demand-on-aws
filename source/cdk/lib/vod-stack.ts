@@ -181,6 +181,7 @@ export class VideoOnDemand extends cdk.Stack {
      * Logging bucket for S3 and CloudFront
      */
     const logsBucket = new s3.Bucket(this, 'Logs', {
+      objectOwnership: s3.ObjectOwnership.OBJECT_WRITER,
       blockPublicAccess: new s3.BlockPublicAccess({
         blockPublicAcls: true,
         blockPublicPolicy: true,
