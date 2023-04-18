@@ -51,8 +51,8 @@ cp $source_template_dir/../.gitignore $dist_dir
 echo "------------------------------------------------------------------------------"
 echo "Copying Architecture Diagram and GitHub Templates"
 echo "------------------------------------------------------------------------------"
-cp -r $source_template_dir/assets/.github $dist_dir/
-cp $source_template_dir/assets/architecture.png $dist_dir/
+cp -r $source_template_dir/.github $dist_dir/
+cp $source_template_dir/../architecture.png $dist_dir/
 
 echo "------------------------------------------------------------------------------"
 echo "Removing Build Files From Open Source Packaging"
