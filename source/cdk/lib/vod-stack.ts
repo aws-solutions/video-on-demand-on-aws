@@ -333,7 +333,10 @@ export class VideoOnDemand extends cdk.Stack {
      * Construct includes a logs bucket for the CloudFront distribution and a CloudFront
      * OriginAccessIdentity which is used to restrict access to S3 from CloudFront.
      */
+    const cachePolicyName = `cp-${cdk.Aws.REGION}-${cdk.Aws.STACK_NAME}`;
+
     const cachePolicy = new cloudfront.CachePolicy(this, 'CachePolicy', {
+      cachePolicyName: cachePolicyName,
       cookieBehavior: cloudfront.CacheCookieBehavior.none(),
       headerBehavior: cloudfront.CacheHeaderBehavior.allowList(
         'Origin',
@@ -2296,8 +2299,8 @@ export class VideoOnDemand extends cdk.Stack {
      * AppRegistry
      */
     const applicationName = `video-on-demand-on-aws-${cdk.Aws.REGION}-${cdk.Aws.ACCOUNT_ID}-${cdk.Aws.STACK_NAME}`;
-    const attributeGroup = new appreg.AttributeGroup(this, 'AppRegistryAttributeGroup', {
-      attributeGroupName: `${cdk.Aws.REGION}-${cdk.Aws.STACK_NAME}`,
+    const attributeGroup = new appreg.AttributeGroup(this, 'AppRegistryAttributeGroupId', {
+      attributeGroupName: `A30-${cdk.Aws.REGION}-${cdk.Aws.STACK_NAME}`,
       description: 'Attribute group for solution information',
       attributes: {
         applicationType: 'AWS-Solutions',
