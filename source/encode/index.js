@@ -120,6 +120,10 @@ const mergeSettingsWithDefault = (originalGroup, customGroup) => {
     return _.merge({}, originalGroup, customGroup);
 };
 
+function stripExtension(fileName) {
+    return fileName.split('.').slice(0, -1).join('.');
+}
+
 exports.handler = async (event) => {
     console.log(`REQUEST:: ${JSON.stringify(event, null, 2)}`);
 
@@ -130,7 +134,10 @@ exports.handler = async (event) => {
 
     try {
         const inputPath = `s3://${event.srcBucket}/${event.srcVideo}`;
-        const outputPath = `s3://${event.destBucket}/${event.guid}`;
+        const outputPath = `s3://${event.destBucket}/media/${stripExtension(event.srcVideo)}`;
+
+        console.log("OUTPUTPATHIS", outputPath);
+        console.log("ORIGINAL", `s3://${event.destBucket}/${event.guid}`);
 
         // Baseline for the job parameters
         let job = {
@@ -223,12 +230,12 @@ exports.handler = async (event) => {
         //if enabled the TimeCodeConfig needs to be set to ZEROBASED not passthrough
         //https://docs.aws.amazon.com/mediaconvert/latest/ug/job-requirements.html
         if (event.acceleratedTranscoding === 'PREFERRED' || event.acceleratedTranscoding === 'ENABLED') {
-            job.AccelerationSettings = {"Mode" : event.acceleratedTranscoding}
-            job.Settings.TimecodeConfig = {"Source" : "ZEROBASED"}
+            job.AccelerationSettings = { "Mode": event.acceleratedTranscoding }
+            job.Settings.TimecodeConfig = { "Source": "ZEROBASED" }
             job.Settings.Inputs[0].TimecodeSource = "ZEROBASED"
         }
-        job.Tags = {'SolutionId': 'SO0021'};
-        
+        job.Tags = { 'SolutionId': 'SO0021' };
+
         let data = await mediaconvert.createJob(job).promise();
         event.encodingJob = job;
         event.encodeJobId = data.Job.Id;
