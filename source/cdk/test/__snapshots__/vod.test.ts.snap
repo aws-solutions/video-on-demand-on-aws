@@ -415,7 +415,7 @@ exports[`VideoOnDemand Stack Test 1`] = `
     },
     AppRegistryApp5349BE86: {
       DependsOn: [
-        AppRegistryAttributeGroupId7C2D526E,
+        AppRegistryAttributeGroup7AF07446,
       ],
       Properties: {
         Description: Service Catalog application to track and manage all your resources. The SolutionId is SO0021 and SolutionVersion is %%VERSION%%.,
@@ -425,32 +425,25 @@ exports[`VideoOnDemand Stack Test 1`] = `
             [
               video-on-demand-on-aws-,
               {
-                Ref: AWS::Region,
-              },
-              -,
-              {
-                Ref: AWS::AccountId,
-              },
-              -,
-              {
                 Ref: AWS::StackName,
               },
             ],
           ],
         },
         Tags: {
+          ApplicationType: AWS-Solutions,
+          SolutionDomain: CloudFoundations,
           SolutionId: SO0021,
-          Solutions:ApplicationType: AWS-Solutions,
-          Solutions:SolutionID: SO0021,
-          Solutions:SolutionName: Video on Demand on AWS,
-          Solutions:SolutionVersion: %%VERSION%%,
+          SolutionName: Video on Demand on AWS,
+          SolutionVersion: %%VERSION%%,
+          solutionId: SO0021,
         },
       },
       Type: AWS::ServiceCatalogAppRegistry::Application,
     },
-    AppRegistryAppAttributeGroupAssociation9a1cc5a2b862D1166969: {
+    AppRegistryAppAttributeGroupAssociation89f88b663a927A6EC94A: {
       DependsOn: [
-        AppRegistryAttributeGroupId7C2D526E,
+        AppRegistryAttributeGroup7AF07446,
       ],
       Properties: {
         Application: {
@@ -461,14 +454,17 @@ exports[`VideoOnDemand Stack Test 1`] = `
         },
         AttributeGroup: {
           Fn::GetAtt: [
-            AppRegistryAttributeGroupId7C2D526E,
+            AppRegistryAttributeGroup7AF07446,
             Id,
           ],
         },
       },
       Type: AWS::ServiceCatalogAppRegistry::AttributeGroupAssociation,
     },
-    AppRegistryAssociation: {
+    AppRegistryAppResourceAssociationa70e26ed0b0e5F5D9D9F: {
+      DependsOn: [
+        AppRegistryAttributeGroup7AF07446,
+      ],
       Properties: {
         Application: {
           Fn::GetAtt: [
@@ -483,29 +479,17 @@ exports[`VideoOnDemand Stack Test 1`] = `
       },
       Type: AWS::ServiceCatalogAppRegistry::ResourceAssociation,
     },
-    AppRegistryAttributeGroupId7C2D526E: {
+    AppRegistryAttributeGroup7AF07446: {
       Properties: {
         Attributes: {
-          applicationType: AWS-Solutions,
-          solutionID: SO0021,
-          solutionName: Video on Demand on AWS,
-          version: %%VERSION%%,
+          ApplicationType: AWS-Solutions,
+          SolutionID: SO0021,
+          SolutionName: Video on Demand on AWS,
+          SolutionVersion: %%VERSION%%,
         },
         Description: Attribute group for solution information,
         Name: {
-          Fn::Join: [
-            ,
-            [
-              A30-,
-              {
-                Ref: AWS::Region,
-              },
-              -,
-              {
-                Ref: AWS::StackName,
-              },
-            ],
-          ],
+          Ref: AWS::StackName,
         },
         Tags: {
           SolutionId: SO0021,
@@ -720,13 +704,9 @@ exports[`VideoOnDemand Stack Test 1`] = `
             Fn::Join: [
               ,
               [
-                cp-,
+                VideoOnDemandCachePolicy7E8194AA-,
                 {
                   Ref: AWS::Region,
-                },
-                -,
-                {
-                  Ref: AWS::StackName,
                 },
               ],
             ],
@@ -2592,13 +2572,6 @@ exports[`VideoOnDemand Stack Test 1`] = `
               ServerSideEncryptionByDefault: {
                 SSEAlgorithm: AES256,
               },
-            },
-          ],
-        },
-        OwnershipControls: {
-          Rules: [
-            {
-              ObjectOwnership: ObjectWriter,
             },
           ],
         },
