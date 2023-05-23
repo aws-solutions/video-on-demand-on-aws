@@ -15,7 +15,7 @@
     "uuid": "^9.0.0"
   },
   "devDependencies": {
-    "aws-sdk": "^2.609.0",
+    "aws-sdk": "^2.1379.0",
     "aws-sdk-mock": "^5.0.0",
     "chai": "^4.2.0",
     "mocha": "^10.2.0",
