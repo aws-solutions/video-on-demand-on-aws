@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1668474144273" clover="3.2.0">
-  <project timestamp="1668474144274" name="All files">
+<coverage generated="1683827139066" clover="3.2.0">
+  <project timestamp="1683827139066" name="All files">
     <metrics statements="194" coveredstatements="187" conditionals="34" coveredconditionals="31" methods="21" coveredmethods="19" elements="249" coveredelements="237" complexity="0" loc="194" ncloc="194" packages="5" files="7" classes="7"/>
     <package name="cfn">
       <metrics statements="7" coveredstatements="7" conditionals="0" coveredconditionals="0" methods="1" coveredmethods="1"/>
-      <file name="index.js" path="/codebuild/output/src986986522/src/source/custom-resource/lib/cfn/index.js">
+      <file name="index.js" path="/home/eduardo/src/obrizum/video-on-demand-on-aws/source/custom-resource/lib/cfn/index.js">
         <metrics statements="7" coveredstatements="7" conditionals="0" coveredconditionals="0" methods="1" coveredmethods="1"/>
         <line num="14" count="1" type="stmt"/>
         <line num="16" count="1" type="stmt"/>
@@ -17,7 +17,7 @@
     </package>
     <package name="mediaconvert">
       <metrics statements="59" coveredstatements="57" conditionals="6" coveredconditionals="6" methods="8" coveredmethods="8"/>
-      <file name="index.js" path="/codebuild/output/src986986522/src/source/custom-resource/lib/mediaconvert/index.js">
+      <file name="index.js" path="/home/eduardo/src/obrizum/video-on-demand-on-aws/source/custom-resource/lib/mediaconvert/index.js">
         <metrics statements="59" coveredstatements="57" conditionals="6" coveredconditionals="6" methods="8" coveredmethods="8"/>
         <line num="14" count="1" type="stmt"/>
         <line num="15" count="1" type="stmt"/>
@@ -82,7 +82,7 @@
     </package>
     <package name="mediapackage">
       <metrics statements="101" coveredstatements="96" conditionals="25" coveredconditionals="22" methods="9" coveredmethods="7"/>
-      <file name="cloudfront.js" path="/codebuild/output/src986986522/src/source/custom-resource/lib/mediapackage/cloudfront.js">
+      <file name="cloudfront.js" path="/home/eduardo/src/obrizum/video-on-demand-on-aws/source/custom-resource/lib/mediapackage/cloudfront.js">
         <metrics statements="30" coveredstatements="29" conditionals="12" coveredconditionals="11" methods="2" coveredmethods="2"/>
         <line num="14" count="2" type="stmt"/>
         <line num="15" count="2" type="stmt"/>
@@ -115,7 +115,7 @@
         <line num="108" count="2" type="cond" truecount="2" falsecount="0"/>
         <line num="109" count="1" type="stmt"/>
       </file>
-      <file name="index.js" path="/codebuild/output/src986986522/src/source/custom-resource/lib/mediapackage/index.js">
+      <file name="index.js" path="/home/eduardo/src/obrizum/video-on-demand-on-aws/source/custom-resource/lib/mediapackage/index.js">
         <metrics statements="68" coveredstatements="64" conditionals="13" coveredconditionals="11" methods="7" coveredmethods="5"/>
         <line num="14" count="1" type="stmt"/>
         <line num="15" count="1" type="stmt"/>
@@ -186,7 +186,7 @@
         <line num="186" count="2" type="stmt"/>
         <line num="191" count="1" type="stmt"/>
       </file>
-      <file name="test-assets.js" path="/codebuild/output/src986986522/src/source/custom-resource/lib/mediapackage/test-assets.js">
+      <file name="test-assets.js" path="/home/eduardo/src/obrizum/video-on-demand-on-aws/source/custom-resource/lib/mediapackage/test-assets.js">
         <metrics statements="3" coveredstatements="3" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
         <line num="1" count="2" type="stmt"/>
         <line num="44" count="2" type="stmt"/>
@@ -195,7 +195,7 @@
     </package>
     <package name="metrics">
       <metrics statements="12" coveredstatements="12" conditionals="0" coveredconditionals="0" methods="2" coveredmethods="2"/>
-      <file name="index.js" path="/codebuild/output/src986986522/src/source/custom-resource/lib/metrics/index.js">
+      <file name="index.js" path="/home/eduardo/src/obrizum/video-on-demand-on-aws/source/custom-resource/lib/metrics/index.js">
         <metrics statements="12" coveredstatements="12" conditionals="0" coveredconditionals="0" methods="2" coveredmethods="2"/>
         <line num="14" count="1" type="stmt"/>
         <line num="15" count="1" type="stmt"/>
@@ -213,7 +213,7 @@
     </package>
     <package name="s3">
       <metrics statements="15" coveredstatements="15" conditionals="3" coveredconditionals="3" methods="1" coveredmethods="1"/>
-      <file name="index.js" path="/codebuild/output/src986986522/src/source/custom-resource/lib/s3/index.js">
+      <file name="index.js" path="/home/eduardo/src/obrizum/video-on-demand-on-aws/source/custom-resource/lib/s3/index.js">
         <metrics statements="15" coveredstatements="15" conditionals="3" coveredconditionals="3" methods="1" coveredmethods="1"/>
         <line num="14" count="1" type="stmt"/>
         <line num="16" count="1" type="stmt"/>

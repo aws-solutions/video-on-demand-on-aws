@@ -6,6 +6,51 @@
     "Settings": {
         "OutputGroups": [
             {
+                "Name": "File Group",
+                "Outputs": [
+                    {
+                        "ContainerSettings": {
+                            "Container": "MP4",
+                            "Mp4Settings": {}
+                        },
+                        "VideoDescription": {
+                            "VideoPreprocessors": {
+                                "Deinterlacer": {}
+                            },
+                            "CodecSettings": {
+                                "Codec": "H_264",
+                                "H264Settings": {
+                                    "MaxBitrate": 50000000,
+                                    "RateControlMode": "QVBR",
+                                    "QvbrSettings": {
+                                        "QvbrQualityLevel": 10
+                                    },
+                                    "SceneChangeDetect": "TRANSITION_DETECTION",
+                                    "QualityTuningLevel": "SINGLE_PASS_HQ"
+                                }
+                            }
+                        },
+                        "AudioDescriptions": [
+                            {
+                                "CodecSettings": {
+                                    "Codec": "AAC",
+                                    "AacSettings": {
+                                        "Bitrate": 96000,
+                                        "CodingMode": "CODING_MODE_2_0",
+                                        "SampleRate": 48000
+                                    }
+                                }
+                            }
+                        ],
+                        "NameModifier": "_Mp4_Avc_Aac_16x9_original_resolution_24Hz_4.5Mbps_qvbr"
+                    }
+                ],
+                "OutputGroupSettings": {
+                    "Type": "FILE_GROUP_SETTINGS",
+                    "FileGroupSettings": {}
+                }
+            },
+            {
                 "Name": "Apple HLS",
                 "Outputs": [
                     {
