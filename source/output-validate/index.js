@@ -104,27 +104,27 @@ exports.handler = async (event) => {
    * feature: if framcapture and accelerated are both enabled the tumbnails are not listed in the CloudWatch
    * output. adding a function to get the last image from the list of images.
    */
-  if (data.frameCapture) {
-
-    data.thumbNails = [];
-    data.thumbNailsUrls = [];
-
-    params = {
-      Bucket: data.destBucket,
-      Prefix: `${data.guid}/thumbnails/`,
-    };
-
-    let thumbNails = await s3.listObjects(params).promise();
-
-    if (thumbNails.Contents.legnth !=0) {
-      let lastImg = thumbNails.Contents.pop();
-      data.thumbNails.push(`s3://${data.destBucket}/${lastImg.Key}`);
-      data.thumbNailsUrls.push(`https://${data.cloudFront}/${lastImg.Key}`);
-    } else {
-        throw new Error('MediaConvert Thumbnails not found in S3');
-    }
-    
-  }
+  // if (data.frameCapture) {
+  //
+  //   data.thumbNails = [];
+  //   data.thumbNailsUrls = [];
+  //
+  //   params = {
+  //     Bucket: data.destBucket,
+  //     Prefix: `${data.guid}/thumbnails/`,
+  //   };
+  //
+  //   let thumbNails = await s3.listObjects(params).promise();
+  //
+  //   if (thumbNails.Contents.legnth !=0) {
+  //     let lastImg = thumbNails.Contents.pop();
+  //     data.thumbNails.push(`s3://${data.destBucket}/${lastImg.Key}`);
+  //     data.thumbNailsUrls.push(`https://${data.cloudFront}/${lastImg.Key}`);
+  //   } else {
+  //       throw new Error('MediaConvert Thumbnails not found in S3');
+  //   }
+  //   
+  // }
 
   } catch (err) {
   await error.handler(event, err);

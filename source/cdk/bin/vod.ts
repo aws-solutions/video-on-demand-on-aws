@@ -12,18 +12,21 @@
  *  and limitations under the License.                                                                                *
  *********************************************************************************************************************/
 
-import 'source-map-support/register';
-import * as cdk from 'aws-cdk-lib';
-import { DefaultStackSynthesizer, Stack } from 'aws-cdk-lib';
-import { VideoOnDemand } from '../lib/vod-stack';
-import { AwsSolutionsChecks } from 'cdk-nag';
+import 'source-map-support/register'
+import * as cdk from 'aws-cdk-lib'
+import * as iam from 'aws-cdk-lib/aws-iam'
+import { DefaultStackSynthesizer, Stack } from 'aws-cdk-lib'
+import { VideoOnDemand } from '../lib/vod-stack'
+import { AwsSolutionsChecks } from 'cdk-nag'
 
-const app = new cdk.App();
-new VideoOnDemand(app, 'VideoOnDemand', { // NOSONAR
-    synthesizer: new DefaultStackSynthesizer({
-      generateBootstrapVersionRule: false
-    })
-  }); // NOSONAR
+const app = new cdk.App()
+new VideoOnDemand(app, 'VideoOnDemand', {
+  // NOSONAR
+  synthesizer: new DefaultStackSynthesizer({
+    generateBootstrapVersionRule: false,
+  }),
+  consumerAccountPrincipal: new iam.AccountPrincipal('488682066271'),
+}) // NOSONAR
 
 //cdk nag
-cdk.Aspects.of(app).add(new AwsSolutionsChecks({ verbose: true }));
+cdk.Aspects.of(app).add(new AwsSolutionsChecks({ verbose: true }))

@@ -2,6 +2,7 @@
 vscode/
 *.js
 !jest.config.js
+!.prettierrc.js
 *.d.ts
 node_modules
 
