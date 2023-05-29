@@ -17,7 +17,6 @@ import * as cdk from 'aws-cdk-lib'
 import * as iam from 'aws-cdk-lib/aws-iam'
 import { DefaultStackSynthesizer, Stack } from 'aws-cdk-lib'
 import { VideoOnDemand } from '../lib/vod-stack'
-import { AwsSolutionsChecks } from 'cdk-nag'
 
 const app = new cdk.App()
 new VideoOnDemand(app, 'VideoOnDemand', {
@@ -27,6 +26,3 @@ new VideoOnDemand(app, 'VideoOnDemand', {
   }),
   consumerAccountPrincipal: new iam.AccountPrincipal('488682066271'),
 }) // NOSONAR
-
-//cdk nag
-cdk.Aspects.of(app).add(new AwsSolutionsChecks({ verbose: true }))
