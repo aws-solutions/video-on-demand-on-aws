@@ -37,6 +37,11 @@ interface VideoOnDemandStackProps extends cdk.StackProps {
    * - S3 Buckets
    */
   consumerAccountPrincipal: iam.IPrincipal
+  /**
+   * The ARN of the Cloudfront Distribution that will serve the contents of the
+   * destination bucket.
+   */
+  cloudFrontDistArn: string
 }
 
 export class VideoOnDemand extends cdk.Stack {
@@ -325,6 +330,17 @@ export class VideoOnDemand extends cdk.Stack {
     cfnDestination.cfnOptions.updateReplacePolicy = cdk.CfnDeletionPolicy.RETAIN
 
     destination.grantReadWrite(props.consumerAccountPrincipal)
+    destination.addToResourcePolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        principals: [new iam.ServicePrincipal('cloudfront.amazonaws.com')],
+        actions: ['s3:GetObject'],
+        resources: [`${destination.bucketArn}/*`],
+        conditions: {
+          StringEquals: { 'AWS:SourceArn': props.cloudFrontDistArn },
+        },
+      })
+    )
 
     //cdk_nag
     NagSuppressions.addResourceSuppressions(destination, [

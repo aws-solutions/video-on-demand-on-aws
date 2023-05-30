@@ -25,4 +25,5 @@ new VideoOnDemand(app, 'VideoOnDemand', {
     generateBootstrapVersionRule: false,
   }),
   consumerAccountPrincipal: new iam.AccountPrincipal('488682066271'),
+  cloudFrontDistArn: 'arn:aws:cloudfront::488682066271:distribution/E1LFSM2XGALXQD',
 }) // NOSONAR
