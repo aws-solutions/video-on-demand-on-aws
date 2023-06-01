@@ -686,6 +686,13 @@ export class VideoOnDemand extends cdk.Stack {
     snsTopic.addSubscription(new subscriptions.EmailSubscription(adminEmail.valueAsString))
     const cfnSnsTopic = snsTopic.node.findChild('Resource') as sns.CfnTopic
     cfnSnsTopic.kmsMasterKeyId = 'alias/aws/sns'
+    
+    snsTopic.addToResourcePolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      principals: [props.consumerAccountPrincipal],
+      actions: ['sns:Subscribe','sns:ListSubscriptionsByTopic'],
+      resources: [snsTopic.topicArn],
+    }))
 
     /**
      * SQS Queue
