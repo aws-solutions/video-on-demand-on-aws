@@ -11,10 +11,12 @@
  *  and limitations under the License.                                                                                *
  *********************************************************************************************************************/
 
-const AWS = require('aws-sdk');
+const {
+    Lambda
+} = require("@aws-sdk/client-lambda");
 
 let errHandler = async (event, _err) => {
-    const lambda = new AWS.Lambda({
+    const lambda = new Lambda({
         region: process.env.AWS_REGION
     });
 
@@ -31,7 +33,7 @@ let errHandler = async (event, _err) => {
             Payload: JSON.stringify(payload, null, 2)
         };
 
-        await lambda.invoke(params).promise();
+        await lambda.invoke(params);
     } catch (err) {
         console.log(err);
         throw err;

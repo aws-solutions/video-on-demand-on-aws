@@ -46,7 +46,9 @@ exports.handler = async (event, context) => {
                     break;
 
                 case 'AnonymousMetric':
-                    await Metrics.send(config);
+                    if (config.SendAnonymizedMetric === "Yes") {
+                        await Metrics.send(config);
+                    }
                     break;
 
                 case 'MediaPackageVod':

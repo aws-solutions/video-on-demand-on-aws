@@ -11,7 +11,7 @@
  *  and limitations under the License.                                                                                *
  *********************************************************************************************************************/
 
-const AWS = require('aws-sdk');
+const { SNS } = require("@aws-sdk/client-sns");
 const error = require('./lib/error.js');
 
 const NOT_APPLICABLE_PROPERTIES = [
@@ -32,7 +32,7 @@ const NOT_APPLICABLE_PROPERTIES = [
 exports.handler = async (event) => {
     console.log(`REQUEST:: ${JSON.stringify(event, null, 2)}`);
 
-    const sns = new AWS.SNS({
+    const sns = new SNS({
         region: process.env.AWS_REGION,
         customUserAgent: process.env.SOLUTION_IDENTIFIER
     });
@@ -76,7 +76,7 @@ exports.handler = async (event) => {
             TargetArn: process.env.SnsTopic
         };
 
-        await sns.publish(params).promise();
+        await sns.publish(params);
     } catch (err) {
         await error.handler(event, err);
         throw err;

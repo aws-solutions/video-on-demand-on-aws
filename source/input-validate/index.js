@@ -11,14 +11,13 @@
  *  and limitations under the License.                                                                                *
  *********************************************************************************************************************/
 
-const moment = require('moment');
-const AWS = require('aws-sdk');
+const { S3 } = require("@aws-sdk/client-s3");
 const error = require('./lib/error');
 
 exports.handler = async (event) => {
     console.log(`REQUEST:: ${JSON.stringify(event, null, 2)}`);
 
-    const s3 = new AWS.S3({customUserAgent: process.env.SOLUTION_IDENTIFIER});
+    const s3 = new S3({customUserAgent: process.env.SOLUTION_IDENTIFIER});
     let data;
 
     try {
@@ -26,7 +25,7 @@ exports.handler = async (event) => {
         // Any parameter in config can be overwriten using a metadata file.
         data = {
             guid: event.guid,
-            startTime: moment().utc().toISOString(),
+            startTime: new Date().toISOString(),
             workflowTrigger: event.workflowTrigger,
             workflowStatus: 'Ingest',
             workflowName: process.env.WorkflowName,
@@ -52,9 +51,10 @@ exports.handler = async (event) => {
                 data.srcMetadataFile = key;
 
                 // Download json metadata file from s3
-                const metadata = await s3.getObject({ Bucket: data.srcBucket, Key: key }).promise();
-
-                const metadataFile = JSON.parse(metadata.Body);
+                const metadata = await s3.getObject({ Bucket: data.srcBucket, Key: key });
+                const metadataBody = await metadata.Body.transformToString();
+                const metadataFile = JSON.parse(metadataBody);
+;
                 if (!metadataFile.srcVideo) {
                     throw new Error('srcVideo is not defined in metadata::', metadataFile);
                 }
@@ -67,7 +67,7 @@ exports.handler = async (event) => {
                 });
 
                 // Check source file is accessible in s3
-                await s3.headObject({ Bucket: data.srcBucket, Key: data.srcVideo }).promise();
+                await s3.headObject({ Bucket: data.srcBucket, Key: data.srcVideo });
 
                 break;
 

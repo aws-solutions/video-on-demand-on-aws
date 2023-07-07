@@ -101,12 +101,10 @@ def parse_text_attributes(track):
 def get_signed_url(bucket, obj):
     SIGNED_URL_EXPIRATION = 60 * 60 * 2
     AWS_REGION = os.environ['AWS_REGION']
-    ## PR: https://github.com/awslabs/video-on-demand-on-aws/pull/111
     boto_config = Config(
         region_name=AWS_REGION,
         s3={
-            'addressing_style': 'virtual',
-            'signature_version': 's3v4'
+            'addressing_style': 'path'
         }
     )
     s3_client = boto3.client('s3', config=boto_config)
@@ -116,7 +114,7 @@ def get_signed_url(bucket, obj):
         ExpiresIn=SIGNED_URL_EXPIRATION
     )
 
-def lambda_handler(event, context):
+def lambda_handler(event, _):
     print(f'REQUEST:: {json.dumps(event)}')
 
     try:

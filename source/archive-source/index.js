@@ -11,13 +11,13 @@
  *  and limitations under the License.                                                                                *
  *********************************************************************************************************************/
 
-const AWS = require('aws-sdk');
+const { S3 } = require("@aws-sdk/client-s3");
 const error = require('./lib/error.js');
 
 exports.handler = async (event) => {
     console.log(`REQUEST:: ${JSON.stringify(event, null, 2)}`);
 
-    const s3 = new AWS.S3();
+    const s3 = new S3();
 
     try {
         let params = {
@@ -37,7 +37,7 @@ exports.handler = async (event) => {
             }
         };
 
-        await s3.putObjectTagging(params).promise();
+        await s3.putObjectTagging(params);
     } catch (err) {
         await error.handler(event, err);
         return err;

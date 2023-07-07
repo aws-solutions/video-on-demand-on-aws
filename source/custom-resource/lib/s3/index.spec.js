@@ -13,8 +13,9 @@
 
 const expect = require('chai').expect;
 const path = require('path');
-const AWS = require('aws-sdk-mock');
-AWS.setSDK(path.resolve('./node_modules/aws-sdk'));
+const { mockClient } = require("aws-sdk-client-mock");
+const { S3Client, PutBucketNotificationConfigurationCommand} = require("@aws-sdk/client-s3");
+const { LambdaClient, InvokeCommand } = require("@aws-sdk/client-lambda");
 
 const lambda = require('./index.js');
 
@@ -31,32 +32,33 @@ const _metadata = {
 };
 
 describe('#S3 PUT NOTIFICATION::', () => {
-    afterEach(() => AWS.restore('S3'));
+    const s3ClientMock = mockClient(S3Client);
+    const lambdaClientMock = mockClient(LambdaClient);
 
     it('should succeed on VideoFile trigger', async () => {
-        AWS.mock('S3', 'putBucketNotificationConfiguration', Promise.resolve());
+        s3ClientMock.on(PutBucketNotificationConfigurationCommand).resolves();
 
         const response = await lambda.putNotification(_video);
         expect(response).to.equal('success');
     });
 
     it('should succeed on MetadataFile trigger', async () => {
-        AWS.mock('S3', 'putBucketNotificationConfiguration', Promise.resolve());
+        s3ClientMock.on(PutBucketNotificationConfigurationCommand).resolves();
 
         const response = await lambda.putNotification(_metadata);
         expect(response).to.equal('success');
     });
 
     it('should throw an exception when putBucketNotificationConfiguration fails', async () => {
-        AWS.mock('S3', 'putBucketNotificationConfiguration', Promise.reject('ERROR'));
+        s3ClientMock.on(PutBucketNotificationConfigurationCommand).rejects('[Error: ERROR]');
 
         await lambda.putNotification(_video).catch(err => {
-            expect(err).to.equal('ERROR');
+            expect(err.toString()).to.equal('Error: [Error: ERROR]');
         });
     });
 
     it('should throw an exception when trigger is unknown', async () => {
-        AWS.mock('S3', 'putBucketNotificationConfiguration', Promise.resolve());
+        s3ClientMock.on(PutBucketNotificationConfigurationCommand).resolves();
         const invalid = { WorkflowTrigger: 'bogus' };
 
         await lambda.putNotification(invalid).catch(err => {

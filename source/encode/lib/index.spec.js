@@ -13,8 +13,9 @@
 
 const expect = require('chai').expect;
 const path = require('path');
-const AWS = require('aws-sdk-mock');
-AWS.setSDK(path.resolve('./node_modules/aws-sdk'));
+const { mockClient } = require("aws-sdk-client-mock");
+const { MediaConvertClient, GetJobTemplateCommand, CreateJobCommand } = require('@aws-sdk/client-mediaconvert');
+const { LambdaClient, InvokeCommand } = require("@aws-sdk/client-lambda");
 
 const lambda = require('../index.js');
 
@@ -63,11 +64,15 @@ describe('#ENCODE::', () => {
         }
     };
 
-    afterEach(() => AWS.restore('MediaConvert'));
+    const mediaConvertClientMock = mockClient(MediaConvertClient);
+    const lambdaClientMock = mockClient(LambdaClient);
+
+    afterEach(() => mediaConvertClientMock.reset());
 
     it('should succeed when FrameCapture is disabled', async () => {
-        AWS.mock('MediaConvert', 'getJobTemplate', Promise.resolve(tmpl));
-        AWS.mock('MediaConvert', 'createJob', Promise.resolve(data));
+        mediaConvertClientMock.on(GetJobTemplateCommand).resolves(tmpl);
+        mediaConvertClientMock.on(CreateJobCommand).resolves(data);
+
 
         const response = await lambda.handler(_event);
         expect(response.encodeJobId).to.equal('12345');
@@ -75,8 +80,8 @@ describe('#ENCODE::', () => {
     });
 
     it('should succeed when FrameCapture is enabled', async () => {
-        AWS.mock('MediaConvert', 'getJobTemplate', Promise.resolve(tmpl));
-        AWS.mock('MediaConvert', 'createJob', Promise.resolve(data));
+        mediaConvertClientMock.on(GetJobTemplateCommand).resolves(tmpl);
+        mediaConvertClientMock.on(CreateJobCommand).resolves(data);
 
         const response = await lambda.handler(_withframe);
         expect(response.encodeJobId).to.equal('12345');
@@ -115,8 +120,8 @@ describe('#ENCODE::', () => {
 
         const newJob = { Job: { Id: '12345678' } };
 
-        AWS.mock('MediaConvert', 'getJobTemplate', Promise.resolve(customTemplate));
-        AWS.mock('MediaConvert', 'createJob', Promise.resolve(newJob));
+        mediaConvertClientMock.on(GetJobTemplateCommand).resolves(customTemplate);
+        mediaConvertClientMock.on(CreateJobCommand).resolves(newJob);
 
         const response = await lambda.handler(event);
 
@@ -129,21 +134,21 @@ describe('#ENCODE::', () => {
     });
 
     it('should fail when getJobTemplate throws an exception', async () => {
-        AWS.mock('MediaConvert', 'getJobTemplate', Promise.reject('GET ERROR'));
-        AWS.mock('Lambda', 'invoke', Promise.resolve());
+        mediaConvertClientMock.on(GetJobTemplateCommand).rejects('GET ERROR');
+        lambdaClientMock.on(InvokeCommand).resolves();
 
         await lambda.handler(_event).catch(err => {
-            expect(err).to.equal('GET ERROR');
+            expect(err.toString()).to.equal('Error: GET ERROR');
         });
     });
 
     it('should fail when createJob throws an exception', async () => {
-        AWS.mock('MediaConvert', 'getJobTemplate', Promise.resolve(tmpl));
-        AWS.mock('MediaConvert', 'createJob', Promise.reject('JOB ERROR'));
-        AWS.mock('Lambda', 'invoke', Promise.resolve());
+        mediaConvertClientMock.on(GetJobTemplateCommand).resolves(tmpl);
+        mediaConvertClientMock.on(CreateJobCommand).rejects('JOB ERROR');
+        lambdaClientMock.on(InvokeCommand).resolves();
 
         await lambda.handler(_event).catch(err => {
-            expect(err).to.equal('JOB ERROR');
+            expect(err.toString()).to.equal('Error: JOB ERROR');
         });
     });
 });

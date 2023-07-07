@@ -11,17 +11,19 @@
  *  and limitations under the License.                                                                                *
  *********************************************************************************************************************/
 
-const AWS = require('aws-sdk');
+const { DynamoDBDocument } = require("@aws-sdk/lib-dynamodb");
+const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
+const { SNS } = require("@aws-sdk/client-sns");
 
 exports.handler = async (event) => {
     console.log(`REQUEST:: ${JSON.stringify(event, null, 2)}`);
 
-    const dynamo = new AWS.DynamoDB.DocumentClient({
+    const dynamo = DynamoDBDocument.from(new DynamoDBClient({ 
         region: process.env.AWS_REGION,
         customUserAgent: process.env.SOLUTION_IDENTIFIER
-    });
+    }));
 
-    const sns = new AWS.SNS({
+    const sns = new SNS({
         region: process.env.AWS_REGION,
         customUserAgent: process.env.SOLUTION_IDENTIFIER
     });
@@ -83,7 +85,7 @@ exports.handler = async (event) => {
         ExpressionAttributeValues: values
     };
 
-    await dynamo.update(params).promise();
+    await dynamo.update(params);
 
     // Feature/so-vod-173 match SNS data structure with the SNS Notification
     // Function for consistency.
@@ -93,7 +95,7 @@ exports.handler = async (event) => {
         TargetArn: process.env.SnsTopic
     };
 
-    await sns.publish(params).promise();
+    await sns.publish(params);
 
     return event;
 };

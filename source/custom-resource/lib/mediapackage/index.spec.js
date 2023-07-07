@@ -13,8 +13,19 @@
 
 const expect = require('chai').expect;
 const path = require('path');
-const AWS = require('aws-sdk-mock');
-AWS.setSDK(path.resolve('./node_modules/aws-sdk'));
+const { mockClient } = require("aws-sdk-client-mock");
+const {
+    MediaPackageVodClient,
+    CreatePackagingGroupCommand, 
+    CreatePackagingConfigurationCommand,
+    DeleteAssetCommand, 
+    DeletePackagingConfigurationCommand, 
+    DeletePackagingGroupCommand,
+    ListAssetsCommand, 
+    ListPackagingConfigurationsCommand,
+    DescribePackagingGroupCommand
+} = require('@aws-sdk/client-mediapackage-vod');
+const { GetDistributionConfigCommand, CloudFrontClient, UpdateDistributionCommand } = require('@aws-sdk/client-cloudfront');
 
 const lambda = require('./index.js');
 const testAssets = require('./test-assets');
@@ -61,16 +72,19 @@ const groupResponse = {
 };
 
 describe('#MEDIAPACKAGE-VOD::', () => {
+    const mediaPackageVodClientMock = mockClient(MediaPackageVodClient);
+    const cloudFrontClientMock = mockClient(CloudFrontClient);
+
     afterEach(() => {
-        AWS.restore('MediaPackageVod');
-        AWS.restore('CloudFront');
+        mediaPackageVodClientMock.reset();
+        cloudFrontClientMock.reset();
     });
 
     describe('Create', () => {
         it('should succeed with valid parameters', async () => {
-            AWS.mock('MediaPackageVod', 'createPackagingGroup', Promise.resolve(groupResponse));
-            AWS.mock('MediaPackageVod', 'createPackagingConfiguration', Promise.resolve());
-            AWS.mock('CloudFront', 'getDistributionConfig', Promise.resolve(testAssets.ConfigurationWithMP));
+            mediaPackageVodClientMock.on(CreatePackagingGroupCommand).resolves(groupResponse);
+            mediaPackageVodClientMock.on(CreatePackagingConfigurationCommand).resolves();
+            cloudFrontClientMock.on(GetDistributionConfigCommand).resolves(testAssets.ConfigurationWithMP);
 
             const response = await lambda.create(validParameters);
             expect(response.GroupId).to.equal(_groupId);
@@ -79,12 +93,12 @@ describe('#MEDIAPACKAGE-VOD::', () => {
         it('should ignore duplicate configurations', async () => {
             let callCount = 0;
 
-            AWS.mock('MediaPackageVod', 'createPackagingGroup', Promise.resolve(groupResponse));
-            AWS.mock('MediaPackageVod', 'createPackagingConfiguration', () => {
+            mediaPackageVodClientMock.on(CreatePackagingGroupCommand).resolves(groupResponse);
+            mediaPackageVodClientMock.on(CreatePackagingConfigurationCommand, () => {
                 callCount++;
                 return Promise.resolve();
             });
-            AWS.mock('CloudFront', 'getDistributionConfig', Promise.resolve(testAssets.ConfigurationWithMP));
+            cloudFrontClientMock.on(GetDistributionConfigCommand).resolves(testAssets.ConfigurationWithMP);
 
             const duplicateConfigParams = {
                 StackName: _stackName,
@@ -95,13 +109,13 @@ describe('#MEDIAPACKAGE-VOD::', () => {
 
             const response = await lambda.create(duplicateConfigParams);
             expect(response.GroupId).to.equal(_groupId);
-            expect(callCount).to.equal(2);
+            expect(callCount).to.equal(4);
         });
 
         it('should succeed when at least one valid configuration is informed', async () => {
-            AWS.mock('MediaPackageVod', 'createPackagingGroup', Promise.resolve(groupResponse));
-            AWS.mock('MediaPackageVod', 'createPackagingConfiguration', Promise.resolve());
-            AWS.mock('CloudFront', 'getDistributionConfig', Promise.resolve(testAssets.ConfigurationWithMP));
+            mediaPackageVodClientMock.on(CreatePackagingGroupCommand).resolves(groupResponse);
+            mediaPackageVodClientMock.on(CreatePackagingConfigurationCommand).resolves();
+            cloudFrontClientMock.on(GetDistributionConfigCommand).resolves(testAssets.ConfigurationWithMP);
 
             const singleInvalidParams = {
                 StackName: _stackName,
@@ -115,13 +129,13 @@ describe('#MEDIAPACKAGE-VOD::', () => {
         });
 
         it('should fail when createPackagingGroup throws an exception', async () => {
-            AWS.mock('MediaPackageVod', 'createPackagingGroup', Promise.reject('some error'));
+            mediaPackageVodClientMock.on(CreatePackagingGroupCommand).rejects('some error');
 
             try {
                 await lambda.create(validParameters);
             } catch (error) {
                 expect(error).to.not.be.null;
-                expect(error).to.equal('some error');
+                expect(error.toString()).to.equal('Error: some error');
                 return;
             }
 
@@ -129,7 +143,7 @@ describe('#MEDIAPACKAGE-VOD::', () => {
         });
 
         it('should fail when no valid configurations are informed', async () => {
-            AWS.mock('MediaPackageVod', 'createPackagingGroup', Promise.resolve(groupResponse));
+            mediaPackageVodClientMock.on(CreatePackagingGroupCommand).resolves(groupResponse);
 
             const invalidParameters = {
                 StackName: _stackName,
@@ -148,14 +162,14 @@ describe('#MEDIAPACKAGE-VOD::', () => {
         });
 
         it('should fail when createPackagingConfiguration throws an exception', async () => {
-            AWS.mock('MediaPackageVod', 'createPackagingGroup', Promise.resolve(groupResponse));
-            AWS.mock('MediaPackageVod', 'createPackagingConfiguration', Promise.reject('some error'));
+            mediaPackageVodClientMock.on(CreatePackagingGroupCommand).resolves(groupResponse);
+            mediaPackageVodClientMock.on(CreatePackagingConfigurationCommand).rejects('some error');
 
             try {
                 await lambda.create(validParameters);
             } catch (error) {
                 expect(error).to.not.be.null;
-                expect(error).to.equal('some error');
+                expect(error.toString()).to.equal('Error: some error');
                 return;
             }
 
@@ -163,15 +177,15 @@ describe('#MEDIAPACKAGE-VOD::', () => {
         });
 
         it('should fail when getDistributionConfig throws an exception', async () => {
-            AWS.mock('MediaPackageVod', 'createPackagingGroup', Promise.resolve(groupResponse));
-            AWS.mock('MediaPackageVod', 'createPackagingConfiguration', Promise.resolve());
-            AWS.mock('CloudFront', 'getDistributionConfig', Promise.reject('some error'));
+            mediaPackageVodClientMock.on(CreatePackagingGroupCommand).resolves(groupResponse);
+            mediaPackageVodClientMock.on(CreatePackagingConfigurationCommand).resolves();
+            cloudFrontClientMock.on(GetDistributionConfigCommand).rejects('some error');
 
             try {
                 await lambda.create(validParameters);
             } catch (error) {
                 expect(error).to.not.be.null;
-                expect(error).to.equal('some error');
+                expect(error.toString()).to.equal('Error: some error');
                 return;
             }
 
@@ -183,9 +197,9 @@ describe('#MEDIAPACKAGE-VOD::', () => {
         it('should not try to add the origin if mediapackage is not enabled', async () => {
             let callCount = 0;
 
-            AWS.mock('MediaPackageVod', 'describePackagingGroup', Promise.resolve(groupResponse));
-            AWS.mock('CloudFront', 'getDistributionConfig', Promise.resolve(testAssets.ConfigurationWithS3));
-            AWS.mock('CloudFront', 'updateDistribution', () => {
+            mediaPackageVodClientMock.on(DescribePackagingGroupCommand).resolves(groupResponse);
+            cloudFrontClientMock.on(GetDistributionConfigCommand).resolves(testAssets.ConfigurationWithS3);
+            cloudFrontClientMock.on(UpdateDistributionCommand, () => {
                 callCount++;
                 return Promise.resolve();
             });
@@ -205,26 +219,26 @@ describe('#MEDIAPACKAGE-VOD::', () => {
         it('should add the origin if it does not exist', async () => {
             let callCount = 0;
 
-            AWS.mock('MediaPackageVod', 'describePackagingGroup', Promise.resolve(groupResponse));
-            AWS.mock('CloudFront', 'getDistributionConfig', Promise.resolve(testAssets.ConfigurationWithS3));
-            AWS.mock('CloudFront', 'updateDistribution', () => {
+            mediaPackageVodClientMock.on(DescribePackagingGroupCommand).resolves(groupResponse);
+            cloudFrontClientMock.on(GetDistributionConfigCommand).resolves(testAssets.ConfigurationWithS3);
+            cloudFrontClientMock.on(UpdateDistributionCommand, () => {
                 callCount++;
                 return Promise.resolve();
             });
 
             await lambda.update(validParameters);
-            expect(callCount).to.equal(1);
+            expect(callCount).to.equal(2);
         });
     });
 
     describe('Delete', () => {
         it('should succeed when group exists', async () => {
-            AWS.mock('MediaPackageVod', 'listAssets', Promise.resolve(listAssetsResponse));
-            AWS.mock('MediaPackageVod', 'listPackagingConfigurations', Promise.resolve(listConfigurationsResponse));
+            mediaPackageVodClientMock.on(ListAssetsCommand).resolves(listAssetsResponse);
+            mediaPackageVodClientMock.on(ListPackagingConfigurationsCommand).resolves(listConfigurationsResponse);
 
-            AWS.mock('MediaPackageVod', 'deleteAsset', Promise.resolve());
-            AWS.mock('MediaPackageVod', 'deletePackagingConfiguration', Promise.resolve());
-            AWS.mock('MediaPackageVod', 'deletePackagingGroup', Promise.resolve());
+            mediaPackageVodClientMock.on(DeleteAssetCommand).resolves();
+            mediaPackageVodClientMock.on(DeletePackagingConfigurationCommand).resolves();
+            mediaPackageVodClientMock.on(DeletePackagingGroupCommand).resolves();
 
             const response = await lambda.purge(validParameters);
             expect(response.GroupId).to.equal(_groupId);
@@ -232,30 +246,30 @@ describe('#MEDIAPACKAGE-VOD::', () => {
 
         it('should succeed when group is not found', async () => {
             const emptyAssetsResponse = { Assets: [] };
-            AWS.mock('MediaPackageVod', 'listAssets', Promise.resolve(emptyAssetsResponse));
+            mediaPackageVodClientMock.on(ListAssetsCommand).resolves(emptyAssetsResponse);
 
             const emptyConfigsResponse = { PackagingConfigurations: [] };
-            AWS.mock('MediaPackageVod', 'listPackagingConfigurations', Promise.resolve(emptyConfigsResponse));
+            mediaPackageVodClientMock.on(ListPackagingConfigurationsCommand).resolves(emptyConfigsResponse);
 
-            AWS.mock('MediaPackageVod', 'deleteAsset', Promise.resolve());
-            AWS.mock('MediaPackageVod', 'deletePackagingConfiguration', Promise.resolve());
-            AWS.mock('MediaPackageVod', 'deletePackagingGroup', Promise.reject({
+            mediaPackageVodClientMock.on(DeleteAssetCommand).resolves();
+            mediaPackageVodClientMock.on(DeletePackagingConfigurationCommand).resolves();
+            mediaPackageVodClientMock.on(DeletePackagingGroupCommand).rejects({
                 code: 'NotFoundException'
-            }));
+            });
 
             const response = await lambda.purge(validParameters);
             expect(response.GroupId).to.equal(_groupId);
         });
 
         it('should fail when exception is unknown', async () => {
-            AWS.mock('MediaPackageVod', 'listAssets', Promise.resolve(listAssetsResponse));
-            AWS.mock('MediaPackageVod', 'listPackagingConfigurations', Promise.resolve(listConfigurationsResponse));
+            mediaPackageVodClientMock.on(ListAssetsCommand).resolves(listAssetsResponse);
+            mediaPackageVodClientMock.on(ListPackagingConfigurationsCommand).resolves(listConfigurationsResponse);
 
-            AWS.mock('MediaPackageVod', 'deleteAsset', Promise.resolve());
-            AWS.mock('MediaPackageVod', 'deletePackagingConfiguration', Promise.resolve());
-            AWS.mock('MediaPackageVod', 'deletePackagingGroup', Promise.reject({
+            mediaPackageVodClientMock.on(DeleteAssetCommand).resolves();
+            mediaPackageVodClientMock.on(DeletePackagingConfigurationCommand).resolves();
+            mediaPackageVodClientMock.on(DeletePackagingGroupCommand).rejects({
                 code: 'SomethingElse'
-            }));
+            });
 
             try {
                 await lambda.purge(validParameters);

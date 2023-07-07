@@ -149,12 +149,12 @@ export class VideoOnDemand extends cdk.Stack {
     /**
      * Mapping for sending anonymous metrics to AWS Solution Builders API
      */
-    new cdk.CfnMapping(this, 'AnonymousData', { // NOSONAR
+    new cdk.CfnMapping(this, 'AnonymizedData', { // NOSONAR
       mapping: {
-        SendAnonymousData: {
+        SendAnonymizedData: {
           Data: 'Yes'
         }
-      }
+      },
     });
     /**
      * Conditions
@@ -189,7 +189,8 @@ export class VideoOnDemand extends cdk.Stack {
         restrictPublicBuckets: true
       }),
       encryption: s3.BucketEncryption.S3_MANAGED,
-      versioned: false
+      versioned: true,
+      enforceSSL: true,
     });
     const cfnLogsBucket = logsBucket.node.findChild('Resource') as s3.CfnBucket;
     cfnLogsBucket.cfnOptions.deletionPolicy = cdk.CfnDeletionPolicy.RETAIN;
@@ -261,7 +262,8 @@ export class VideoOnDemand extends cdk.Stack {
           ]
         }
       ],
-      versioned: false
+      versioned: true,
+      enforceSSL: true,
     });
     const cfnSource = source.node.findChild('Resource') as s3.CfnBucket;
     cfnSource.cfnOptions.deletionPolicy = cdk.CfnDeletionPolicy.RETAIN;
@@ -310,7 +312,8 @@ export class VideoOnDemand extends cdk.Stack {
           maxAge: 3000
         }
       ],
-      versioned: false
+      versioned: true,
+      enforceSSL: true,
     });
     const cfnDestination = destination.node.findChild('Resource') as s3.CfnBucket;
     cfnDestination.cfnOptions.deletionPolicy = cdk.CfnDeletionPolicy.RETAIN;
@@ -506,7 +509,7 @@ export class VideoOnDemand extends cdk.Stack {
     );
 
     const customResourceLambda = new lambda.Function(this, 'CustomResource', {
-      runtime: lambda.Runtime.NODEJS_16_X,
+      runtime: lambda.Runtime.NODEJS_18_X,
       handler: 'index.handler',
       description: 'Used to deploy resources not supported by CloudFormation',
       environment: {
@@ -827,7 +830,7 @@ export class VideoOnDemand extends cdk.Stack {
     );
 
     const errorHandlerLambda = new lambda.Function(this, 'ErrorHandlerLambda', {
-      runtime: lambda.Runtime.NODEJS_16_X,
+      runtime: lambda.Runtime.NODEJS_18_X,
       handler: 'index.handler',
       functionName: `${cdk.Aws.STACK_NAME}-error-handler`,
       description: 'Captures and processes workflow errors',
@@ -937,7 +940,7 @@ export class VideoOnDemand extends cdk.Stack {
     );
 
     const inputValidateLambda = new lambda.Function(this, 'InputValidateLambda', {
-      runtime: lambda.Runtime.NODEJS_16_X,
+      runtime: lambda.Runtime.NODEJS_18_X,
       handler: 'index.handler',
       functionName: `${cdk.Aws.STACK_NAME}-input-validate`,
       description: 'Validates the input given to the workflow',
@@ -1138,7 +1141,7 @@ export class VideoOnDemand extends cdk.Stack {
     );
 
     const dynamoUpdateLambda = new lambda.Function(this, 'DynamoUpdateLambda', {
-      runtime: lambda.Runtime.NODEJS_16_X,
+      runtime: lambda.Runtime.NODEJS_18_X,
       handler: 'index.handler',
       functionName: `${cdk.Aws.STACK_NAME}-dynamo`,
       description: 'Updates DynamoDB with event data',
@@ -1227,7 +1230,7 @@ export class VideoOnDemand extends cdk.Stack {
     );
 
     const profilerLambda = new lambda.Function(this, 'ProfilerLambda', {
-      runtime: lambda.Runtime.NODEJS_16_X,
+      runtime: lambda.Runtime.NODEJS_18_X,
       handler: 'index.handler',
       functionName: `${cdk.Aws.STACK_NAME}-profiler`,
       description: 'Sets an EncodeProfile based on mediainfo output',
@@ -1325,7 +1328,7 @@ export class VideoOnDemand extends cdk.Stack {
     );
 
     const encodeLambda = new lambda.Function(this, 'EncodeLambda', {
-      runtime: lambda.Runtime.NODEJS_16_X,
+      runtime: lambda.Runtime.NODEJS_18_X,
       handler: 'index.handler',
       functionName: `${cdk.Aws.STACK_NAME}-encode`,
       description: 'Creates a MediaConvert encode job',
@@ -1419,7 +1422,7 @@ export class VideoOnDemand extends cdk.Stack {
     );
 
     const outputValidateLambda = new lambda.Function(this, 'OutputValidateLambda', {
-      runtime: lambda.Runtime.NODEJS_16_X,
+      runtime: lambda.Runtime.NODEJS_18_X,
       handler: 'index.handler',
       functionName: `${cdk.Aws.STACK_NAME}-output-validate`,
       description: 'Parses MediaConvert job output',
@@ -1509,7 +1512,7 @@ export class VideoOnDemand extends cdk.Stack {
     );
 
     const archiveSourceLambda = new lambda.Function(this, 'ArchiveSourceLambda', {
-      runtime: lambda.Runtime.NODEJS_16_X,
+      runtime: lambda.Runtime.NODEJS_18_X,
       handler: 'index.handler',
       functionName: `${cdk.Aws.STACK_NAME}-archive-source`,
       description: 'Updates tags on source files to enable Glacier',
@@ -1602,7 +1605,7 @@ export class VideoOnDemand extends cdk.Stack {
     );
 
     const sqsSendMessageLambda = new lambda.Function(this, 'SqsSendMessageLambda', {
-      runtime: lambda.Runtime.NODEJS_16_X,
+      runtime: lambda.Runtime.NODEJS_18_X,
       handler: 'index.handler',
       functionName: `${cdk.Aws.STACK_NAME}-sqs-publish`,
       description: 'Publish the workflow results to an SQS queue',
@@ -1696,7 +1699,7 @@ export class VideoOnDemand extends cdk.Stack {
     );
 
     const snsNotificationLambda = new lambda.Function(this, 'SnsNotificationLambda', {
-      runtime: lambda.Runtime.NODEJS_16_X,
+      runtime: lambda.Runtime.NODEJS_18_X,
       handler: 'index.handler',
       functionName: `${cdk.Aws.STACK_NAME}-sns-notification`,
       description: 'Sends a notification when the encode job is completed',
@@ -1804,7 +1807,7 @@ export class VideoOnDemand extends cdk.Stack {
     );
 
     const mediaPackageAssetsLambda = new lambda.Function(this, 'MediaPackageAssetsLambda', {
-      runtime: lambda.Runtime.NODEJS_16_X,
+      runtime: lambda.Runtime.NODEJS_18_X,
       handler: 'index.handler',
       functionName: `${cdk.Aws.STACK_NAME}-media-package-assets`,
       description: 'Ingests an asset into MediaPackage-VOD',
@@ -1900,7 +1903,7 @@ export class VideoOnDemand extends cdk.Stack {
     );
 
     const stepFunctionsLambda = new lambda.Function(this, 'StepFunctionsLambda', {
-      runtime: lambda.Runtime.NODEJS_16_X,
+      runtime: lambda.Runtime.NODEJS_18_X,
       handler: 'index.handler',
       functionName: `${cdk.Aws.STACK_NAME}-step-functions`,
       description: 'Creates a unique identifer (GUID) and executes the Ingest StateMachine',
@@ -1937,6 +1940,34 @@ export class VideoOnDemand extends cdk.Stack {
         ]
       }
     };
+
+    // temporary cdk nag rule suppression
+    // remove the suppressions when working on https://app.asana.com/0/1202684577925745/1204347805387549/f
+    [
+      cfnCustomResourceLambda,
+      cfnErrorHandlerLambda,
+      cfnInputValidateLambda,
+      cfnMediaInfoLambda,
+      cfnDynamoUpdateLambda,
+      cfnProfilerLambda,
+      cfnEncodeLambda,
+      cfnOutputValidateLambda,
+      cfnArchiveSourceLambda,
+      cfnSqsSendMessageLambda,
+      cfnSnsNotificationLambda,
+      cfnMediaPackageAssetsLambda,
+      cfnStepFunctionsLambda,
+    ].forEach(lambdaFunction => {
+      NagSuppressions.addResourceSuppressions(
+        lambdaFunction,
+        [
+          {
+            id: 'AwsSolutions-L1',
+            reason: 'Lambda NodeJS 18 Runtime in development...',
+          }
+        ]
+      );
+    });
 
     const encodeCompleteRule = new events.Rule(this, 'EncodeCompleteRule', {
       ruleName: `${cdk.Aws.STACK_NAME}-EncodeComplete`,
@@ -2291,7 +2322,8 @@ export class VideoOnDemand extends cdk.Stack {
         WorkflowTrigger: workflowTrigger.valueAsString,
         Glacier: glacier.valueAsString,
         FrameCapture: frameCapture.valueAsString,
-        EnableMediaPackage: enableMediaPackage.valueAsString
+        EnableMediaPackage: enableMediaPackage.valueAsString,
+        SendAnonymizedMetric: cdk.Fn.findInMap('AnonymizedData', 'SendAnonymizedData', 'Data')
       }
     });
 
@@ -2319,8 +2351,7 @@ export class VideoOnDemand extends cdk.Stack {
     cdk.Tags.of(appRegistry).add('Solutions:SolutionVersion', '%%VERSION%%');
     cdk.Tags.of(appRegistry).add('Solutions:ApplicationType', 'AWS-Solutions');
 
-    appRegistry.node.addDependency(attributeGroup);
-    appRegistry.associateAttributeGroup(attributeGroup);
+    attributeGroup.associateWith(appRegistry);
 
 
     /**

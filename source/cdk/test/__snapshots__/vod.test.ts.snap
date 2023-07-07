@@ -37,13 +37,6 @@ exports[`VideoOnDemand Stack Test 1`] = `
     },
   },
   Description: (SO0021) - Video on Demand on AWS workflow with AWS Step Functions, MediaConvert, MediaPackage, S3, CloudFront and DynamoDB. Version %%VERSION%%,
-  Mappings: {
-    AnonymousData: {
-      SendAnonymousData: {
-        Data: Yes,
-      },
-    },
-  },
   Metadata: {
     AWS::CloudFormation::Interface: {
       ParameterGroups: [
@@ -391,6 +384,13 @@ exports[`VideoOnDemand Stack Test 1`] = `
           Ref: Glacier,
         },
         Resource: AnonymousMetric,
+        SendAnonymizedMetric: {
+          Fn::FindInMap: [
+            AnonymizedData,
+            SendAnonymizedData,
+            Data,
+          ],
+        },
         ServiceToken: {
           Fn::GetAtt: [
             CustomResource8CDCD7A7,
@@ -414,9 +414,6 @@ exports[`VideoOnDemand Stack Test 1`] = `
       UpdateReplacePolicy: Delete,
     },
     AppRegistryApp5349BE86: {
-      DependsOn: [
-        AppRegistryAttributeGroup7AF07446,
-      ],
       Properties: {
         Description: Service Catalog application to track and manage all your resources. The SolutionId is SO0021 and SolutionVersion is %%VERSION%%.,
         Name: {
@@ -425,46 +422,30 @@ exports[`VideoOnDemand Stack Test 1`] = `
             [
               video-on-demand-on-aws-,
               {
+                Ref: AWS::Region,
+              },
+              -,
+              {
+                Ref: AWS::AccountId,
+              },
+              -,
+              {
                 Ref: AWS::StackName,
               },
             ],
           ],
         },
         Tags: {
-          ApplicationType: AWS-Solutions,
-          SolutionDomain: CloudFoundations,
           SolutionId: SO0021,
-          SolutionName: Video on Demand on AWS,
-          SolutionVersion: %%VERSION%%,
-          solutionId: SO0021,
+          Solutions:ApplicationType: AWS-Solutions,
+          Solutions:SolutionID: SO0021,
+          Solutions:SolutionName: Video on Demand on AWS,
+          Solutions:SolutionVersion: %%VERSION%%,
         },
       },
       Type: AWS::ServiceCatalogAppRegistry::Application,
     },
-    AppRegistryAppAttributeGroupAssociation89f88b663a927A6EC94A: {
-      DependsOn: [
-        AppRegistryAttributeGroup7AF07446,
-      ],
-      Properties: {
-        Application: {
-          Fn::GetAtt: [
-            AppRegistryApp5349BE86,
-            Id,
-          ],
-        },
-        AttributeGroup: {
-          Fn::GetAtt: [
-            AppRegistryAttributeGroup7AF07446,
-            Id,
-          ],
-        },
-      },
-      Type: AWS::ServiceCatalogAppRegistry::AttributeGroupAssociation,
-    },
-    AppRegistryAppResourceAssociationa70e26ed0b0e5F5D9D9F: {
-      DependsOn: [
-        AppRegistryAttributeGroup7AF07446,
-      ],
+    AppRegistryAssociation: {
       Properties: {
         Application: {
           Fn::GetAtt: [
@@ -479,17 +460,29 @@ exports[`VideoOnDemand Stack Test 1`] = `
       },
       Type: AWS::ServiceCatalogAppRegistry::ResourceAssociation,
     },
-    AppRegistryAttributeGroup7AF07446: {
+    AppRegistryAttributeGroupId7C2D526E: {
       Properties: {
         Attributes: {
-          ApplicationType: AWS-Solutions,
-          SolutionID: SO0021,
-          SolutionName: Video on Demand on AWS,
-          SolutionVersion: %%VERSION%%,
+          applicationType: AWS-Solutions,
+          solutionID: SO0021,
+          solutionName: Video on Demand on AWS,
+          version: %%VERSION%%,
         },
         Description: Attribute group for solution information,
         Name: {
-          Ref: AWS::StackName,
+          Fn::Join: [
+            ,
+            [
+              A30-,
+              {
+                Ref: AWS::Region,
+              },
+              -,
+              {
+                Ref: AWS::StackName,
+              },
+            ],
+          ],
         },
         Tags: {
           SolutionId: SO0021,
@@ -497,12 +490,37 @@ exports[`VideoOnDemand Stack Test 1`] = `
       },
       Type: AWS::ServiceCatalogAppRegistry::AttributeGroup,
     },
+    AppRegistryAttributeGroupIdApplicationAttributeGroupAssociatione9644211d9ed28C08BBE: {
+      Properties: {
+        Application: {
+          Fn::GetAtt: [
+            AppRegistryApp5349BE86,
+            Id,
+          ],
+        },
+        AttributeGroup: {
+          Fn::GetAtt: [
+            AppRegistryAttributeGroupId7C2D526E,
+            Id,
+          ],
+        },
+      },
+      Type: AWS::ServiceCatalogAppRegistry::AttributeGroupAssociation,
+    },
     ArchiveSourceLambda320F09D9: {
       DependsOn: [
         ArchiveSourcePolicy1D98A4F5,
         ArchiveSourceRole49DA53ED,
       ],
       Metadata: {
+        cdk_nag: {
+          rules_to_suppress: [
+            {
+              id: AwsSolutions-L1,
+              reason: Lambda NodeJS 18 Runtime in development...,
+            },
+          ],
+        },
         cfn_nag: {
           rules_to_suppress: [
             {
@@ -558,7 +576,7 @@ exports[`VideoOnDemand Stack Test 1`] = `
             Arn,
           ],
         },
-        Runtime: nodejs16.x,
+        Runtime: nodejs18.x,
         Tags: [
           {
             Key: SolutionId,
@@ -704,9 +722,13 @@ exports[`VideoOnDemand Stack Test 1`] = `
             Fn::Join: [
               ,
               [
-                VideoOnDemandCachePolicy7E8194AA-,
+                cp-,
                 {
                   Ref: AWS::Region,
+                },
+                -,
+                {
+                  Ref: AWS::StackName,
                 },
               ],
             ],
@@ -836,6 +858,14 @@ exports[`VideoOnDemand Stack Test 1`] = `
         CustomResourceRoleAB1EF463,
       ],
       Metadata: {
+        cdk_nag: {
+          rules_to_suppress: [
+            {
+              id: AwsSolutions-L1,
+              reason: Lambda NodeJS 18 Runtime in development...,
+            },
+          ],
+        },
         cfn_nag: {
           rules_to_suppress: [
             {
@@ -884,7 +914,7 @@ exports[`VideoOnDemand Stack Test 1`] = `
             Arn,
           ],
         },
-        Runtime: nodejs16.x,
+        Runtime: nodejs18.x,
         Tags: [
           {
             Key: SolutionId,
@@ -1220,6 +1250,9 @@ exports[`VideoOnDemand Stack Test 1`] = `
             Value: SO0021,
           },
         ],
+        VersioningConfiguration: {
+          Status: Enabled,
+        },
       },
       Type: AWS::S3::Bucket,
       UpdateReplacePolicy: Retain,
@@ -1249,6 +1282,40 @@ exports[`VideoOnDemand Stack Test 1`] = `
         },
         PolicyDocument: {
           Statement: [
+            {
+              Action: s3:*,
+              Condition: {
+                Bool: {
+                  aws:SecureTransport: false,
+                },
+              },
+              Effect: Deny,
+              Principal: {
+                AWS: *,
+              },
+              Resource: [
+                {
+                  Fn::GetAtt: [
+                    Destination920A3C57,
+                    Arn,
+                  ],
+                },
+                {
+                  Fn::Join: [
+                    ,
+                    [
+                      {
+                        Fn::GetAtt: [
+                          Destination920A3C57,
+                          Arn,
+                        ],
+                      },
+                      /*,
+                    ],
+                  ],
+                },
+              ],
+            },
             {
               Action: s3:GetObject,
               Effect: Allow,
@@ -1359,6 +1426,14 @@ exports[`VideoOnDemand Stack Test 1`] = `
         DynamoUpdateRoleB73E97DD,
       ],
       Metadata: {
+        cdk_nag: {
+          rules_to_suppress: [
+            {
+              id: AwsSolutions-L1,
+              reason: Lambda NodeJS 18 Runtime in development...,
+            },
+          ],
+        },
         cfn_nag: {
           rules_to_suppress: [
             {
@@ -1417,7 +1492,7 @@ exports[`VideoOnDemand Stack Test 1`] = `
             Arn,
           ],
         },
-        Runtime: nodejs16.x,
+        Runtime: nodejs18.x,
         Tags: [
           {
             Key: SolutionId,
@@ -1681,6 +1756,14 @@ exports[`VideoOnDemand Stack Test 1`] = `
         EncodeRole36198881,
       ],
       Metadata: {
+        cdk_nag: {
+          rules_to_suppress: [
+            {
+              id: AwsSolutions-L1,
+              reason: Lambda NodeJS 18 Runtime in development...,
+            },
+          ],
+        },
         cfn_nag: {
           rules_to_suppress: [
             {
@@ -1748,7 +1831,7 @@ exports[`VideoOnDemand Stack Test 1`] = `
             Arn,
           ],
         },
-        Runtime: nodejs16.x,
+        Runtime: nodejs18.x,
         Tags: [
           {
             Key: SolutionId,
@@ -1934,6 +2017,14 @@ exports[`VideoOnDemand Stack Test 1`] = `
         ErrorHandlerRole361CFEB7,
       ],
       Metadata: {
+        cdk_nag: {
+          rules_to_suppress: [
+            {
+              id: AwsSolutions-L1,
+              reason: Lambda NodeJS 18 Runtime in development...,
+            },
+          ],
+        },
         cfn_nag: {
           rules_to_suppress: [
             {
@@ -1989,7 +2080,7 @@ exports[`VideoOnDemand Stack Test 1`] = `
             Arn,
           ],
         },
-        Runtime: nodejs16.x,
+        Runtime: nodejs18.x,
         Tags: [
           {
             Key: SolutionId,
@@ -2120,6 +2211,7 @@ exports[`VideoOnDemand Stack Test 1`] = `
       Type: AWS::IAM::Role,
     },
     IngestWorkflow58F2BCD4: {
+      DeletionPolicy: Delete,
       DependsOn: [
         StepFunctionsServiceRoleDefaultPolicy6AD67B91,
         StepFunctionsServiceRole2A83B843,
@@ -2207,6 +2299,7 @@ exports[`VideoOnDemand Stack Test 1`] = `
         ],
       },
       Type: AWS::StepFunctions::StateMachine,
+      UpdateReplacePolicy: Delete,
     },
     InputValidateLambdaA739FF97: {
       DependsOn: [
@@ -2214,6 +2307,14 @@ exports[`VideoOnDemand Stack Test 1`] = `
         InputValidateRole862FC6A2,
       ],
       Metadata: {
+        cdk_nag: {
+          rules_to_suppress: [
+            {
+              id: AwsSolutions-L1,
+              reason: Lambda NodeJS 18 Runtime in development...,
+            },
+          ],
+        },
         cfn_nag: {
           rules_to_suppress: [
             {
@@ -2400,7 +2501,7 @@ exports[`VideoOnDemand Stack Test 1`] = `
             Arn,
           ],
         },
-        Runtime: nodejs16.x,
+        Runtime: nodejs18.x,
         Tags: [
           {
             Key: SolutionId,
@@ -2575,6 +2676,13 @@ exports[`VideoOnDemand Stack Test 1`] = `
             },
           ],
         },
+        OwnershipControls: {
+          Rules: [
+            {
+              ObjectOwnership: ObjectWriter,
+            },
+          ],
+        },
         PublicAccessBlockConfiguration: {
           BlockPublicAcls: true,
           BlockPublicPolicy: true,
@@ -2587,9 +2695,59 @@ exports[`VideoOnDemand Stack Test 1`] = `
             Value: SO0021,
           },
         ],
+        VersioningConfiguration: {
+          Status: Enabled,
+        },
       },
       Type: AWS::S3::Bucket,
       UpdateReplacePolicy: Retain,
+    },
+    LogsPolicy90DB40C9: {
+      Properties: {
+        Bucket: {
+          Ref: Logs6819BB44,
+        },
+        PolicyDocument: {
+          Statement: [
+            {
+              Action: s3:*,
+              Condition: {
+                Bool: {
+                  aws:SecureTransport: false,
+                },
+              },
+              Effect: Deny,
+              Principal: {
+                AWS: *,
+              },
+              Resource: [
+                {
+                  Fn::GetAtt: [
+                    Logs6819BB44,
+                    Arn,
+                  ],
+                },
+                {
+                  Fn::Join: [
+                    ,
+                    [
+                      {
+                        Fn::GetAtt: [
+                          Logs6819BB44,
+                          Arn,
+                        ],
+                      },
+                      /*,
+                    ],
+                  ],
+                },
+              ],
+            },
+          ],
+          Version: 2012-10-17,
+        },
+      },
+      Type: AWS::S3::BucketPolicy,
     },
     MediaConvertEndPoint: {
       DeletionPolicy: Delete,
@@ -2772,6 +2930,14 @@ exports[`VideoOnDemand Stack Test 1`] = `
         MediaInfoRole16C46683,
       ],
       Metadata: {
+        cdk_nag: {
+          rules_to_suppress: [
+            {
+              id: AwsSolutions-L1,
+              reason: Lambda NodeJS 18 Runtime in development...,
+            },
+          ],
+        },
         cfn_nag: {
           rules_to_suppress: [
             {
@@ -2968,6 +3134,14 @@ exports[`VideoOnDemand Stack Test 1`] = `
         MediaPackageAssetsRole5B26B67C,
       ],
       Metadata: {
+        cdk_nag: {
+          rules_to_suppress: [
+            {
+              id: AwsSolutions-L1,
+              reason: Lambda NodeJS 18 Runtime in development...,
+            },
+          ],
+        },
         cfn_nag: {
           rules_to_suppress: [
             {
@@ -3041,7 +3215,7 @@ exports[`VideoOnDemand Stack Test 1`] = `
             Arn,
           ],
         },
-        Runtime: nodejs16.x,
+        Runtime: nodejs18.x,
         Tags: [
           {
             Key: SolutionId,
@@ -3330,6 +3504,14 @@ exports[`VideoOnDemand Stack Test 1`] = `
         OutputValidateRole553C8CD2,
       ],
       Metadata: {
+        cdk_nag: {
+          rules_to_suppress: [
+            {
+              id: AwsSolutions-L1,
+              reason: Lambda NodeJS 18 Runtime in development...,
+            },
+          ],
+        },
         cfn_nag: {
           rules_to_suppress: [
             {
@@ -3394,7 +3576,7 @@ exports[`VideoOnDemand Stack Test 1`] = `
             Arn,
           ],
         },
-        Runtime: nodejs16.x,
+        Runtime: nodejs18.x,
         Tags: [
           {
             Key: SolutionId,
@@ -3533,6 +3715,7 @@ exports[`VideoOnDemand Stack Test 1`] = `
       Type: AWS::IAM::Role,
     },
     ProcessWorkflow95FAF321: {
+      DeletionPolicy: Delete,
       DependsOn: [
         StepFunctionsServiceRoleDefaultPolicy6AD67B91,
         StepFunctionsServiceRole2A83B843,
@@ -3606,6 +3789,7 @@ exports[`VideoOnDemand Stack Test 1`] = `
         ],
       },
       Type: AWS::StepFunctions::StateMachine,
+      UpdateReplacePolicy: Delete,
     },
     ProfilerLambdaFAFF7893: {
       DependsOn: [
@@ -3613,6 +3797,14 @@ exports[`VideoOnDemand Stack Test 1`] = `
         ProfilerRole5E433579,
       ],
       Metadata: {
+        cdk_nag: {
+          rules_to_suppress: [
+            {
+              id: AwsSolutions-L1,
+              reason: Lambda NodeJS 18 Runtime in development...,
+            },
+          ],
+        },
         cfn_nag: {
           rules_to_suppress: [
             {
@@ -3671,7 +3863,7 @@ exports[`VideoOnDemand Stack Test 1`] = `
             Arn,
           ],
         },
-        Runtime: nodejs16.x,
+        Runtime: nodejs18.x,
         Tags: [
           {
             Key: SolutionId,
@@ -3800,6 +3992,7 @@ exports[`VideoOnDemand Stack Test 1`] = `
       Type: AWS::IAM::Role,
     },
     PublishWorkflowEF670320: {
+      DeletionPolicy: Delete,
       DependsOn: [
         StepFunctionsServiceRoleDefaultPolicy6AD67B91,
         StepFunctionsServiceRole2A83B843,
@@ -3901,6 +4094,7 @@ exports[`VideoOnDemand Stack Test 1`] = `
         ],
       },
       Type: AWS::StepFunctions::StateMachine,
+      UpdateReplacePolicy: Delete,
     },
     S3Config: {
       DeletionPolicy: Delete,
@@ -3939,6 +4133,14 @@ exports[`VideoOnDemand Stack Test 1`] = `
         SnsNotificationRole48AE9F11,
       ],
       Metadata: {
+        cdk_nag: {
+          rules_to_suppress: [
+            {
+              id: AwsSolutions-L1,
+              reason: Lambda NodeJS 18 Runtime in development...,
+            },
+          ],
+        },
         cfn_nag: {
           rules_to_suppress: [
             {
@@ -3997,7 +4199,7 @@ exports[`VideoOnDemand Stack Test 1`] = `
             Arn,
           ],
         },
-        Runtime: nodejs16.x,
+        Runtime: nodejs18.x,
         Tags: [
           {
             Key: SolutionId,
@@ -4270,9 +4472,59 @@ exports[`VideoOnDemand Stack Test 1`] = `
             Value: SO0021,
           },
         ],
+        VersioningConfiguration: {
+          Status: Enabled,
+        },
       },
       Type: AWS::S3::Bucket,
       UpdateReplacePolicy: Retain,
+    },
+    SourcePolicyE5AB5F73: {
+      Properties: {
+        Bucket: {
+          Ref: Source71E471F1,
+        },
+        PolicyDocument: {
+          Statement: [
+            {
+              Action: s3:*,
+              Condition: {
+                Bool: {
+                  aws:SecureTransport: false,
+                },
+              },
+              Effect: Deny,
+              Principal: {
+                AWS: *,
+              },
+              Resource: [
+                {
+                  Fn::GetAtt: [
+                    Source71E471F1,
+                    Arn,
+                  ],
+                },
+                {
+                  Fn::Join: [
+                    ,
+                    [
+                      {
+                        Fn::GetAtt: [
+                          Source71E471F1,
+                          Arn,
+                        ],
+                      },
+                      /*,
+                    ],
+                  ],
+                },
+              ],
+            },
+          ],
+          Version: 2012-10-17,
+        },
+      },
+      Type: AWS::S3::BucketPolicy,
     },
     SqsQueue13597403: {
       DeletionPolicy: Delete,
@@ -4411,6 +4663,14 @@ exports[`VideoOnDemand Stack Test 1`] = `
         SqsSendMessageRole23292716,
       ],
       Metadata: {
+        cdk_nag: {
+          rules_to_suppress: [
+            {
+              id: AwsSolutions-L1,
+              reason: Lambda NodeJS 18 Runtime in development...,
+            },
+          ],
+        },
         cfn_nag: {
           rules_to_suppress: [
             {
@@ -4469,7 +4729,7 @@ exports[`VideoOnDemand Stack Test 1`] = `
             Arn,
           ],
         },
-        Runtime: nodejs16.x,
+        Runtime: nodejs18.x,
         Tags: [
           {
             Key: SolutionId,
@@ -4608,6 +4868,14 @@ exports[`VideoOnDemand Stack Test 1`] = `
         StepFunctionsRole575CBBE2,
       ],
       Metadata: {
+        cdk_nag: {
+          rules_to_suppress: [
+            {
+              id: AwsSolutions-L1,
+              reason: Lambda NodeJS 18 Runtime in development...,
+            },
+          ],
+        },
         cfn_nag: {
           rules_to_suppress: [
             {
@@ -4735,7 +5003,7 @@ exports[`VideoOnDemand Stack Test 1`] = `
             Arn,
           ],
         },
-        Runtime: nodejs16.x,
+        Runtime: nodejs18.x,
         Tags: [
           {
             Key: SolutionId,

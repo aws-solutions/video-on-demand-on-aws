@@ -11,14 +11,14 @@
  *  and limitations under the License.                                                                                *
  *********************************************************************************************************************/
 
-const AWS = require('aws-sdk');
+const { SQS } = require("@aws-sdk/client-sqs");
 const error = require('./lib/error.js');
 
 
 exports.handler = async (event) => {
     console.log(`REQUEST:: ${JSON.stringify(event, null, 2)}`);
 
-    const sqs = new AWS.SQS({
+    const sqs = new SQS({
         region: process.env.AWS_REGION,
         customUserAgent: process.env.SOLUTION_IDENTIFIER
     });
@@ -32,7 +32,7 @@ exports.handler = async (event) => {
             QueueUrl: process.env.SqsQueue
         };
 
-        await sqs.sendMessage(params).promise();
+        await sqs.sendMessage(params);
 
     } catch (err) {
         await error.handler(event, err);

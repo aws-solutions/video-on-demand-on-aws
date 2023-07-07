@@ -17,8 +17,8 @@ Source code for [Video on Demand on AWS](https://aws.amazon.com/solutions/video-
   - [QVBR Mode](#qvbr-mode)
   - [Accelerated Transcoding](#accelerated-transcoding)
   - [Source code](#source-code)
-    - [Node.js 12](#nodejs-12)
-    - [Python 3.7](#python-37)
+    - [Node.js 18](#nodejs-18)
+    - [Python 3.9](#python-39)
   - [Creating a custom build](#creating-a-custom-build)
     - [Prerequisites:](#prerequisites)
     - [1. Running unit tests for customization](#1-running-unit-tests-for-customization)
@@ -145,7 +145,7 @@ For more detail please see [Accelerated Transcoding](https://docs.aws.amazon.com
 
 ## Source code
 
-### Node.js 14
+### Node.js 18
 * **archive-source:** Lambda function to tag the source video in s3 to enable the Glacier lifecycle policy.
 * **custom-resource:** Lambda backed CloudFormation custom resource to deploy MediaConvert templates configure S3 event notifications.
 * **dynamo:** Lambda function to Update DynamoDB.
@@ -157,7 +157,7 @@ For more detail please see [Accelerated Transcoding](https://docs.aws.amazon.com
 * **profiler:** Lambda function used to send publish and/or error notifications.
 * **step-functions:** Lambda function to trigger AWS Step Functions.
 
-### Python 3.8
+### Python 3.9
 * **mediainfo:** Lambda function to run [mediainfo](https://mediaarea.net/en/MediaInfo) on an S3 signed url.
 
 > ./source/mediainfo/bin/mediainfo must be made executable before deploying to lambda.
@@ -168,7 +168,7 @@ To make changes to the solution, download or clone this repo, update the source 
 
 ### Prerequisites:
 * [AWS Command Line Interface](https://aws.amazon.com/cli/)
-* Node.js 14.x or later
+* Node.js 18.x or later
 * Python 3.8 or later
 
 ### 1. Running unit tests for customization
