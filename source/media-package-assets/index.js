@@ -11,7 +11,7 @@
  *  and limitations under the License.                                                                                *
  *********************************************************************************************************************/
 
-const AWS = require('aws-sdk');
+const { MediaPackageVod } = require("@aws-sdk/client-mediapackage-vod");
 const crypto = require('crypto');
 const error = require('./lib/error');
 
@@ -49,7 +49,7 @@ const convertEndpoints = (egressEndpoints, cloudFrontEndpoint) => {
 const handler = async (event) => {
     console.log(`REQUEST:: ${JSON.stringify(event, null, 2)}`);
 
-    const mediaPackageVod = new AWS.MediaPackageVod({customUserAgent: process.env.SOLUTION_IDENTIFIER});
+    const mediaPackageVod = new MediaPackageVod({customUserAgent: process.env.SOLUTION_IDENTIFIER});
     const randomId = crypto.randomBytes(16).toString('hex').toLowerCase();
 
     try {
@@ -63,7 +63,7 @@ const handler = async (event) => {
         params.Tags = {'SolutionId': 'SO0021'};
 
         console.log(`Ingesting asset:: ${JSON.stringify(params, null, 2)}`);
-        const response = await mediaPackageVod.createAsset(params).promise();
+        const response = await mediaPackageVod.createAsset(params);
         event.mediaPackageResourceId = randomId;
         event.egressEndpoints = convertEndpoints(response.EgressEndpoints, event.cloudFront);
         console.log(`ENDPOINTS:: ${JSON.stringify(event.egressEndpoints, null, 2)}`);

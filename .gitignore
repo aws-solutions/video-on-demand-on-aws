@@ -22,3 +22,8 @@
 # System Files
 **/.DS_Store
 **/.vscode
+
+# test coverage files
+**/source/test
+**source/**/.coverage
+**source/**/coverage

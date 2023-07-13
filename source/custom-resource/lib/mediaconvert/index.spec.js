@@ -13,8 +13,15 @@
 
 const expect = require('chai').expect;
 const path = require('path');
-const AWS = require('aws-sdk-mock');
-AWS.setSDK(path.resolve('./node_modules/aws-sdk'));
+const { mockClient } = require("aws-sdk-client-mock");
+const { 
+    MediaConvertClient, 
+    CreateJobTemplateCommand, 
+    DescribeEndpointsCommand, 
+    DeletePresetCommand, 
+    DeleteJobTemplateCommand,
+    ListJobTemplatesCommand
+} = require('@aws-sdk/client-mediaconvert');
 
 const lambda = require('./index.js');
 
@@ -42,46 +49,47 @@ const update_data_no_preset = {
 }
 
 describe('#MEDIACONVERT::', () => {
-    afterEach(() => AWS.restore('MediaConvert'));
+    const mediaConvertClientMock = mockClient(MediaConvertClient);
+    afterEach(() => mediaConvertClientMock.reset());
 
     describe('Create', () => {
         it('should return "SUCCESS" on create templates', async () => {
-            AWS.mock('MediaConvert', 'createJobTemplate', Promise.resolve(data));
+            mediaConvertClientMock.on(CreateJobTemplateCommand).resolves(data);
 
             const response = await lambda.createTemplates(_config);
             expect(response).to.equal('success');
         });
 
         it('should fail when createJobTemplate throws an exception', async () => {
-            AWS.mock('MediaConvert', 'createJobTemplate', Promise.reject('ERROR'));
+            mediaConvertClientMock.on(CreateJobTemplateCommand).rejects('[Error: ERROR]');
 
             await lambda.createTemplates(_config).catch(err => {
-                expect(err).to.equal('ERROR');
+                expect(err.toString()).to.equal('Error: [Error: ERROR]');
             });
         });
     });
 
     describe('Describe', () => {
         it('should return "SUCCESS" on describeEndpoints', async () => {
-            AWS.mock('MediaConvert', 'describeEndpoints', Promise.resolve(data));
+            mediaConvertClientMock.on(DescribeEndpointsCommand).resolves(data);
 
             const response = await lambda.getEndpoint(_config);
             expect(response.EndpointUrl).to.equal('https://test.com');
         });
 
         it('should fail when describeEndpoints throws an exception', async () => {
-            AWS.mock('MediaConvert', 'describeEndpoints', Promise.reject('ERROR'));
+            mediaConvertClientMock.on(DescribeEndpointsCommand).rejects('[Error: ERROR]');
 
             await lambda.getEndpoint(_config).catch(err => {
-                expect(err).to.equal('ERROR');
+                expect(err.toString()).to.equal('Error: [Error: ERROR]');
             });
         });
     });
 
     describe('Update', () => {
         it('should return "SUCCESS" on update templates', async () => {
-            AWS.mock('MediaConvert', 'listJobTemplates', Promise.resolve(update_data));
-            AWS.mock('MediaConvert', 'createJobTemplate', Promise.resolve(update_data));
+            mediaConvertClientMock.on(ListJobTemplatesCommand).resolves(update_data);
+            mediaConvertClientMock.on(CreateJobTemplateCommand).resolves(update_data);
 
             const response = await lambda.updateTemplates(_config);
             expect(response).to.equal('success');
@@ -92,8 +100,8 @@ describe('#MEDIACONVERT::', () => {
             let wasCreateTemplateInvoked = false;
             let toBeCreated = [];
 
-            AWS.mock('MediaConvert', 'listJobTemplates', Promise.resolve(update_data));
-            AWS.mock('MediaConvert', 'createJobTemplate', (params) => {
+            mediaConvertClientMock.on(ListJobTemplatesCommand).resolves(update_data);
+            mediaConvertClientMock.on(CreateJobTemplateCommand, (params) => {
                 wasCreateTemplateInvoked = true;
                 toBeCreated.push(params.Name);
 
@@ -110,8 +118,8 @@ describe('#MEDIACONVERT::', () => {
             let wasCreateTemplateInvoked = false;
             let toBeCreated = [];
 
-            AWS.mock('MediaConvert', 'listJobTemplates', Promise.resolve(update_data_no_preset));
-            AWS.mock('MediaConvert', 'createJobTemplate', (params) => {
+            mediaConvertClientMock.on(ListJobTemplatesCommand).resolves(update_data_no_preset);
+            mediaConvertClientMock.on(CreateJobTemplateCommand, (params) => {
                 wasCreateTemplateInvoked = false;
                 toBeCreated.push(params.Name);
 
@@ -124,18 +132,18 @@ describe('#MEDIACONVERT::', () => {
         });
 
         it('should fail when listJobTemplates throws an exception', async () => {
-            AWS.mock('MediaConvert', 'listJobTemplates', Promise.reject('ERROR'));
+            mediaConvertClientMock.on(ListJobTemplatesCommand).rejects('[Error: ERROR]');
 
             await lambda.updateTemplates(_config).catch(err => {
-                expect(err).to.equal('ERROR');
+                expect(err.toString()).to.equal('Error: [Error: ERROR]');
             });
         });
     });
 
     describe('Delete', () => {
         it('should return "SUCCESS" on delete templates', async () => {
-            AWS.mock('MediaConvert', 'deletePreset', Promise.resolve());
-            AWS.mock('MediaConvert', 'deleteJobTemplate', Promise.resolve());
+            mediaConvertClientMock.on(DeletePresetCommand).resolves();
+            mediaConvertClientMock.on(DeleteJobTemplateCommand).resolves();
 
             const response = await lambda.deleteTemplates(_config);
             expect(response).to.equal('success');

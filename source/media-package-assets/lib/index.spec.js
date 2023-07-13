@@ -13,8 +13,9 @@
 
 const expect = require('chai').expect;
 const path = require('path');
-const AWS = require('aws-sdk-mock');
-AWS.setSDK(path.resolve('./node_modules/aws-sdk'));
+const { mockClient } = require("aws-sdk-client-mock");
+const { MediaPackageVodClient, CreateAssetCommand } = require('@aws-sdk/client-mediapackage-vod');
+const { LambdaClient, InvokeCommand } = require("@aws-sdk/client-lambda");
 
 const lambda = require('../index.js');
 
@@ -40,6 +41,8 @@ const createAssetResponse = {
 };
 
 describe('#INGEST::', () => {
+    const mediaPackageVodClientMock = mockClient(MediaPackageVodClient);
+    const lambdaClientMock = mockClient(LambdaClient);
     describe('Asset', () => {
         process.env.DistributionId = 'distribution-id';
         process.env.GroupId = 'test-packaging-group';
@@ -48,12 +51,12 @@ describe('#INGEST::', () => {
         process.env.ErrorHandler = 'error_handler';
 
         afterEach(() => {
-            AWS.restore('MediaPackageVod');
-            AWS.restore('Lambda');
+            mediaPackageVodClientMock.reset();
+            lambdaClientMock.reset();
         });
 
         it('should succeed with valid parameters', async () => {
-            AWS.mock('MediaPackageVod', 'createAsset', Promise.resolve(createAssetResponse));
+            mediaPackageVodClientMock.on(CreateAssetCommand).resolves(createAssetResponse);
 
             const event = {
                 guid: 'ce791447-277c-4a8c-9a0d-c3ed28b495ea',
@@ -70,8 +73,8 @@ describe('#INGEST::', () => {
         });
 
         it('should fail when createAsset throws an exception', async () => {
-            AWS.mock('MediaPackageVod', 'createAsset', Promise.reject('some error'));
-            AWS.mock('Lambda', 'invoke', Promise.resolve());
+            mediaPackageVodClientMock.on(CreateAssetCommand).rejects('some error');
+            lambdaClientMock.on(InvokeCommand).resolves();
 
             const event = {
                 guid: 'ce791447-277c-4a8c-9a0d-c3ed28b495ea',
@@ -83,7 +86,7 @@ describe('#INGEST::', () => {
                 await lambda.handler(event);
             } catch (error) {
                 expect(error).to.not.be.null;
-                expect(error).to.equal('some error');
+                expect(String(error)).to.equal('Error: some error');
                 return;
             }
 

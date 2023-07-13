@@ -11,7 +11,7 @@
  *  and limitations under the License.                                                                                *
  *********************************************************************************************************************/
 
-const AWS = require('aws-sdk');
+const { CloudFront } = require("@aws-sdk/client-cloudfront");
 const originId = 'vodMPOrigin';
 
 module.exports.addCustomOrigin = async (distributionId, domainName) => {
@@ -23,8 +23,8 @@ module.exports.addCustomOrigin = async (distributionId, domainName) => {
         throw new Error('domainName must be informed');
     }
 
-    const cloudFront = new AWS.CloudFront({customUserAgent: process.env.SOLUTION_IDENTIFIER});
-    const response = await cloudFront.getDistributionConfig({ Id: distributionId }).promise();
+    const cloudFront = new CloudFront({customUserAgent: process.env.SOLUTION_IDENTIFIER});
+    const response = await cloudFront.getDistributionConfig({ Id: distributionId });
     const config = response.DistributionConfig;
 
     const originExists = config.Origins.Items.some(item => item.Id === originId);
@@ -101,7 +101,7 @@ module.exports.addCustomOrigin = async (distributionId, domainName) => {
             IfMatch: response.ETag
         };
 
-        await cloudFront.updateDistribution(params).promise();
+        await cloudFront.updateDistribution(params);
         console.log(`Origins:: ${JSON.stringify(config.Origins.Items, null, 2)}`);
         console.log(`Cache behaviors:: ${JSON.stringify(config.CacheBehaviors.Items, null, 2)}`);
     } catch (error) {

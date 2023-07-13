@@ -13,8 +13,9 @@
 
 const expect = require('chai').expect;
 const path = require('path');
-const AWS = require('aws-sdk-mock');
-AWS.setSDK(path.resolve('./node_modules/aws-sdk'));
+const { mockClient } = require("aws-sdk-client-mock");
+const { S3Client, GetObjectCommand, HeadObjectCommand} = require("@aws-sdk/client-s3");
+const { LambdaClient, InvokeCommand } = require("@aws-sdk/client-lambda");
 
 const lambda = require('../index.js');
 
@@ -53,7 +54,10 @@ describe('#INPUT VALIDATE::', () => {
         }]
     };
 
-    afterEach(() => AWS.restore('S3'));
+    const s3ClientMock = mockClient(S3Client);
+    const lambdaClientMock = mockClient(LambdaClient);
+
+    afterEach(() => s3ClientMock.reset());
 
     it('should succeed when processing valid source video', async () => {
         const response = await lambda.handler(_video);
@@ -62,11 +66,13 @@ describe('#INPUT VALIDATE::', () => {
 
     it('should succeed when processing valid metadata', async () => {
         const validMetadata = {
-            "Body": '{"srcVideo": "video_from_json.mp4", "archiveSource": false, "frameCapture": false, "srcBucket": "other-source", "jobTemplate_720p": "other-template"}'
+            "Body": {
+                transformToString: () => ('{"srcVideo": "video_from_json.mp4", "archiveSource": false, "frameCapture": false, "srcBucket": "other-source", "jobTemplate_720p": "other-template"}')
+            }
         };
 
-        AWS.mock('S3', 'getObject', Promise.resolve(validMetadata));
-        AWS.mock('S3', 'headObject', Promise.resolve());
+        s3ClientMock.on(GetObjectCommand).resolves(validMetadata);
+        s3ClientMock.on(HeadObjectCommand).resolves();
 
         const response = await lambda.handler(_json);
         expect(response.srcVideo).to.equal('video_from_json.mp4');
@@ -80,11 +86,13 @@ describe('#INPUT VALIDATE::', () => {
 
     it('should always use MediaPackage env variable', async () => {
         const metadata = {
-            "Body": '{"srcVideo": "video_from_json.mp4", "enableMediaPackage": false }'
+            "Body": {
+                transformToString: () => ('{"srcVideo": "video_from_json.mp4", "archiveSource": false, "frameCapture": false, "srcBucket": "other-source", "jobTemplate_720p": "other-template"}')
+            }
         };
 
-        AWS.mock('S3', 'getObject', Promise.resolve(metadata));
-        AWS.mock('S3', 'headObject', Promise.resolve());
+        s3ClientMock.on(GetObjectCommand).resolves(metadata);
+        s3ClientMock.on(HeadObjectCommand).resolves();
 
         const response = await lambda.handler(_json);
         expect(response.enableMediaPackage).to.be.true;
@@ -92,11 +100,13 @@ describe('#INPUT VALIDATE::', () => {
 
     it('should correctly handle metadata in PascalCase', async () => {
         const invalidMetadata = {
-            "Body": '{"srcVideo": "video_from_json.mp4", "ArchiveSource": false, "FrameCapture": false, "SrcBucket": "other-source", "inputRotate": "AUTO" }'
+            "Body": {
+                transformToString: () => ('{"srcVideo": "video_from_json.mp4", "ArchiveSource": false, "FrameCapture": false, "SrcBucket": "other-source", "inputRotate": "AUTO" }')
+            }
         };
 
-        AWS.mock('S3', 'getObject', Promise.resolve(invalidMetadata));
-        AWS.mock('S3', 'headObject', Promise.resolve());
+        s3ClientMock.on(GetObjectCommand).resolves(invalidMetadata);
+        s3ClientMock.on(HeadObjectCommand).resolves();
 
         const response = await lambda.handler(_json);
         expect(response.srcVideo).to.equal('video_from_json.mp4');
@@ -107,10 +117,10 @@ describe('#INPUT VALIDATE::', () => {
     });
 
     it('should fail when getting object from S3 throws an exception', async () => {
-        AWS.mock('S3', 'getObject', Promise.reject('S3 GET ERROR'));
-        AWS.mock('S3', 'headObject', Promise.resolve());
-        AWS.mock('Lambda', 'invoke', Promise.resolve());
+        s3ClientMock.on(GetObjectCommand).rejects('S3 GET ERROR');
+        s3ClientMock.on(HeadObjectCommand).resolves();
+        lambdaClientMock.on(InvokeCommand).resolves();
 
-        await lambda.handler(_json).catch(err => expect(err).to.equal('S3 GET ERROR'));
+        await lambda.handler(_json).catch(err => expect(err.toString()).to.equal('Error: S3 GET ERROR'));
     });
 });

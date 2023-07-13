@@ -13,8 +13,9 @@
 
 const expect = require('chai').expect;
 const path = require('path');
-const AWS = require('aws-sdk-mock');
-AWS.setSDK(path.resolve('./node_modules/aws-sdk'));
+const { mockClient } = require('aws-sdk-client-mock');
+const { SQSClient, SendMessageCommand } = require('@aws-sdk/client-sqs');
+const { LambdaClient, InvokeCommand } = require('@aws-sdk/client-lambda');
 
 const lambda = require('../index.js');
 
@@ -28,21 +29,24 @@ describe('#SNS::', () => {
     process.env.ErrorHandler = 'error_handler';
     process.env.SqsQueue = 'https://sqs.amazonaws.com/1234'
 
-    afterEach(() => AWS.restore('SQS'));
+    const lambdaClientMock = mockClient(LambdaClient);
+    const sQSClientMock = mockClient(SQSClient);
+
+    afterEach(() => sQSClientMock.reset());
 
     it('should return "success" on send SQS message', async () => {
-        AWS.mock('SQS', 'sendMessage', Promise.resolve());
+        sQSClientMock.on(SendMessageCommand).resolves();
 
         const response = await lambda.handler(_event);
         expect(response.srcVideo).to.equal('video.mp4');
     });
 
     it('should return "SQS ERROR" when send SQS message fails', async () => {
-        AWS.mock('SQS', 'sendMessage', Promise.reject('SQS ERROR'));
-        AWS.mock('Lambda', 'invoke', Promise.resolve());
+        sQSClientMock.on(SendMessageCommand).rejects('SQS ERROR');
+        lambdaClientMock.on(InvokeCommand).resolves();
 
         await lambda.handler(_event).catch(err => {
-            expect(err).to.equal('SQS ERROR');
+            expect(err.toString()).to.equal('Error: SQS ERROR');
         });
     });
 });

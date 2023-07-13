@@ -13,8 +13,9 @@
 
 const expect = require('chai').expect;
 const path = require('path');
-const AWS = require('aws-sdk-mock');
-AWS.setSDK(path.resolve('./node_modules/aws-sdk'));
+const { mockClient } = require('aws-sdk-client-mock');
+const { DynamoDBDocumentClient, UpdateCommand } = require('@aws-sdk/lib-dynamodb');
+const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns');
 
 const lambda = require('../index.js');
 
@@ -37,42 +38,45 @@ describe('#ERROR HANDLER::', () => {
         }
     };
 
+    const dynamoDBDocumentClientMock = mockClient(DynamoDBDocumentClient);
+    const sNSClientMock = mockClient(SNSClient);
+
     afterEach(() => {
-        AWS.restore('DynamoDB.DocumentClient');
-        AWS.restore('SNS');
+        dynamoDBDocumentClientMock.reset();
+        sNSClientMock.reset();
     });
 
     it('should return "FROM LAMBDA" processing a lambda error', async () => {
-        AWS.mock('DynamoDB.DocumentClient', 'update', Promise.resolve());
-        AWS.mock('SNS', 'publish', Promise.resolve());
+        dynamoDBDocumentClientMock.on(UpdateCommand).resolves();
+        sNSClientMock.on(PublishCommand).resolves();
 
         const response = await lambda.handler(_lambda);
         expect(response.error).to.equal('LAMBDA');
     });
 
     it('should return "FROM MEDIACONVERT" processing a mediaconvert error', async () => {
-        AWS.mock('DynamoDB.DocumentClient', 'update', Promise.resolve());
-        AWS.mock('SNS', 'publish', Promise.resolve());
+        dynamoDBDocumentClientMock.on(UpdateCommand).resolves();
+        sNSClientMock.on(PublishCommand).resolves();
 
         const response = await lambda.handler(_encode);
         expect(response.error).to.equal('MEDIACONVERT');
     });
 
     it('should return "DB_ERROR" processing a lambda error', async () => {
-        AWS.mock('DynamoDB.DocumentClient', 'update', Promise.reject('DB_ERROR'));
-        AWS.mock('SNS', 'publish', Promise.resolve());
+        dynamoDBDocumentClientMock.on(UpdateCommand).rejects('DB_ERROR');
+        sNSClientMock.on(PublishCommand).resolves();
 
         await lambda.handler(_lambda).catch(err => {
-            expect(err).to.equal('DB_ERROR');
+            expect(err.toString()).to.equal('Error: DB_ERROR');
         });
     });
 
     it('should return "SNS_ERROR" processing a lambda error', async () => {
-        AWS.mock('DynamoDB.DocumentClient', 'update', Promise.resolve());
-        AWS.mock('SNS', 'publish', Promise.reject('SNS_ERROR'));
+        dynamoDBDocumentClientMock.on(UpdateCommand).resolves();
+        sNSClientMock.on(PublishCommand).rejects('SNS_ERROR');
 
         await lambda.handler(_encode).catch(err => {
-            expect(err).to.equal('SNS_ERROR');
+            expect(err.toString()).to.equal('Error: SNS_ERROR');
         });
     });
 });

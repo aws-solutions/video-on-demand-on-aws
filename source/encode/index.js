@@ -11,7 +11,7 @@
  *  and limitations under the License.                                                                                *
  *********************************************************************************************************************/
 
-const AWS = require('aws-sdk');
+const { MediaConvert } = require("@aws-sdk/client-mediaconvert");
 const error = require('./lib/error.js');
 const _ = require('lodash');
 
@@ -123,7 +123,7 @@ const mergeSettingsWithDefault = (originalGroup, customGroup) => {
 exports.handler = async (event) => {
     console.log(`REQUEST:: ${JSON.stringify(event, null, 2)}`);
 
-    const mediaconvert = new AWS.MediaConvert({
+    const mediaconvert = new MediaConvert({
         endpoint: process.env.EndPoint,
         customUserAgent: process.env.SOLUTION_IDENTIFIER
     });
@@ -172,7 +172,7 @@ exports.handler = async (event) => {
         const mss = getMssGroup(outputPath);
         const frameCapture = getFrameGroup(event, outputPath);
 
-        let tmpl = await mediaconvert.getJobTemplate({ Name: event.jobTemplate }).promise();
+        let tmpl = await mediaconvert.getJobTemplate({ Name: event.jobTemplate });
         console.log(`TEMPLATE:: ${JSON.stringify(tmpl, null, 2)}`);
 
         // OutputGroupSettings:Type is required and must be one of the following
@@ -229,7 +229,7 @@ exports.handler = async (event) => {
         }
         job.Tags = {'SolutionId': 'SO0021'};
         
-        let data = await mediaconvert.createJob(job).promise();
+        let data = await mediaconvert.createJob(job);
         event.encodingJob = job;
         event.encodeJobId = data.Job.Id;
 

@@ -14,7 +14,7 @@
 
 import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
-import { DefaultStackSynthesizer, Stack } from 'aws-cdk-lib';
+import { DefaultStackSynthesizer } from 'aws-cdk-lib';
 import { VideoOnDemand } from '../lib/vod-stack';
 import { AwsSolutionsChecks } from 'cdk-nag';
 
@@ -23,7 +23,7 @@ new VideoOnDemand(app, 'VideoOnDemand', { // NOSONAR
     synthesizer: new DefaultStackSynthesizer({
       generateBootstrapVersionRule: false
     })
-  }); // NOSONAR
+}); // NOSONAR
 
 //cdk nag
 cdk.Aspects.of(app).add(new AwsSolutionsChecks({ verbose: true }));

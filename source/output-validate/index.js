@@ -11,21 +11,22 @@
  *  and limitations under the License.                                                                                *
  *********************************************************************************************************************/
 
-const AWS = require('aws-sdk');
+const { DynamoDBDocument } = require("@aws-sdk/lib-dynamodb");
+const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
+const { S3 } = require("@aws-sdk/client-s3");
 const error = require('./lib/error.js');
-const moment = require('moment');
 
 const buildUrl = (originalValue) => originalValue.slice(5).split('/').splice(1).join('/');
 
 exports.handler = async (event) => {
   console.log(`REQUEST:: ${JSON.stringify(event, null, 2)}`);
 
-  const dynamo = new AWS.DynamoDB.DocumentClient({
-  region: process.env.AWS_REGION,
-  customUserAgent: process.env.SOLUTION_IDENTIFIER
-  });
+  const dynamo = DynamoDBDocument.from(new DynamoDBClient({ 
+    region: process.env.AWS_REGION,
+    customUserAgent: process.env.SOLUTION_IDENTIFIER
+  }));
 
-  const s3 = new AWS.S3({customUserAgent: process.env.SOLUTION_IDENTIFIER});
+  const s3 = new S3({customUserAgent: process.env.SOLUTION_IDENTIFIER});
 
   let data = {};
 
@@ -38,12 +39,12 @@ exports.handler = async (event) => {
     }
   };
 
-  data = await dynamo.get(params).promise();
+  data = await dynamo.get(params);
   data = data.Item;
 
   data.encodingOutput = event;
   data.workflowStatus = 'Complete';
-  data.endTime = moment().utc().toISOString();
+  data.endTime = new Date().toISOString();
 
   // Parse MediaConvert Output and generate CloudFront URLS.
   event.detail.outputGroupDetails.forEach(output => {
@@ -114,7 +115,7 @@ exports.handler = async (event) => {
       Prefix: `${data.guid}/thumbnails/`,
     };
 
-    let thumbNails = await s3.listObjects(params).promise();
+    let thumbNails = await s3.listObjects(params);
 
     if (thumbNails.Contents.legnth !=0) {
       let lastImg = thumbNails.Contents.pop();

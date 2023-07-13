@@ -13,8 +13,9 @@
 
 const expect = require('chai').expect;
 const path = require('path');
-const AWS = require('aws-sdk-mock');
-AWS.setSDK(path.resolve('./node_modules/aws-sdk'));
+const { mockClient } = require('aws-sdk-client-mock');
+const { DynamoDBDocumentClient, GetCommand } = require('@aws-sdk/lib-dynamodb');
+const { LambdaClient, InvokeCommand } = require('@aws-sdk/client-lambda');
 
 const lambda = require('../index.js');
 
@@ -61,10 +62,12 @@ describe('#OUTPUT VALIDATE::', () => {
 
     process.env.ErrorHandler = 'error_handler';
 
-    afterEach(() => AWS.restore('DynamoDB.DocumentClient'));
+    const dynamoDBDocumentClientMock = mockClient(DynamoDBDocumentClient);
+    const lambdaClientMock = mockClient(LambdaClient);
+    afterEach(() => dynamoDBDocumentClientMock.reset());
 
     it('should return "SUCCESS" on parsing CMAF MSS output', async () => {
-        AWS.mock('DynamoDB.DocumentClient', 'get', Promise.resolve(data));
+        dynamoDBDocumentClientMock.on(GetCommand).resolves(data);
 
         const response = await lambda.handler(_events.cmafMss);
         expect(response.mssPlaylist).to.equal('s3://vod-destination/12345/mss/big_bunny.ism');
@@ -74,7 +77,7 @@ describe('#OUTPUT VALIDATE::', () => {
     });
 
     it('should return "SUCCESS" on parsing HLS DASH output', async () => {
-        AWS.mock('DynamoDB.DocumentClient', 'get', Promise.resolve(data));
+        dynamoDBDocumentClientMock.on(GetCommand).resolves(data);
 
         const response = await lambda.handler(_events.hlsDash);
         expect(response.hlsPlaylist).to.equal('s3://vod-destination/12345/hls/dude.m3u8');
@@ -84,7 +87,7 @@ describe('#OUTPUT VALIDATE::', () => {
     });
 
     it('should return "SUCCESS" on parsing MP4 output', async () => {
-        AWS.mock('DynamoDB.DocumentClient', 'get', Promise.resolve(data));
+        dynamoDBDocumentClientMock.on(GetCommand).resolves(data);
 
         const response = await lambda.handler(_events.mp4);
         expect(response.mp4Outputs[0]).to.equal('s3://vod-destination/12345/mp4/dude_3.0Mbps.mp4');
@@ -92,8 +95,8 @@ describe('#OUTPUT VALIDATE::', () => {
     });
 
     it('should return "DB ERROR" when db get fails', async () => {
-        AWS.mock('DynamoDB.DocumentClient', 'get', Promise.reject('DB ERROR'));
-        AWS.mock('Lambda', 'invoke', Promise.resolve());
+        dynamoDBDocumentClientMock.on(GetCommand).resolves(data);
+        lambdaClientMock.on(InvokeCommand).resolves();
 
         await lambda.handler(_events.cmafMss).catch(err => {
             expect(err).to.equal('DB ERROR');
@@ -101,7 +104,7 @@ describe('#OUTPUT VALIDATE::', () => {
     });
 
     it('should return "ERROR" when output parse fails', async () => {
-        AWS.mock('DynamoDB.DocumentClient', 'get', Promise.resolve(data));
+        dynamoDBDocumentClientMock.on(GetCommand).resolves(data);
 
         await lambda.handler(_error).catch(err => {
             expect(err.toString()).to.equal('Could not parse MediaConvert Output');

@@ -11,7 +11,7 @@
  *  and limitations under the License.                                                                                *
  *********************************************************************************************************************/
 
-const AWS = require('aws-sdk');
+const { MediaPackageVod } = require("@aws-sdk/client-mediapackage-vod");
 const crypto = require('crypto');
 const cloudfrontHelper = require('./cloudfront');
 
@@ -75,7 +75,7 @@ const getCmafParameters = (groupId, configId) => ({
 });
 
 const create = async (properties) => {
-    const mediaPackageVod = new AWS.MediaPackageVod({customUserAgent: process.env.SOLUTION_IDENTIFIER});
+    const mediaPackageVod = new MediaPackageVod({customUserAgent: process.env.SOLUTION_IDENTIFIER});
     const randomId = crypto.randomBytes(8).toString('hex');
 
     let groupParams = {
@@ -83,7 +83,7 @@ const create = async (properties) => {
         Tags: {'SolutionId': 'SO0021'}
     };
     
-    const packagingGroup = await mediaPackageVod.createPackagingGroup(groupParams).promise();
+    const packagingGroup = await mediaPackageVod.createPackagingGroup(groupParams);
     let created = false;
 
     const configurations = Array.from(new Set(properties.PackagingConfigurations.split(',')));
@@ -116,7 +116,7 @@ const create = async (properties) => {
         if (params) {
             params.Tags = {'SolutionId': 'SO0021'};
             console.log(`Creating configuration:: ${JSON.stringify(params, null, 2)}`);
-            await mediaPackageVod.createPackagingConfiguration(params).promise();
+            await mediaPackageVod.createPackagingConfiguration(params);
             created = true;
         }
     }
@@ -134,8 +134,8 @@ const create = async (properties) => {
 };
 
 const update = async (properties) => {
-    const mediaPackageVod = new AWS.MediaPackageVod({customUserAgent: process.env.SOLUTION_IDENTIFIER});
-    const packagingGroup = await mediaPackageVod.describePackagingGroup({ Id: properties.GroupId }).promise();
+    const mediaPackageVod = new MediaPackageVod({customUserAgent: process.env.SOLUTION_IDENTIFIER});
+    const packagingGroup = await mediaPackageVod.describePackagingGroup({ Id: properties.GroupId });
 
     if (properties.EnableMediaPackage == 'true') {
         await cloudfrontHelper.addCustomOrigin(properties.DistributionId, packagingGroup.DomainName);
@@ -148,15 +148,15 @@ const update = async (properties) => {
 };
 
 const purge = async (properties) => {
-    const mediaPackageVod = new AWS.MediaPackageVod({customUserAgent: process.env.SOLUTION_IDENTIFIER});
+    const mediaPackageVod = new MediaPackageVod({customUserAgent: process.env.SOLUTION_IDENTIFIER});
     const groupId = properties.GroupId;
     let token;
 
     do {
-        const response = await mediaPackageVod.listAssets({ PackagingGroupId: groupId, NextToken: token }).promise();
+        const response = await mediaPackageVod.listAssets({ PackagingGroupId: groupId, NextToken: token });
 
         for (let asset of response.Assets) {
-            await mediaPackageVod.deleteAsset({ Id: asset.Id }).promise();
+            await mediaPackageVod.deleteAsset({ Id: asset.Id });
             console.log(`Deleted asset:: ${asset.Id}`);
         }
 
@@ -164,10 +164,10 @@ const purge = async (properties) => {
     } while (token);
 
     do {
-        const response = await mediaPackageVod.listPackagingConfigurations({ PackagingGroupId: groupId, NextToken: token }).promise();
+        const response = await mediaPackageVod.listPackagingConfigurations({ PackagingGroupId: groupId, NextToken: token });
 
         for (let config of response.PackagingConfigurations) {
-            await mediaPackageVod.deletePackagingConfiguration({ Id: config.Id }).promise();
+            await mediaPackageVod.deletePackagingConfiguration({ Id: config.Id });
             console.log(`Deleted configuration:: ${config.Id}`);
         }
 
@@ -175,7 +175,7 @@ const purge = async (properties) => {
     } while (token);
 
     try {
-        await mediaPackageVod.deletePackagingGroup({ Id: groupId }).promise();
+        await mediaPackageVod.deletePackagingGroup({ Id: groupId });
         console.log(`Deleted group:: ${groupId}`);
     } catch (error) {
         if (error.code !== 'NotFoundException') {
