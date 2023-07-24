@@ -42,6 +42,12 @@ interface VideoOnDemandStackProps extends cdk.StackProps {
    * destination bucket.
    */
   cloudFrontDistArn: string
+
+  /**
+   * The list of principals that will be allowed to read the destination bucket.
+   * This is useful when the destination bucket is in a different account.
+   */
+  readDestinationPrincipals: iam.IPrincipal[]
 }
 
 export class VideoOnDemand extends cdk.Stack {
@@ -349,6 +355,18 @@ export class VideoOnDemand extends cdk.Stack {
       })
     )
 
+    // Added to allow the NodeSplitting Lambda to read from the destination bucket
+    destination.addToResourcePolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        principals: props.readDestinationPrincipals,
+        actions: ['s3:GetObject', 's3:List*'],
+        resources: [`${destination.bucketArn}`, `${destination.bucketArn}/*`],
+        conditions: {
+          StringEquals: { 'AWS:SourceArn': props.cloudFrontDistArn },
+        },
+      })
+    )
     //cdk_nag
     NagSuppressions.addResourceSuppressions(destination, [
       {
@@ -686,13 +704,15 @@ export class VideoOnDemand extends cdk.Stack {
     snsTopic.addSubscription(new subscriptions.EmailSubscription(adminEmail.valueAsString))
     const cfnSnsTopic = snsTopic.node.findChild('Resource') as sns.CfnTopic
     cfnSnsTopic.kmsMasterKeyId = 'alias/aws/sns'
-    
-    snsTopic.addToResourcePolicy(new iam.PolicyStatement({
-      effect: iam.Effect.ALLOW,
-      principals: [props.consumerAccountPrincipal],
-      actions: ['sns:Subscribe','sns:ListSubscriptionsByTopic'],
-      resources: [snsTopic.topicArn],
-    }))
+
+    snsTopic.addToResourcePolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        principals: [props.consumerAccountPrincipal],
+        actions: ['sns:Subscribe', 'sns:ListSubscriptionsByTopic'],
+        resources: [snsTopic.topicArn],
+      })
+    )
 
     /**
      * SQS Queue

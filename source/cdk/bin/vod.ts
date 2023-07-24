@@ -18,6 +18,12 @@ import * as iam from 'aws-cdk-lib/aws-iam'
 import { DefaultStackSynthesizer, Stack } from 'aws-cdk-lib'
 import { VideoOnDemand } from '../lib/vod-stack'
 
+const readDestinationPrincipals = [
+  new iam.ArnPrincipal(
+    'arn:aws:iam::666774207884:role/Staging-IntelligentSearch-NodeSplittingLambdaServi-1P25PYQ6XDLXL'
+  ),
+]
+
 const app = new cdk.App()
 new VideoOnDemand(app, 'VideoOnDemand', {
   // NOSONAR
@@ -26,4 +32,5 @@ new VideoOnDemand(app, 'VideoOnDemand', {
   }),
   consumerAccountPrincipal: new iam.AccountPrincipal('488682066271'),
   cloudFrontDistArn: 'arn:aws:cloudfront::488682066271:distribution/E1LFSM2XGALXQD',
+  readDestinationPrincipals,
 }) // NOSONAR
