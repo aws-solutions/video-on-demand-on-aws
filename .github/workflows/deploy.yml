@@ -10,20 +10,23 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
           node-version: 18
       - name: Authenticate Via OIDC Role
-        uses: aws-actions/configure-aws-credentials@v1-node16
+        uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-region: eu-west-1
           role-duration-seconds: 1800
           role-skip-session-tagging: true
           role-to-assume: arn:aws:iam::488682066271:role/OIDCRole
       - name: Assume CDK Deploy Role
-        uses: aws-actions/configure-aws-credentials@v1-node16
+        uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-region: eu-west-1
           role-duration-seconds: 1800
