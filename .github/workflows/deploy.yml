@@ -1,0 +1,49 @@
+name: Staging Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version of the solution. "
+        required: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - name: Authenticate Via OIDC Role
+        uses: aws-actions/configure-aws-credentials@v1-node16
+        with:
+          aws-region: eu-west-1
+          role-duration-seconds: 1800
+          role-skip-session-tagging: true
+          role-to-assume: arn:aws:iam::488682066271:role/OIDCRole
+      - name: Assume CDK Deploy Role
+        uses: aws-actions/configure-aws-credentials@v1-node16
+        with:
+          aws-region: eu-west-1
+          role-duration-seconds: 1800
+          role-skip-session-tagging: true
+          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ env.AWS_SESSION_TOKEN }}
+          role-to-assume: arn:aws:iam::591476930517:role/OrganizationAccountAccessRole
+          role-external-id: Pipeline
+      - name: Build
+        run: |-
+          cd deployment/
+          ./build-s3-dist.sh video-on-demand-build video-on-demand-on-aws ${{ github.event.input.version }}
+          aws s3 sync ./global-s3-assets s3://video-on-demand-build-eu-west-1/video-on-demand-on-aws/${{ github.event.input.version }}/
+          aws s3 sync ./regional-assets s3://video-on-demand-build-eu-west-1/video-on-demand-on-aws/${{ github.event.input.version }}/
+      - id: Deploy
+        uses: aws-actions/aws-cloudformation-github-deploy@v1.1.0
+        with:
+          name: Staging-lab-backend
+          template: https://video-on-demand-build-eu-west-1.s3.eu-west-1.amazonaws.com/video-on-demand-on-aws/${{ github.event.input.version }}/video-on-demand-on-aws.template
+          no-fail-on-empty-changeset: "1"
+          capabilities: CAPABILITY_IAM,CAPABILITY_NAMED_IAM
+          role-arn: arn:aws:iam::591476930517:role/OrganizationAccountAccessRole
