@@ -41,7 +41,7 @@ jobs:
           role-external-id: Pipeline
       - run: ./build-s3-dist.sh video-on-demand-build video-on-demand-on-aws ${{ github.event.inputs.version }}
       - run: aws s3 sync ./global-s3-assets s3://video-on-demand-build-eu-west-1/video-on-demand-on-aws/${{ github.event.inputs.version }}/
-      - run: aws s3 sync ./regional-assets s3://video-on-demand-build-eu-west-1/video-on-demand-on-aws/${{ github.event.inputs.version }}/
+      - run: aws s3 sync ./regional-s3-assets s3://video-on-demand-build-eu-west-1/video-on-demand-on-aws/${{ github.event.inputs.version }}/
       - id: Deploy
         uses: aws-actions/aws-cloudformation-github-deploy@v1.1.0
         with:
