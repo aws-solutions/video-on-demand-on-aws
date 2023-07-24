@@ -49,4 +49,3 @@ jobs:
           template: https://video-on-demand-build-eu-west-1.s3.eu-west-1.amazonaws.com/video-on-demand-on-aws/${{ github.event.inputs.version }}/video-on-demand-on-aws.template
           no-fail-on-empty-changeset: "1"
           capabilities: CAPABILITY_IAM,CAPABILITY_NAMED_IAM
-          role-arn: arn:aws:iam::591476930517:role/OrganizationAccountAccessRole
