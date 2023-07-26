@@ -29,10 +29,8 @@ def parse_number(num):
         try:
             # Try converting the first part to int
             numerator = int(parts[0])
-            # Try converting the second part to int
-            denominator = int(parts[1])
-            # If both conversions succeed, return the result of division as float
-            return float(numerator) / denominator
+            
+            return float(numerator)
         except (ValueError, ZeroDivisionError):
             # If there's any error during conversion or division, return None
             return None
