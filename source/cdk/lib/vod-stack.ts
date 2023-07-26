@@ -361,10 +361,7 @@ export class VideoOnDemand extends cdk.Stack {
         effect: iam.Effect.ALLOW,
         principals: props.readDestinationPrincipals,
         actions: ['s3:GetObject', 's3:List*'],
-        resources: [`${destination.bucketArn}`, `${destination.bucketArn}/*`],
-        conditions: {
-          StringEquals: { 'AWS:SourceArn': props.cloudFrontDistArn },
-        },
+        resources: [`${destination.bucketArn}`, `${destination.bucketArn}/*`]
       })
     )
     //cdk_nag
