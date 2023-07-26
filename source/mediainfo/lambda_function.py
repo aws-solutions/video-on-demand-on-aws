@@ -22,6 +22,21 @@ def parse_number(num):
     if num is None:
         return None
 
+    # Check if the value contains a forward slash
+    if '/' in num:
+        # Split the value by the forward slash
+        parts = num.split('/')
+        try:
+            # Try converting the first part to int
+            numerator = int(parts[0])
+            # Try converting the second part to int
+            denominator = int(parts[1])
+            # If both conversions succeed, return the result of division as float
+            return float(numerator) / denominator
+        except (ValueError, ZeroDivisionError):
+            # If there's any error during conversion or division, return None
+            return None
+
     try:
         return int(num)
     except ValueError:
