@@ -27,3 +27,7 @@
 **/source/test
 **source/**/.coverage
 **source/**/coverage
+.zshrc
+dev.json
+prod.json
+deployment/deploy.sh

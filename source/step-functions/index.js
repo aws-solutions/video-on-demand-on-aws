@@ -11,7 +11,7 @@
  *  and limitations under the License.                                                                                *
  *********************************************************************************************************************/
 
-const { SFN: StepFunctions } = require("@aws-sdk/client-sfn");
+const { SFN: StepFunctions } = require('@aws-sdk/client-sfn');
 const { v4: uuidv4 } = require('uuid');
 const error = require('./lib/error.js');
 
@@ -20,7 +20,7 @@ exports.handler = async (event) => {
 
     const stepfunctions = new StepFunctions({
         region: process.env.AWS_REGION,
-        customUserAgent: process.env.SOLUTION_IDENTIFIER
+        customUserAgent: process.env.SOLUTION_IDENTIFIER,
     });
 
     let response;
@@ -30,11 +30,12 @@ exports.handler = async (event) => {
         switch (true) {
             case event.hasOwnProperty('Records'):
                 // Ingest workflow triggered by s3 event::
-                event.guid = uuidv4();
+                // event.guid = uuidv4();
 
                 // Identify file extention of s3 object::
-                let key = decodeURIComponent(event.Records[0].s3.object.key.replace(/\+/g, " "));
-                if (key.slice((key.lastIndexOf(".") - 1 >>> 0) + 2) === 'json') {
+                let key = decodeURIComponent(event.Records[0].s3.object.key.replace(/\+/g, ' '));
+                event.guid = key.replace(/\.[\w\.]+$/, '');
+                if (key.slice(((key.lastIndexOf('.') - 1) >>> 0) + 2) === 'json') {
                     event.workflowTrigger = 'Metadata';
                 } else {
                     event.workflowTrigger = 'Video';
@@ -42,7 +43,7 @@ exports.handler = async (event) => {
                 params = {
                     stateMachineArn: process.env.IngestWorkflow,
                     input: JSON.stringify(event),
-                    name: event.guid
+                    name: event.guid,
                 };
                 response = 'success';
                 break;
@@ -52,9 +53,9 @@ exports.handler = async (event) => {
                 params = {
                     stateMachineArn: process.env.ProcessWorkflow,
                     input: JSON.stringify({
-                        guid: event.guid
+                        guid: event.guid,
                     }),
-                    name: event.guid
+                    name: event.guid,
                 };
                 response = 'success';
                 break;
@@ -64,7 +65,7 @@ exports.handler = async (event) => {
                 params = {
                     stateMachineArn: process.env.PublishWorkflow,
                     input: JSON.stringify(event),
-                    name: event.detail.userMetadata.guid
+                    name: event.detail.userMetadata.guid,
                 };
                 response = 'success';
                 break;

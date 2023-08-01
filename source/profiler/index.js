@@ -11,30 +11,32 @@
  *  and limitations under the License.                                                                                *
  *********************************************************************************************************************/
 
-const { DynamoDBDocument } = require("@aws-sdk/lib-dynamodb");
-const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
+const { DynamoDBDocument } = require('@aws-sdk/lib-dynamodb');
+const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
 const error = require('./lib/error.js');
 
 exports.handler = async (event) => {
     console.log(`REQUEST:: ${JSON.stringify(event, null, 2)}`);
 
-    const dynamo = DynamoDBDocument.from(new DynamoDBClient({ 
-        region: process.env.AWS_REGION,
-        customUserAgent: process.env.SOLUTION_IDENTIFIER
-    }));
+    const dynamo = DynamoDBDocument.from(
+        new DynamoDBClient({
+            region: process.env.AWS_REGION,
+            customUserAgent: process.env.SOLUTION_IDENTIFIER,
+        }),
+    );
 
     try {
         // Download DynamoDB data for the source file:
         let params = {
             TableName: process.env.DynamoDBTable,
             Key: {
-                guid: event.guid
-            }
+                guid: event.guid,
+            },
         };
 
         let data = await dynamo.get(params);
 
-        Object.keys(data.Item).forEach(key => {
+        Object.keys(data.Item).forEach((key) => {
             event[key] = data.Item[key];
         });
 
@@ -43,45 +45,46 @@ exports.handler = async (event) => {
         event.srcWidth = mediaInfo.video[0].width;
 
         // Determine encoding by matching the srcHeight to the nearest profile.
-        const profiles = [2160, 1080, 720];
-        let lastProfile;
-        let encodeProfile;
+        // const profiles = [2160, 1080, 720];
+        // let lastProfile;
+        // let encodeProfile;
 
-        profiles.some(p => {
-            let profile = Math.abs(event.srcHeight - p);
-            if (profile > lastProfile) {
-                return true;
-            }
+        // profiles.some(p => {
+        //     let profile = Math.abs(event.srcHeight - p);
+        //     if (profile > lastProfile) {
+        //         return true;
+        //     }
 
-            encodeProfile = p;
-            lastProfile = profile;
-        });
+        //     encodeProfile = p;
+        //     lastProfile = profile;
+        // });
 
-        event.encodingProfile = encodeProfile;
+        // event.encodingProfile = encodeProfile;
 
-        if (event.frameCapture) {
-            // Match Height x Width with the encoding profile.
-            const ratios = {
-                '2160': 3840,
-                '1080': 1920,
-                '720': 1280
-            };
+        // if (event.frameCapture) {
+        //     // Match Height x Width with the encoding profile.
+        //     const ratios = {
+        //         '2160': 3840,
+        //         '1080': 1920,
+        //         '720': 1280
+        //     };
 
-            event.frameCaptureHeight = encodeProfile;
-            event.frameCaptureWidth = ratios[encodeProfile];
-        }
+        //     event.frameCaptureHeight = encodeProfile;
+        //     event.frameCaptureWidth = ratios[encodeProfile];
+        // }
 
         // Update:: added support to pass in a custom encoding Template instead of using the
         // solution defaults
         if (!event.jobTemplate) {
             // Match the jobTemplate to the encoding Profile.
-            const jobTemplates = {
-                '2160': event.jobTemplate_2160p,
-                '1080': event.jobTemplate_1080p,
-                '720': event.jobTemplate_720p
-            };
+            // const jobTemplates = {
+            //     '2160': event.jobTemplate_2160p,
+            //     '1080': event.jobTemplate_1080p,
+            //     '720': event.jobTemplate_720p
+            // };
 
-            event.jobTemplate = jobTemplates[encodeProfile];
+            event.jobTemplate = event.jobTemplate_720p;
+            // jobTemplates[encodeProfile];
             console.log(`Chosen template:: ${event.jobTemplate}`);
 
             event.isCustomTemplate = false;

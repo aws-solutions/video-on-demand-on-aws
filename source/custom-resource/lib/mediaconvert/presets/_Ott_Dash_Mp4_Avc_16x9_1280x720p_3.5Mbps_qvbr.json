@@ -39,12 +39,11 @@
         "HrdBufferSize": 7000000
       }
     },
-    "DropFrameTimecode": "ENABLED", 
+    "DropFrameTimecode": "ENABLED",
     "RespondToAfd": "NONE",
     "Sharpness": 50,
     "AfdSignaling": "NONE",
     "Height": 720,
-    "Width": 1280,
     "ScalingBehavior": "DEFAULT",
     "ColorMetadata": "INSERT",
     "AntiAlias": "ENABLED",

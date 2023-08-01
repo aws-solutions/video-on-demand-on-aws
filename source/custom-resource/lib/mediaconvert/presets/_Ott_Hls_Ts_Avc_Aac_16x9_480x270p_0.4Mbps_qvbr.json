@@ -39,36 +39,37 @@
         "HrdBufferSize": 800000
       }
     },
-    "DropFrameTimecode": "ENABLED", 
+    "DropFrameTimecode": "ENABLED",
     "RespondToAfd": "NONE",
     "Sharpness": 50,
     "AfdSignaling": "NONE",
     "Height": 270,
-    "Width": 480,
     "ScalingBehavior": "DEFAULT",
     "ColorMetadata": "INSERT",
     "AntiAlias": "ENABLED",
     "TimecodeInsertion": "DISABLED"
   },
-  "AudioDescriptions": [{
-    "CodecSettings": {
-      "Codec": "AAC",
-      "AacSettings": {
-        "CodecProfile": "HEV1",
-        "Specification": "MPEG4",
-        "RateControlMode": "CBR",
-        "AudioDescriptionBroadcasterMix": "NORMAL",
-        "SampleRate": 48000,
-        "Bitrate": 64000,
-        "CodingMode": "CODING_MODE_2_0",
-        "RawFormat": "NONE"
-      }
-    },
-    "AudioSourceName": "Audio Selector 1",
-    "AudioTypeControl": "FOLLOW_INPUT",
-    "LanguageCodeControl": "FOLLOW_INPUT",
-    "AudioType": 0
-  }],
+  "AudioDescriptions": [
+    {
+      "CodecSettings": {
+        "Codec": "AAC",
+        "AacSettings": {
+          "CodecProfile": "HEV1",
+          "Specification": "MPEG4",
+          "RateControlMode": "CBR",
+          "AudioDescriptionBroadcasterMix": "NORMAL",
+          "SampleRate": 48000,
+          "Bitrate": 64000,
+          "CodingMode": "CODING_MODE_2_0",
+          "RawFormat": "NONE"
+        }
+      },
+      "AudioSourceName": "Audio Selector 1",
+      "AudioTypeControl": "FOLLOW_INPUT",
+      "LanguageCodeControl": "FOLLOW_INPUT",
+      "AudioType": 0
+    }
+  ],
   "ContainerSettings": {
     "M3u8Settings": {
       "PatInterval": 0,
@@ -78,25 +79,7 @@
       "ProgramNumber": 1,
       "PmtPid": 480,
       "PmtInterval": 0,
-      "AudioPids": [
-        482,
-        483,
-        484,
-        485,
-        486,
-        487,
-        488,
-        489,
-        490,
-        491,
-        492,
-        493,
-        494,
-        495,
-        496,
-        497,
-        498
-      ],
+      "AudioPids": [482, 483, 484, 485, 486, 487, 488, 489, 490, 491, 492, 493, 494, 495, 496, 497, 498],
       "AudioFramesPerPes": 4
     },
     "Container": "M3U8"

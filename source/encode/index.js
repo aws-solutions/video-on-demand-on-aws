@@ -11,7 +11,7 @@
  *  and limitations under the License.                                                                                *
  *********************************************************************************************************************/
 
-const { MediaConvert } = require("@aws-sdk/client-mediaconvert");
+const { MediaConvert } = require('@aws-sdk/client-mediaconvert');
 const error = require('./lib/error.js');
 const _ = require('lodash');
 
@@ -20,10 +20,10 @@ const getMp4Group = (outputPath) => ({
     OutputGroupSettings: {
         Type: 'FILE_GROUP_SETTINGS',
         FileGroupSettings: {
-            Destination: `${outputPath}/mp4/`
-        }
+            Destination: `${outputPath}/mp4/`,
+        },
     },
-    Outputs: []
+    Outputs: [],
 });
 
 const getHlsGroup = (outputPath) => ({
@@ -31,26 +31,26 @@ const getHlsGroup = (outputPath) => ({
     OutputGroupSettings: {
         Type: 'HLS_GROUP_SETTINGS',
         HlsGroupSettings: {
-            SegmentLength: 5,
+            SegmentLength: 6,
             MinSegmentLength: 0,
-            Destination: `${outputPath}/hls/`
-        }
+            Destination: `${outputPath}/hls/`,
+        },
     },
-    Outputs: []
+    Outputs: [],
 });
 
-const getDashGroup = (outputPath) => ({
-    Name: 'DASH ISO',
-    OutputGroupSettings: {
-        Type: 'DASH_ISO_GROUP_SETTINGS',
-        DashIsoGroupSettings: {
-            SegmentLength: 30,
-            FragmentLength: 3,
-            Destination: `${outputPath}/dash/`
-        }
-    },
-    Outputs: []
-});
+// const getDashGroup = (outputPath) => ({
+//     Name: 'DASH ISO',
+//     OutputGroupSettings: {
+//         Type: 'DASH_ISO_GROUP_SETTINGS',
+//         DashIsoGroupSettings: {
+//             SegmentLength: 30,
+//             FragmentLength: 3,
+//             Destination: `${outputPath}/dash/`
+//         }
+//     },
+//     Outputs: []
+// });
 
 const getCmafGroup = (outputPath) => ({
     Name: 'CMAF',
@@ -59,24 +59,24 @@ const getCmafGroup = (outputPath) => ({
         CmafGroupSettings: {
             SegmentLength: 30,
             FragmentLength: 3,
-            Destination: `${outputPath}/cmaf/`
-        }
+            Destination: `${outputPath}/cmaf/`,
+        },
     },
-    Outputs: []
+    Outputs: [],
 });
 
-const getMssGroup = (outputPath) => ({
-    Name: 'MS Smooth',
-    OutputGroupSettings: {
-        Type: 'MS_SMOOTH_GROUP_SETTINGS',
-        MsSmoothGroupSettings: {
-            FragmentLength: 2,
-            ManifestEncoding: 'UTF8',
-            Destination: `${outputPath}/mss/`
-        }
-    },
-    Outputs: []
-});
+// const getMssGroup = (outputPath) => ({
+//     Name: 'MS Smooth',
+//     OutputGroupSettings: {
+//         Type: 'MS_SMOOTH_GROUP_SETTINGS',
+//         MsSmoothGroupSettings: {
+//             FragmentLength: 2,
+//             ManifestEncoding: 'UTF8',
+//             Destination: `${outputPath}/mss/`
+//         }
+//     },
+//     Outputs: []
+// });
 
 const getFrameGroup = (event, outputPath) => ({
     CustomName: 'Frame Capture',
@@ -84,36 +84,38 @@ const getFrameGroup = (event, outputPath) => ({
     OutputGroupSettings: {
         Type: 'FILE_GROUP_SETTINGS',
         FileGroupSettings: {
-            Destination: `${outputPath}/thumbnails/`
-        }
-    },
-    Outputs: [{
-        NameModifier: '_thumb',
-        ContainerSettings: {
-            Container: 'RAW'
+            Destination: `${outputPath}/thumbnails/`,
         },
-        VideoDescription: {
-            ColorMetadata: 'INSERT',
-            AfdSignaling: 'NONE',
-            Sharpness: 100,
-            Height: event.frameHeight,
-            RespondToAfd: 'NONE',
-            TimecodeInsertion: 'DISABLED',
-            Width: event.frameWidth,
-            ScalingBehavior: 'DEFAULT',
-            AntiAlias: 'ENABLED',
-            CodecSettings: {
-                FrameCaptureSettings: {
-                    MaxCaptures: 10000000,
-                    Quality: 80,
-                    FramerateDenominator: 5,
-                    FramerateNumerator: 1
-                },
-                Codec: 'FRAME_CAPTURE'
+    },
+    Outputs: [
+        {
+            NameModifier: '_thumb',
+            ContainerSettings: {
+                Container: 'RAW',
             },
-            DropFrameTimecode: 'ENABLED'
-        }
-    }]
+            VideoDescription: {
+                ColorMetadata: 'INSERT',
+                AfdSignaling: 'NONE',
+                Sharpness: 100,
+                Height: event.frameHeight,
+                RespondToAfd: 'NONE',
+                TimecodeInsertion: 'DISABLED',
+                Width: event.frameWidth,
+                ScalingBehavior: 'DEFAULT',
+                AntiAlias: 'ENABLED',
+                CodecSettings: {
+                    FrameCaptureSettings: {
+                        MaxCaptures: 10000000,
+                        Quality: 80,
+                        FramerateDenominator: 5,
+                        FramerateNumerator: 1,
+                    },
+                    Codec: 'FRAME_CAPTURE',
+                },
+                DropFrameTimecode: 'ENABLED',
+            },
+        },
+    ],
 });
 //PR: https://github.com/awslabs/video-on-demand-on-aws/pull/107
 const mergeSettingsWithDefault = (originalGroup, customGroup) => {
@@ -125,7 +127,7 @@ exports.handler = async (event) => {
 
     const mediaconvert = new MediaConvert({
         endpoint: process.env.EndPoint,
-        customUserAgent: process.env.SOLUTION_IDENTIFIER
+        customUserAgent: process.env.SOLUTION_IDENTIFIER,
     });
 
     try {
@@ -138,38 +140,40 @@ exports.handler = async (event) => {
             Role: process.env.MediaConvertRole,
             UserMetadata: {
                 guid: event.guid,
-                workflow: event.workflowName
+                workflow: event.workflowName,
             },
             Settings: {
-                Inputs: [{
-                    AudioSelectors: {
-                        'Audio Selector 1': {
-                            Offset: 0,
-                            DefaultSelection: 'NOT_DEFAULT',
-                            ProgramSelection: 1
-                        }
+                Inputs: [
+                    {
+                        AudioSelectors: {
+                            'Audio Selector 1': {
+                                Offset: 0,
+                                DefaultSelection: 'NOT_DEFAULT',
+                                ProgramSelection: 1,
+                            },
+                        },
+                        VideoSelector: {
+                            ColorSpace: 'FOLLOW',
+                            Rotate: event.inputRotate,
+                        },
+                        FilterEnable: 'AUTO',
+                        PsiControl: 'USE_PSI',
+                        FilterStrength: 0,
+                        DeblockFilter: 'DISABLED',
+                        DenoiseFilter: 'DISABLED',
+                        TimecodeSource: 'EMBEDDED',
+                        FileInput: inputPath,
                     },
-                    VideoSelector: {
-                        ColorSpace: 'FOLLOW',
-                        Rotate: event.inputRotate
-                    },
-                    FilterEnable: 'AUTO',
-                    PsiControl: 'USE_PSI',
-                    FilterStrength: 0,
-                    DeblockFilter: 'DISABLED',
-                    DenoiseFilter: 'DISABLED',
-                    TimecodeSource: 'EMBEDDED',
-                    FileInput: inputPath,
-                }],
-                OutputGroups: []
-            }
+                ],
+                OutputGroups: [],
+            },
         };
 
         const mp4 = getMp4Group(outputPath);
         const hls = getHlsGroup(outputPath);
-        const dash = getDashGroup(outputPath);
+        // const dash = getDashGroup(outputPath);
         const cmaf = getCmafGroup(outputPath);
-        const mss = getMssGroup(outputPath);
+        // const mss = getMssGroup(outputPath);
         const frameCapture = getFrameGroup(event, outputPath);
 
         let tmpl = await mediaconvert.getJobTemplate({ Name: event.jobTemplate });
@@ -178,8 +182,9 @@ exports.handler = async (event) => {
         // OutputGroupSettings:Type is required and must be one of the following
         // HLS_GROUP_SETTINGS | DASH_ISO_GROUP_SETTINGS | FILE_GROUP_SETTINGS | MS_SMOOTH_GROUP_SETTINGS | CMAF_GROUP_SETTINGS,
         // Using this to determine the output types in the the job Template
-        tmpl.JobTemplate.Settings.OutputGroups.forEach(group => {
-            let found = false, defaultGroup = {};
+        tmpl.JobTemplate.Settings.OutputGroups.forEach((group) => {
+            let found = false,
+                defaultGroup = {};
 
             switch (group.OutputGroupSettings.Type) {
                 case 'FILE_GROUP_SETTINGS':
@@ -192,15 +197,15 @@ exports.handler = async (event) => {
                     defaultGroup = hls;
                     break;
 
-                case 'DASH_ISO_GROUP_SETTINGS':
-                    found = true;
-                    defaultGroup = dash;
-                    break;
+                // case 'DASH_ISO_GROUP_SETTINGS':
+                //     found = true;
+                //     defaultGroup = dash;
+                //     break;
 
-                case 'MS_SMOOTH_GROUP_SETTINGS':
-                    found = true;
-                    defaultGroup = mss;
-                    break;
+                // case 'MS_SMOOTH_GROUP_SETTINGS':
+                //     found = true;
+                //     defaultGroup = mss;
+                //     break;
 
                 case 'CMAF_GROUP_SETTINGS':
                     found = true;
@@ -223,12 +228,12 @@ exports.handler = async (event) => {
         //if enabled the TimeCodeConfig needs to be set to ZEROBASED not passthrough
         //https://docs.aws.amazon.com/mediaconvert/latest/ug/job-requirements.html
         if (event.acceleratedTranscoding === 'PREFERRED' || event.acceleratedTranscoding === 'ENABLED') {
-            job.AccelerationSettings = {"Mode" : event.acceleratedTranscoding}
-            job.Settings.TimecodeConfig = {"Source" : "ZEROBASED"}
-            job.Settings.Inputs[0].TimecodeSource = "ZEROBASED"
+            job.AccelerationSettings = { Mode: event.acceleratedTranscoding };
+            job.Settings.TimecodeConfig = { Source: 'ZEROBASED' };
+            job.Settings.Inputs[0].TimecodeSource = 'ZEROBASED';
         }
-        job.Tags = {'SolutionId': 'SO0021'};
-        
+        job.Tags = { SolutionId: 'SO0021' };
+
         let data = await mediaconvert.createJob(job);
         event.encodingJob = job;
         event.encodeJobId = data.Job.Id;

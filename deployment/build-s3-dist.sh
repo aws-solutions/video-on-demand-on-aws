@@ -65,11 +65,14 @@ echo "Download mediainfo binary for AWS Lambda"
 echo "------------------------------------------------------------------------------"
 cd $source_dir/mediainfo/
 rm -rf bin/*
-curl -O https://mediaarea.net/download/binary/mediainfo/20.09/MediaInfo_CLI_20.09_Lambda.zip
-unzip MediaInfo_CLI_20.09_Lambda.zip 
+# curl -O https://mediaarea.net/download/binary/mediainfo/20.09/MediaInfo_CLI_20.09_Lambda.zip
+curl -O https://mediaarea.net/download/binary/mediainfo/23.06/MediaInfo_CLI_23.06_Lambda_x86_64.zip
+# unzip MediaInfo_CLI_20.09_Lambda.zip 
+unzip MediaInfo_CLI_23.06_Lambda_x86_64.zip 
 mv LICENSE bin/
 chmod +x ./bin/mediainfo
-rm -r MediaInfo_CLI_20.09_Lambda.zip
+# rm -r MediaInfo_CLI_20.09_Lambda.zip
+rm -r MediaInfo_CLI_23.06_Lambda_x86_64.zip
 
 echo "------------------------------------------------------------------------------"
 echo "[Synth] CDK Project"
