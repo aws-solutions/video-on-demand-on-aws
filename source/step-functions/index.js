@@ -12,7 +12,7 @@
  *********************************************************************************************************************/
 
 const { SFN: StepFunctions } = require('@aws-sdk/client-sfn');
-const { v4: uuidv4 } = require('uuid');
+// const { v4: uuidv4 } = require('uuid');
 const error = require('./lib/error.js');
 
 exports.handler = async (event) => {

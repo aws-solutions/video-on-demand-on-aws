@@ -356,7 +356,7 @@ export class VideoOnDemand extends cdk.Stack {
           cachePolicy: cachePolicy,
           viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS
         },
-        priceClass: cloudfront.PriceClass.PRICE_CLASS_100,
+        priceClass: cloudfront.PriceClass.PRICE_CLASS_ALL,
         logBucket: logsBucket,
         logFilePrefix: 'cloudfront-logs/'
       },
@@ -970,7 +970,7 @@ export class VideoOnDemand extends cdk.Stack {
         )}`,
         CloudFront: distribution.cloudFrontWebDistribution.domainName,
         EnableMediaPackage: `${cdk.Fn.conditionIf(conditionEnableMediaPackage.logicalId, 'true', 'false')}`,
-        InputRotate: 'DEGREE_0',
+        InputRotate: 'AUTO',
         EnableSns: `${cdk.Fn.conditionIf(conditionEnableSns.logicalId, 'true', 'false')}`,
         EnableSqs: `${cdk.Fn.conditionIf(conditionEnableSqs.logicalId, 'true', 'false')}`,
         AcceleratedTranscoding: acceleratedTranscoding.valueAsString

@@ -31,3 +31,5 @@
 dev.json
 prod.json
 deployment/deploy.sh
+*.mov
+*.mp4

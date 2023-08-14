@@ -43,6 +43,7 @@ exports.handler = async (event) => {
         let mediaInfo = JSON.parse(event.srcMediainfo);
         event.srcHeight = mediaInfo.video[0].height;
         event.srcWidth = mediaInfo.video[0].width;
+        // event.inputRotate = `DEGREE_${mediaInfo.video[0].rotation}`;
 
         // Determine encoding by matching the srcHeight to the nearest profile.
         // const profiles = [2160, 1080, 720];
@@ -59,7 +60,7 @@ exports.handler = async (event) => {
         //     lastProfile = profile;
         // });
 
-        // event.encodingProfile = encodeProfile;
+        event.encodingProfile = 720; //encodeProfile;
 
         // if (event.frameCapture) {
         //     // Match Height x Width with the encoding profile.
