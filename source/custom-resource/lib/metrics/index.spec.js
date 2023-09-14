@@ -21,7 +21,7 @@ const _config = {
     SolutionId: 'SO0021',
     UUID: '999-999',
     ServiceToken: 'lambda-arn',
-    Resource: 'AnonymousMetric'
+    Resource: 'AnonymizedMetric'
 };
 
 describe('#SEND METRICS', () => {

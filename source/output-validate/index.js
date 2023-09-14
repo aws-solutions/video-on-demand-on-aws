@@ -117,7 +117,7 @@ exports.handler = async (event) => {
 
     let thumbNails = await s3.listObjects(params);
 
-    if (thumbNails.Contents.legnth !=0) {
+    if (thumbNails.Contents.length !=0) {
       let lastImg = thumbNails.Contents.pop();
       data.thumbNails.push(`s3://${data.destBucket}/${lastImg.Key}`);
       data.thumbNailsUrls.push(`https://${data.cloudFront}/${lastImg.Key}`);

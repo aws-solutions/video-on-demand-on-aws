@@ -13,10 +13,10 @@ prepare_jest_coverage_report() {
 
   # prepare coverage reports
   rm -fr coverage/lcov-report
-  mkdir -p $coverage_reports_top_path/jest
-  coverage_report_path=$coverage_reports_top_path/jest/$component_name
-  rm -fr $coverage_report_path
-  mv coverage $coverage_report_path
+  mkdir -p "$coverage_reports_top_path/jest"
+  coverage_report_path="$coverage_reports_top_path/jest/$component_name"
+  rm -fr "$coverage_report_path"
+  mv coverage "$coverage_report_path"
 }
 
 run_javascript_test() {
@@ -27,7 +27,7 @@ run_javascript_test() {
   echo "[Test] Run javascript unit test with coverage for $component_name"
   echo "------------------------------------------------------------------------------"
   echo "cd $component_path"
-  cd $component_path
+  cd "$component_path"
 
   # install dependencies
   npm install --silent
@@ -35,13 +35,13 @@ run_javascript_test() {
   npm test
 
   # prepare coverage reports
-  prepare_jest_coverage_report $component_name
+  prepare_jest_coverage_report "$component_name"
 }
 
 # Get reference for all important folders
 template_dir="$PWD"
 source_dir="$template_dir/../source"
-coverage_reports_top_path=$source_dir/test/coverage-reports
+coverage_reports_top_path="$source_dir/test/coverage-reports"
 
 # Test the attached Lambda function
 declare -a lambda_packages=(
@@ -62,9 +62,9 @@ declare -a lambda_packages=(
 
 for lambda_package in "${lambda_packages[@]}"
 do
-  rm -rf $source_dir/$lambda_package/coverage
-  mkdir $source_dir/$lambda_package/coverage
-  run_javascript_test $source_dir/$lambda_package $lambda_package
+  rm -rf "$source_dir/$lambda_package/coverage"
+  mkdir "$source_dir/$lambda_package/coverage"
+  run_javascript_test "$source_dir/$lambda_package" $lambda_package
 
   # Check the result of the test and exit if a failure is identified
   if [ $? -eq 0 ]
@@ -96,6 +96,6 @@ rm -rf coverage
 pytest --cov=. --cov-report xml:coverage/coverage.xml
 # fix source file path
 sed -i -- 's/filename\=\"/filename\=\"source\/mediainfo\//g' coverage/coverage.xml
-mkdir -p $coverage_reports_top_path/pytest
-mv coverage $coverage_reports_top_path/pytest/mediainfo
+mkdir -p "$coverage_reports_top_path/pytest"
+mv coverage "$coverage_reports_top_path/pytest/mediainfo"
 rm -rf pytests

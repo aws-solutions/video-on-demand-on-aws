@@ -45,25 +45,25 @@ source_dir="$template_dir/../source"
 echo "------------------------------------------------------------------------------"
 echo "[Init] Remove any old dist files from previous runs"
 echo "------------------------------------------------------------------------------"
-rm -rf $template_dist_dir
-mkdir -p $template_dist_dir
+rm -rf "$template_dist_dir"
+mkdir -p "$template_dist_dir"
 
-rm -rf $build_dist_dir
-mkdir -p $build_dist_dir
+rm -rf "$build_dist_dir"
+mkdir -p "$build_dist_dir"
 
-rm -rf $staging_dist_dir
-mkdir -p $staging_dist_dir
+rm -rf "$staging_dist_dir"
+mkdir -p "$staging_dist_dir"
 
 echo "------------------------------------------------------------------------------"
 echo "[Init] Install dependencies for the cdk-solution-helper"
 echo "------------------------------------------------------------------------------"
-cd $template_dir/cdk-solution-helper
+cd "$template_dir/cdk-solution-helper"
 npm install --production
 
 echo "------------------------------------------------------------------------------"
 echo "Download mediainfo binary for AWS Lambda"
 echo "------------------------------------------------------------------------------"
-cd $source_dir/mediainfo/
+cd "$source_dir/mediainfo/"
 rm -rf bin/*
 curl -O https://mediaarea.net/download/binary/mediainfo/20.09/MediaInfo_CLI_20.09_Lambda.zip
 unzip MediaInfo_CLI_20.09_Lambda.zip 
@@ -77,9 +77,9 @@ echo "--------------------------------------------------------------------------
 # Make sure user has the newest CDK version
 npm uninstall -g aws-cdk && npm install -g aws-cdk@2
 
-cd $source_dir/cdk
+cd "$source_dir/cdk"
 npm install
-cdk synth --output=$staging_dist_dir
+cdk synth --output="$staging_dist_dir"
 if [ $? -ne 0 ]
 then
     echo "******************************************************************************"
@@ -88,33 +88,33 @@ then
     exit 1
 fi
 
-cd $staging_dist_dir
+cd "$staging_dist_dir"
 rm tree.json manifest.json cdk.out
 
 echo "------------------------------------------------------------------------------"
 echo "Run Cdk Helper and update template placeholders"
 echo "------------------------------------------------------------------------------"
-mv VideoOnDemand.template.json $template_dist_dir/$solution_name.template
+mv VideoOnDemand.template.json "$template_dist_dir/$solution_name.template"
 
-node $template_dir/cdk-solution-helper/index
+node "$template_dir/cdk-solution-helper/index"
 
-for file in $template_dist_dir/*.template
+for file in "$template_dist_dir"/*.template
 do
     replace="s/%%BUCKET_NAME%%/$bucket_name/g"
-    sed -i -e $replace $file
+    sed -i -e $replace "$file"
 
     replace="s/%%SOLUTION_NAME%%/$solution_name/g"
-    sed -i -e $replace $file
+    sed -i -e $replace "$file"
 
     replace="s/%%VERSION%%/$solution_version/g"
-    sed -i -e $replace $file
+    sed -i -e $replace "$file"
 done
 
 echo "------------------------------------------------------------------------------"
 echo "[Packing] Source code artifacts"
 echo "------------------------------------------------------------------------------"
 # ... For each asset.* source code artifact in the temporary /staging folder...
-cd $staging_dist_dir
+cd "$staging_dist_dir"
 for d in `find . -mindepth 1 -maxdepth 1 -type d`; do
     # Rename the artifact, removing the period for handler compatibility
     pfname="$(basename -- $d)"
@@ -133,14 +133,14 @@ for d in `find . -mindepth 1 -maxdepth 1 -type d`; do
     cd ..
 
     # Copy the zipped artifact from /staging to /regional-s3-assets
-    mv $fname.zip $build_dist_dir
+    mv $fname.zip "$build_dist_dir"
 done
 
 echo "------------------------------------------------------------------------------"
 echo "[Cleanup]  Remove temporary files"
 echo "------------------------------------------------------------------------------"
-rm -rf $staging_dist_dir
-rm -f $template_dist_dir/*.template-e
+rm -rf "$staging_dist_dir"
+rm -f "$template_dist_dir"/*.template-e
 
 echo "------------------------------------------------------------------------------"
 echo "S3 Packaging Complete"
