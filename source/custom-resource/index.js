@@ -45,7 +45,7 @@ exports.handler = async (event, context) => {
                     responseData = { UUID: uuidv4() };
                     break;
 
-                case 'AnonymousMetric':
+                case 'AnonymizedMetric':
                     if (config.SendAnonymizedMetric === "Yes") {
                         await Metrics.send(config);
                     }

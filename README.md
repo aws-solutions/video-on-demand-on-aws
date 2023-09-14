@@ -52,7 +52,7 @@ The workflow configuration is set at deployment and is defined as environment va
 * **MediaConvert_Template_720p:**	The name of the SD template in MediaConvert
 * **Source:**	The name of the source S3 bucket
 * **WorkflowName:**	Used to tag all of the MediaConvert encoding jobs
-* **acceleratedTranscoding** Enabled Accelerated Transocding in MediaConvert. options include ENABLE, DISABLE, PREFERRED. for more detials please see: 
+* **acceleratedTranscoding** Enabled Accelerated Transcoding in MediaConvert. options include ENABLE, DISABLED, PREFERRED. for more details please see: [Accelerated Transcoding](https://docs.aws.amazon.com/mediaconvert/latest/ug/accelerated-transcoding.html).
 * **enableSns** Send SNS notifications for the workflow results.
 * **enableSqs** Send the workflow results to an SQS queue
 
@@ -108,15 +108,15 @@ At launch the Solution creates 3 MediaConvert job templates which are used as th
 - **MediaConvert_Template_1080p**
 - **MediaConvert_Template_720p**
 
-By default, the profiler step in the process step function will check the source video height and set the parameter "jobTemplate" to one of the available templates. This variable is then passed to the encoding step which submits a job to Elemental MediaConvert. To customize the encoding templates used by the solution you can either replace the existing templates or you can use the source metadata version of the workflow and define the jobTemplate as part of the source metadata file.
+By default, the profiler step in the process step function will check the source video height and set the parameter "jobTemplate" to one of the available templates. This variable is then passed to the encoding step which submits a job to AWS Elemental MediaConvert. To customize the encoding templates used by the solution you can either replace the existing templates or you can use the source metadata version of the workflow and define the jobTemplate as part of the source metadata file.
 
 **To replace the templates:**
-1.	Use the system templates or create 3 new templates through the MediaConvert console (see the Elemental MediaConvert documentation for details).
+1.	Use the system templates or create 3 new templates through the MediaConvert console (see the AWS Elemental MediaConvert documentation for details).
 2.	Update the environment variables for the input validate lambda function with the names of the new templates.
 
 **To define the job template using metadata:**
 1.	Launch the solution with source metadata parameter. See Appendix E for more details.
-2.	Use the system templates or create a new template through the MediaConvert console (see the Elemental MediaConvert documentation for details).
+2.	Use the system templates or create a new template through the MediaConvert console (see the AWS Elemental MediaConvert documentation for details).
 3.	Add "jobTemplate":"name of the template" to the metadata file, this will overwrite the profiler step in the process Step Functions.
 
 ## QVBR Mode
@@ -149,7 +149,7 @@ For more detail please see [Accelerated Transcoding](https://docs.aws.amazon.com
 * **archive-source:** Lambda function to tag the source video in s3 to enable the Glacier lifecycle policy.
 * **custom-resource:** Lambda backed CloudFormation custom resource to deploy MediaConvert templates configure S3 event notifications.
 * **dynamo:** Lambda function to Update DynamoDB.
-* **encode:** Lambda function to submit an encoding job to Elemental MediaConvert.
+* **encode:** Lambda function to submit an encoding job to AWS Elemental MediaConvert.
 * **error-handler:** Lambda function to handler any errors created by the workflow or MediaConvert.
 * **input-validate:** Lambda function to parse S3 event notifications and define the workflow parameters.
 * **media-package-assets:** Lambda function to ingest an asset into MediaPackage-VOD.
@@ -271,7 +271,7 @@ limitations under the License.
 
 ***
 
-This solution collects anonymous operational metrics to help AWS improve the
+This solution collects Anonymized operational metrics to help AWS improve the
 quality of features of the solution. For more information, including how to disable
 this capability, please see the [implementation guide](https://docs.aws.amazon.com/solutions/latest/video-on-demand/appendix-h.html).
 

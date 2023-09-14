@@ -37,6 +37,13 @@ exports[`VideoOnDemand Stack Test 1`] = `
     },
   },
   Description: (SO0021) - Video on Demand on AWS workflow with AWS Step Functions, MediaConvert, MediaPackage, S3, CloudFront and DynamoDB. Version %%VERSION%%,
+  Mappings: {
+    AnonymizedData: {
+      SendAnonymizedData: {
+        Data: Yes,
+      },
+    },
+  },
   Metadata: {
     AWS::CloudFormation::Interface: {
       ParameterGroups: [
@@ -99,8 +106,8 @@ exports[`VideoOnDemand Stack Test 1`] = `
     },
   },
   Outputs: {
-    AnonymousMetricUUID: {
-      Description: AnonymousMetric UUID,
+    AnonymizedMetricUUID: {
+      Description: AnonymizedMetric UUID,
       Export: {
         Name: {
           Fn::Join: [
@@ -371,7 +378,7 @@ exports[`VideoOnDemand Stack Test 1`] = `
     },
   },
   Resources: {
-    AnonymousMetric: {
+    AnonymizedMetric: {
       DeletionPolicy: Delete,
       Properties: {
         EnableMediaPackage: {
@@ -383,7 +390,7 @@ exports[`VideoOnDemand Stack Test 1`] = `
         Glacier: {
           Ref: Glacier,
         },
-        Resource: AnonymousMetric,
+        Resource: AnonymizedMetric,
         SendAnonymizedMetric: {
           Fn::FindInMap: [
             AnonymizedData,
@@ -2235,35 +2242,35 @@ exports[`VideoOnDemand Stack Test 1`] = `
           Fn::Join: [
             ,
             [
-              {"StartAt":"Input Validate","States":{"Input Validate":{"Next":"MediaInfo","Retry":[{"ErrorEquals":["Lambda.ServiceException","Lambda.AWSLambdaException","Lambda.SdkClientException"],"IntervalSeconds":2,"MaxAttempts":6,"BackoffRate":2}],"Type":"Task","Resource":",
+              {"StartAt":"Input Validate","States":{"Input Validate":{"Next":"MediaInfo","Retry":[{"ErrorEquals":["Lambda.ClientExecutionTimeoutException","Lambda.ServiceException","Lambda.AWSLambdaException","Lambda.SdkClientException"],"IntervalSeconds":2,"MaxAttempts":6,"BackoffRate":2}],"Type":"Task","Resource":",
               {
                 Fn::GetAtt: [
                   InputValidateLambdaA739FF97,
                   Arn,
                 ],
               },
-              "},"MediaInfo":{"Next":"DynamoDB Update (Ingest)","Retry":[{"ErrorEquals":["Lambda.ServiceException","Lambda.AWSLambdaException","Lambda.SdkClientException"],"IntervalSeconds":2,"MaxAttempts":6,"BackoffRate":2}],"Type":"Task","Resource":",
+              "},"MediaInfo":{"Next":"DynamoDB Update (Ingest)","Retry":[{"ErrorEquals":["Lambda.ClientExecutionTimeoutException","Lambda.ServiceException","Lambda.AWSLambdaException","Lambda.SdkClientException"],"IntervalSeconds":2,"MaxAttempts":6,"BackoffRate":2}],"Type":"Task","Resource":",
               {
                 Fn::GetAtt: [
                   MediaInfoLambda172F634B,
                   Arn,
                 ],
               },
-              "},"DynamoDB Update (Ingest)":{"Next":"SNS Choice (Ingest)","Retry":[{"ErrorEquals":["Lambda.ServiceException","Lambda.AWSLambdaException","Lambda.SdkClientException"],"IntervalSeconds":2,"MaxAttempts":6,"BackoffRate":2}],"Type":"Task","Resource":",
+              "},"DynamoDB Update (Ingest)":{"Next":"SNS Choice (Ingest)","Retry":[{"ErrorEquals":["Lambda.ClientExecutionTimeoutException","Lambda.ServiceException","Lambda.AWSLambdaException","Lambda.SdkClientException"],"IntervalSeconds":2,"MaxAttempts":6,"BackoffRate":2}],"Type":"Task","Resource":",
               {
                 Fn::GetAtt: [
                   DynamoUpdateLambda0DF14C26,
                   Arn,
                 ],
               },
-              "},"SNS Choice (Ingest)":{"Type":"Choice","Choices":[{"Variable":"$.enableSns","BooleanEquals":true,"Next":"SNS Notification (Ingest)"}],"Default":"Process Execute"},"Process Execute":{"End":true,"Retry":[{"ErrorEquals":["Lambda.ServiceException","Lambda.AWSLambdaException","Lambda.SdkClientException"],"IntervalSeconds":2,"MaxAttempts":6,"BackoffRate":2}],"Type":"Task","Resource":",
+              "},"SNS Choice (Ingest)":{"Type":"Choice","Choices":[{"Variable":"$.enableSns","BooleanEquals":true,"Next":"SNS Notification (Ingest)"}],"Default":"Process Execute"},"Process Execute":{"End":true,"Retry":[{"ErrorEquals":["Lambda.ClientExecutionTimeoutException","Lambda.ServiceException","Lambda.AWSLambdaException","Lambda.SdkClientException"],"IntervalSeconds":2,"MaxAttempts":6,"BackoffRate":2}],"Type":"Task","Resource":",
               {
                 Fn::GetAtt: [
                   StepFunctionsLambda8B4F69C7,
                   Arn,
                 ],
               },
-              "},"SNS Notification (Ingest)":{"Next":"Process Execute","Retry":[{"ErrorEquals":["Lambda.ServiceException","Lambda.AWSLambdaException","Lambda.SdkClientException"],"IntervalSeconds":2,"MaxAttempts":6,"BackoffRate":2}],"Type":"Task","Resource":",
+              "},"SNS Notification (Ingest)":{"Next":"Process Execute","Retry":[{"ErrorEquals":["Lambda.ClientExecutionTimeoutException","Lambda.ServiceException","Lambda.AWSLambdaException","Lambda.SdkClientException"],"IntervalSeconds":2,"MaxAttempts":6,"BackoffRate":2}],"Type":"Task","Resource":",
               {
                 Fn::GetAtt: [
                   SnsNotificationLambda1EA4A474,
@@ -3739,21 +3746,21 @@ exports[`VideoOnDemand Stack Test 1`] = `
           Fn::Join: [
             ,
             [
-              {"StartAt":"Profiler","States":{"Profiler":{"Next":"Encoding Profile Check","Retry":[{"ErrorEquals":["Lambda.ServiceException","Lambda.AWSLambdaException","Lambda.SdkClientException"],"IntervalSeconds":2,"MaxAttempts":6,"BackoffRate":2}],"Type":"Task","Resource":",
+              {"StartAt":"Profiler","States":{"Profiler":{"Next":"Encoding Profile Check","Retry":[{"ErrorEquals":["Lambda.ClientExecutionTimeoutException","Lambda.ServiceException","Lambda.AWSLambdaException","Lambda.SdkClientException"],"IntervalSeconds":2,"MaxAttempts":6,"BackoffRate":2}],"Type":"Task","Resource":",
               {
                 Fn::GetAtt: [
                   ProfilerLambdaFAFF7893,
                   Arn,
                 ],
               },
-              "},"Encoding Profile Check":{"Type":"Choice","Choices":[{"Variable":"$.isCustomTemplate","BooleanEquals":true,"Next":"Custom jobTemplate"},{"Variable":"$.encodingProfile","NumericEquals":2160,"Next":"jobTemplate 2160p"},{"Variable":"$.encodingProfile","NumericEquals":1080,"Next":"jobTemplate 1080p"},{"Variable":"$.encodingProfile","NumericEquals":720,"Next":"jobTemplate 720p"}]},"Custom jobTemplate":{"Type":"Pass","Next":"Accelerated Transcoding Check"},"Accelerated Transcoding Check":{"Type":"Choice","Choices":[{"Variable":"$.acceleratedTranscoding","StringEquals":"ENABLED","Next":"Enabled"},{"Variable":"$.acceleratedTranscoding","StringEquals":"PREFERRED","Next":"Preferred"},{"Variable":"$.acceleratedTranscoding","StringEquals":"DISABLED","Next":"Disabled"}]},"jobTemplate 2160p":{"Type":"Pass","Next":"Accelerated Transcoding Check"},"jobTemplate 1080p":{"Type":"Pass","Next":"Accelerated Transcoding Check"},"jobTemplate 720p":{"Type":"Pass","Next":"Accelerated Transcoding Check"},"Enabled":{"Type":"Pass","Next":"Frame Capture Check"},"Frame Capture Check":{"Type":"Choice","Choices":[{"Variable":"$.frameCapture","BooleanEquals":true,"Next":"Frame Capture"},{"Variable":"$.frameCapture","BooleanEquals":false,"Next":"No Frame Capture"}]},"Preferred":{"Type":"Pass","Next":"Frame Capture Check"},"Disabled":{"Type":"Pass","Next":"Frame Capture Check"},"Frame Capture":{"Type":"Pass","Next":"Encode Job Submit"},"Encode Job Submit":{"Next":"DynamoDB Update (Process)","Retry":[{"ErrorEquals":["Lambda.ServiceException","Lambda.AWSLambdaException","Lambda.SdkClientException"],"IntervalSeconds":2,"MaxAttempts":6,"BackoffRate":2}],"Type":"Task","Resource":",
+              "},"Encoding Profile Check":{"Type":"Choice","Choices":[{"Variable":"$.isCustomTemplate","BooleanEquals":true,"Next":"Custom jobTemplate"},{"Variable":"$.encodingProfile","NumericEquals":2160,"Next":"jobTemplate 2160p"},{"Variable":"$.encodingProfile","NumericEquals":1080,"Next":"jobTemplate 1080p"},{"Variable":"$.encodingProfile","NumericEquals":720,"Next":"jobTemplate 720p"}]},"Custom jobTemplate":{"Type":"Pass","Next":"Accelerated Transcoding Check"},"Accelerated Transcoding Check":{"Type":"Choice","Choices":[{"Variable":"$.acceleratedTranscoding","StringEquals":"ENABLED","Next":"Enabled"},{"Variable":"$.acceleratedTranscoding","StringEquals":"PREFERRED","Next":"Preferred"},{"Variable":"$.acceleratedTranscoding","StringEquals":"DISABLED","Next":"Disabled"}]},"jobTemplate 2160p":{"Type":"Pass","Next":"Accelerated Transcoding Check"},"jobTemplate 1080p":{"Type":"Pass","Next":"Accelerated Transcoding Check"},"jobTemplate 720p":{"Type":"Pass","Next":"Accelerated Transcoding Check"},"Enabled":{"Type":"Pass","Next":"Frame Capture Check"},"Frame Capture Check":{"Type":"Choice","Choices":[{"Variable":"$.frameCapture","BooleanEquals":true,"Next":"Frame Capture"},{"Variable":"$.frameCapture","BooleanEquals":false,"Next":"No Frame Capture"}]},"Preferred":{"Type":"Pass","Next":"Frame Capture Check"},"Disabled":{"Type":"Pass","Next":"Frame Capture Check"},"Frame Capture":{"Type":"Pass","Next":"Encode Job Submit"},"Encode Job Submit":{"Next":"DynamoDB Update (Process)","Retry":[{"ErrorEquals":["Lambda.ClientExecutionTimeoutException","Lambda.ServiceException","Lambda.AWSLambdaException","Lambda.SdkClientException"],"IntervalSeconds":2,"MaxAttempts":6,"BackoffRate":2}],"Type":"Task","Resource":",
               {
                 Fn::GetAtt: [
                   EncodeLambdaDADCB2BB,
                   Arn,
                 ],
               },
-              "},"No Frame Capture":{"Type":"Pass","Next":"Encode Job Submit"},"DynamoDB Update (Process)":{"End":true,"Retry":[{"ErrorEquals":["Lambda.ServiceException","Lambda.AWSLambdaException","Lambda.SdkClientException"],"IntervalSeconds":2,"MaxAttempts":6,"BackoffRate":2}],"Type":"Task","Resource":",
+              "},"No Frame Capture":{"Type":"Pass","Next":"Encode Job Submit"},"DynamoDB Update (Process)":{"End":true,"Retry":[{"ErrorEquals":["Lambda.ClientExecutionTimeoutException","Lambda.ServiceException","Lambda.AWSLambdaException","Lambda.SdkClientException"],"IntervalSeconds":2,"MaxAttempts":6,"BackoffRate":2}],"Type":"Task","Resource":",
               {
                 Fn::GetAtt: [
                   DynamoUpdateLambda0DF14C26,
@@ -4016,49 +4023,49 @@ exports[`VideoOnDemand Stack Test 1`] = `
           Fn::Join: [
             ,
             [
-              {"StartAt":"Validate Encoding Outputs","States":{"Validate Encoding Outputs":{"Next":"Archive Source Choice","Retry":[{"ErrorEquals":["Lambda.ServiceException","Lambda.AWSLambdaException","Lambda.SdkClientException"],"IntervalSeconds":2,"MaxAttempts":6,"BackoffRate":2}],"Type":"Task","Resource":",
+              {"StartAt":"Validate Encoding Outputs","States":{"Validate Encoding Outputs":{"Next":"Archive Source Choice","Retry":[{"ErrorEquals":["Lambda.ClientExecutionTimeoutException","Lambda.ServiceException","Lambda.AWSLambdaException","Lambda.SdkClientException"],"IntervalSeconds":2,"MaxAttempts":6,"BackoffRate":2}],"Type":"Task","Resource":",
               {
                 Fn::GetAtt: [
                   OutputValidateLambda2645C4BB,
                   Arn,
                 ],
               },
-              "},"Archive Source Choice":{"Type":"Choice","Choices":[{"Variable":"$.archiveSource","StringEquals":"GLACIER","Next":"Archive"},{"Variable":"$.archiveSource","StringEquals":"DEEP_ARCHIVE","Next":"Deep Archive"}],"Default":"MediaPackage Choice"},"MediaPackage Choice":{"Type":"Choice","Choices":[{"Variable":"$.enableMediaPackage","BooleanEquals":true,"Next":"MediaPackage Assets"}],"Default":"DynamoDB Update (Publish)"},"Archive":{"Next":"MediaPackage Choice","Retry":[{"ErrorEquals":["Lambda.ServiceException","Lambda.AWSLambdaException","Lambda.SdkClientException"],"IntervalSeconds":2,"MaxAttempts":6,"BackoffRate":2}],"Type":"Task","Resource":",
+              "},"Archive Source Choice":{"Type":"Choice","Choices":[{"Variable":"$.archiveSource","StringEquals":"GLACIER","Next":"Archive"},{"Variable":"$.archiveSource","StringEquals":"DEEP_ARCHIVE","Next":"Deep Archive"}],"Default":"MediaPackage Choice"},"MediaPackage Choice":{"Type":"Choice","Choices":[{"Variable":"$.enableMediaPackage","BooleanEquals":true,"Next":"MediaPackage Assets"}],"Default":"DynamoDB Update (Publish)"},"Archive":{"Next":"MediaPackage Choice","Retry":[{"ErrorEquals":["Lambda.ClientExecutionTimeoutException","Lambda.ServiceException","Lambda.AWSLambdaException","Lambda.SdkClientException"],"IntervalSeconds":2,"MaxAttempts":6,"BackoffRate":2}],"Type":"Task","Resource":",
               {
                 Fn::GetAtt: [
                   ArchiveSourceLambda320F09D9,
                   Arn,
                 ],
               },
-              "},"Deep Archive":{"Next":"MediaPackage Choice","Retry":[{"ErrorEquals":["Lambda.ServiceException","Lambda.AWSLambdaException","Lambda.SdkClientException"],"IntervalSeconds":2,"MaxAttempts":6,"BackoffRate":2}],"Type":"Task","Resource":",
+              "},"Deep Archive":{"Next":"MediaPackage Choice","Retry":[{"ErrorEquals":["Lambda.ClientExecutionTimeoutException","Lambda.ServiceException","Lambda.AWSLambdaException","Lambda.SdkClientException"],"IntervalSeconds":2,"MaxAttempts":6,"BackoffRate":2}],"Type":"Task","Resource":",
               {
                 Fn::GetAtt: [
                   ArchiveSourceLambda320F09D9,
                   Arn,
                 ],
               },
-              "},"DynamoDB Update (Publish)":{"Next":"SQS Choice","Retry":[{"ErrorEquals":["Lambda.ServiceException","Lambda.AWSLambdaException","Lambda.SdkClientException"],"IntervalSeconds":2,"MaxAttempts":6,"BackoffRate":2}],"Type":"Task","Resource":",
+              "},"DynamoDB Update (Publish)":{"Next":"SQS Choice","Retry":[{"ErrorEquals":["Lambda.ClientExecutionTimeoutException","Lambda.ServiceException","Lambda.AWSLambdaException","Lambda.SdkClientException"],"IntervalSeconds":2,"MaxAttempts":6,"BackoffRate":2}],"Type":"Task","Resource":",
               {
                 Fn::GetAtt: [
                   DynamoUpdateLambda0DF14C26,
                   Arn,
                 ],
               },
-              "},"MediaPackage Assets":{"Next":"DynamoDB Update (Publish)","Retry":[{"ErrorEquals":["Lambda.ServiceException","Lambda.AWSLambdaException","Lambda.SdkClientException"],"IntervalSeconds":2,"MaxAttempts":6,"BackoffRate":2}],"Type":"Task","Resource":",
+              "},"MediaPackage Assets":{"Next":"DynamoDB Update (Publish)","Retry":[{"ErrorEquals":["Lambda.ClientExecutionTimeoutException","Lambda.ServiceException","Lambda.AWSLambdaException","Lambda.SdkClientException"],"IntervalSeconds":2,"MaxAttempts":6,"BackoffRate":2}],"Type":"Task","Resource":",
               {
                 Fn::GetAtt: [
                   MediaPackageAssetsLambda63EB0986,
                   Arn,
                 ],
               },
-              "},"SQS Choice":{"Type":"Choice","Choices":[{"Variable":"$.enableSqs","BooleanEquals":true,"Next":"SQS Send Message"}],"Default":"SNS Choice (Publish)"},"SNS Choice (Publish)":{"Type":"Choice","Choices":[{"Variable":"$.enableSns","BooleanEquals":true,"Next":"SNS Notification (Publish)"}],"Default":"Complete"},"SQS Send Message":{"Next":"SNS Choice (Publish)","Retry":[{"ErrorEquals":["Lambda.ServiceException","Lambda.AWSLambdaException","Lambda.SdkClientException"],"IntervalSeconds":2,"MaxAttempts":6,"BackoffRate":2}],"Type":"Task","Resource":",
+              "},"SQS Choice":{"Type":"Choice","Choices":[{"Variable":"$.enableSqs","BooleanEquals":true,"Next":"SQS Send Message"}],"Default":"SNS Choice (Publish)"},"SNS Choice (Publish)":{"Type":"Choice","Choices":[{"Variable":"$.enableSns","BooleanEquals":true,"Next":"SNS Notification (Publish)"}],"Default":"Complete"},"SQS Send Message":{"Next":"SNS Choice (Publish)","Retry":[{"ErrorEquals":["Lambda.ClientExecutionTimeoutException","Lambda.ServiceException","Lambda.AWSLambdaException","Lambda.SdkClientException"],"IntervalSeconds":2,"MaxAttempts":6,"BackoffRate":2}],"Type":"Task","Resource":",
               {
                 Fn::GetAtt: [
                   SqsSendMessageLambda156FD22A,
                   Arn,
                 ],
               },
-              "},"Complete":{"Type":"Pass","End":true},"SNS Notification (Publish)":{"Next":"Complete","Retry":[{"ErrorEquals":["Lambda.ServiceException","Lambda.AWSLambdaException","Lambda.SdkClientException"],"IntervalSeconds":2,"MaxAttempts":6,"BackoffRate":2}],"Type":"Task","Resource":",
+              "},"Complete":{"Type":"Pass","End":true},"SNS Notification (Publish)":{"Next":"Complete","Retry":[{"ErrorEquals":["Lambda.ClientExecutionTimeoutException","Lambda.ServiceException","Lambda.AWSLambdaException","Lambda.SdkClientException"],"IntervalSeconds":2,"MaxAttempts":6,"BackoffRate":2}],"Type":"Task","Resource":",
               {
                 Fn::GetAtt: [
                   SnsNotificationLambda1EA4A474,

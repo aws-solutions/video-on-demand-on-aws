@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.1.4] - 2023-09-14
+
+### Fixed
+
+- Fixed typos ([PR #161](https://github.com/aws-solutions/video-on-demand-on-aws/pull/161), [PR #123](https://github.com/aws-solutions/video-on-demand-on-aws/pull/123), [PR #153](https://github.com/aws-solutions/video-on-demand-on-aws/issues/153))
+- Fixed scripts to handle spaces in directory name ([Issue #141](https://github.com/aws-solutions/video-on-demand-on-aws/issues/153), [PR #142](https://github.com/aws-solutions/video-on-demand-on-aws/pull/142))
+
 ## [6.1.3] - 2023-07-10
 
 ### Changed
@@ -131,7 +138,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Default encryption to SNS topic
 - Environment variable to configure the AWS SDK to reuse TCP connections <https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/node-reusing-connections.html>
 - SQS queue options at deployment to capture workflow outputs
-- Support for accelerated transcoding in Elemental MediaCoonvert: <https://aws.amazon.com/about-aws/whats-new/2019/10/announcing-new-aws-elemental-mediaconvert-features-for-accelerated-transcoding-dash-and-avc-video-quality/>
+- Support for accelerated transcoding in AWS Elemental MediaConvert: <https://aws.amazon.com/about-aws/whats-new/2019/10/announcing-new-aws-elemental-mediaconvert-features-for-accelerated-transcoding-dash-and-avc-video-quality/>
 - support for Glacier deep archive
 
 ### Changed
@@ -172,7 +179,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Typo in notification event property name (ecodeJobId -> encodeJobId)
 - Links to issues in the CONTRIBUTING file
-- Anonymous metrics helper to remove ServiceToken (which includes Lambda ARN) from sent data
+- Anonymized metrics helper to remove ServiceToken (which includes Lambda ARN) from sent data
 - Suffix for supported format (mv4 -> m4v)
 - Custom resource to handle WorkflowTrigger parameter update
 

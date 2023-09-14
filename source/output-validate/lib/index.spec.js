@@ -16,6 +16,7 @@ const path = require('path');
 const { mockClient } = require('aws-sdk-client-mock');
 const { DynamoDBDocumentClient, GetCommand } = require('@aws-sdk/lib-dynamodb');
 const { LambdaClient, InvokeCommand } = require('@aws-sdk/client-lambda');
+const { S3Client, ListObjectsCommand } = require('@aws-sdk/client-s3');
 
 const lambda = require('../index.js');
 
@@ -51,7 +52,7 @@ describe('#OUTPUT VALIDATE::', () => {
         }
     };
 
-    const imgList = {
+    const img_list = {
         Contents: [
             {
                 Key: "12345/thumbnails/dude3.000.jpg",
@@ -64,6 +65,7 @@ describe('#OUTPUT VALIDATE::', () => {
 
     const dynamoDBDocumentClientMock = mockClient(DynamoDBDocumentClient);
     const lambdaClientMock = mockClient(LambdaClient);
+    const s3ClientMock = mockClient(S3Client);
     afterEach(() => dynamoDBDocumentClientMock.reset());
 
     it('should return "SUCCESS" on parsing CMAF MSS output', async () => {
@@ -109,6 +111,15 @@ describe('#OUTPUT VALIDATE::', () => {
         await lambda.handler(_error).catch(err => {
             expect(err.toString()).to.equal('Could not parse MediaConvert Output');
         });
+    });
+
+    it('should return "SUCCESS" when frame capture enabled', async () => {
+        dynamoDBDocumentClientMock.on(GetCommand).resolves(img_data);
+        s3ClientMock.on(ListObjectsCommand).resolves(img_list);
+
+        const response = await lambda.handler(_events.mp4);
+        expect(response.thumbNails[0]).to.equal("s3://vod-destination/12345/thumbnails/dude3.000.jpg");
+        expect(response.thumbNailsUrls[0]).to.equal("https://cloudfront/12345/thumbnails/dude3.000.jpg");
     });
 });
 

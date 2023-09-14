@@ -17,6 +17,7 @@ import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
+import * as kms from 'aws-cdk-lib/aws-kms';
 import * as sns from 'aws-cdk-lib/aws-sns';
 import * as sqs from 'aws-cdk-lib/aws-sqs';
 import * as subscriptions from 'aws-cdk-lib/aws-sns-subscriptions';
@@ -147,7 +148,7 @@ export class VideoOnDemand extends cdk.Stack {
       }
     };
     /**
-     * Mapping for sending anonymous metrics to AWS Solution Builders API
+     * Mapping for sending Anonymized metrics to AWS Solution Builders API
      */
     new cdk.CfnMapping(this, 'AnonymizedData', { // NOSONAR
       mapping: {
@@ -685,7 +686,8 @@ export class VideoOnDemand extends cdk.Stack {
      * SNS Topic
      */
     const snsTopic = new sns.Topic(this, 'SnsTopic', {
-      displayName: `${cdk.Aws.STACK_NAME}-Notifications`
+      displayName: `${cdk.Aws.STACK_NAME}-Notifications`,
+      masterKey: kms.Alias.fromAliasName(this, 'AwsManagedAwsKmsForAmazonSns', 'alias/aws/sns')
     });
     snsTopic.addSubscription(new subscriptions.EmailSubscription(adminEmail.valueAsString));
     const cfnSnsTopic = snsTopic.node.findChild('Resource') as sns.CfnTopic;
@@ -697,11 +699,10 @@ export class VideoOnDemand extends cdk.Stack {
     const sqsDlq = new sqs.Queue(this, 'SqsQueueDlq', {
       queueName: `${cdk.Aws.STACK_NAME}-dlq`,
       visibilityTimeout: cdk.Duration.seconds(120),
+      encryption: sqs.QueueEncryption.KMS_MANAGED,
+      dataKeyReuse: cdk.Duration.seconds(300),
       enforceSSL: true
     });
-    const cfnSqsDlq = sqsDlq.node.findChild('Resource') as sqs.CfnQueue;
-    cfnSqsDlq.kmsMasterKeyId = 'alias/aws/sqs';
-    cfnSqsDlq.kmsDataKeyReusePeriodSeconds = 300;
 
     const sqsQueue = new sqs.Queue(this, 'SqsQueue', {
       queueName: `${cdk.Aws.STACK_NAME}`,
@@ -710,11 +711,10 @@ export class VideoOnDemand extends cdk.Stack {
         queue: sqsDlq,
         maxReceiveCount: 1
       },
+      encryption: sqs.QueueEncryption.KMS_MANAGED,
+      dataKeyReuse: cdk.Duration.seconds(300),
       enforceSSL: true
     });
-    const cfnSqsQueue = sqsQueue.node.findChild('Resource') as sqs.CfnQueue;
-    cfnSqsQueue.kmsMasterKeyId = 'alias/aws/sqs';
-    cfnSqsQueue.kmsDataKeyReusePeriodSeconds = 300;
 
     //cdk_nag
     NagSuppressions.addResourceSuppressions(
@@ -2309,12 +2309,12 @@ export class VideoOnDemand extends cdk.Stack {
     });
 
     /**
-     * Custom Resource: Anonymouse Metric
+     * Custom Resource: Anonymized Metric
      */
-    new cdk.CustomResource(this, 'AnonymousMetric', { // NOSONAR
+    new cdk.CustomResource(this, 'AnonymizedMetric', { // NOSONAR
       serviceToken: customResourceLambda.functionArn,
       properties: {
-        Resource: 'AnonymousMetric',
+        Resource: 'AnonymizedMetric',
         SolutionId: solutionId,
         UUID: uuid.getAttString('UUID'),
         Version: '%%VERSION%%',
@@ -2377,9 +2377,9 @@ export class VideoOnDemand extends cdk.Stack {
       description: 'CloudFront Domain Name',
       exportName: `${cdk.Aws.STACK_NAME}:CloudFront`
     });
-    new cdk.CfnOutput(this, 'AnonymousMetricUUID', { // NOSONAR
+    new cdk.CfnOutput(this, 'AnonymizedMetricUUID', { // NOSONAR
       value: uuid.getAttString('UUID'),
-      description: 'AnonymousMetric UUID',
+      description: 'AnonymizedMetric UUID',
       exportName: `${cdk.Aws.STACK_NAME}:UUID`
     });
     new cdk.CfnOutput(this, 'SnsTopicName', { // NOSONAR
