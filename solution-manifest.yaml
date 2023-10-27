@@ -1,0 +1,6 @@
+id: SO0021
+name: video-on-demand-on-aws
+version: 6.1.5
+cloudformation_templates:
+  - template: video-on-demand-on-aws.template
+    main_template: true
