@@ -11,16 +11,17 @@
  *  and limitations under the License.                                                                                *
  *********************************************************************************************************************/
 
-const AWS = require('aws-sdk');
+const { DynamoDBDocument } = require("@aws-sdk/lib-dynamodb");
+const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
 const error = require('./lib/error.js');
 
 exports.handler = async (event) => {
     console.log(`REQUEST:: ${JSON.stringify(event, null, 2)}`);
 
-    const dynamo = new AWS.DynamoDB.DocumentClient({
+    const dynamo = DynamoDBDocument.from(new DynamoDBClient({ 
         region: process.env.AWS_REGION,
         customUserAgent: process.env.SOLUTION_IDENTIFIER
-    });
+    }));
 
     try {
         // Download DynamoDB data for the source file:
@@ -31,7 +32,7 @@ exports.handler = async (event) => {
             }
         };
 
-        let data = await dynamo.get(params).promise();
+        let data = await dynamo.get(params);
 
         Object.keys(data.Item).forEach(key => {
             event[key] = data.Item[key];

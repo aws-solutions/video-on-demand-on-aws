@@ -11,7 +11,7 @@
  *  and limitations under the License.                                                                                *
  *********************************************************************************************************************/
 
-const AWS = require('aws-sdk');
+const { MediaConvert } = require("@aws-sdk/client-mediaconvert");
 const error = require('./lib/error.js');
 const _ = require('lodash');
 
@@ -123,7 +123,7 @@ const mergeSettingsWithDefault = (originalGroup, customGroup) => {
 exports.handler = async (event) => {
     console.log(`REQUEST:: ${JSON.stringify(event, null, 2)}`);
 
-    const mediaconvert = new AWS.MediaConvert({
+    const mediaconvert = new MediaConvert({
         endpoint: process.env.EndPoint,
         customUserAgent: process.env.SOLUTION_IDENTIFIER
     });
@@ -172,7 +172,7 @@ exports.handler = async (event) => {
         const mss = getMssGroup(outputPath);
         const frameCapture = getFrameGroup(event, outputPath);
 
-        let tmpl = await mediaconvert.getJobTemplate({ Name: event.jobTemplate }).promise();
+        let tmpl = await mediaconvert.getJobTemplate({ Name: event.jobTemplate });
         console.log(`TEMPLATE:: ${JSON.stringify(tmpl, null, 2)}`);
 
         // OutputGroupSettings:Type is required and must be one of the following
@@ -181,35 +181,37 @@ exports.handler = async (event) => {
         tmpl.JobTemplate.Settings.OutputGroups.forEach(group => {
             let found = false, defaultGroup = {};
 
-            if (group.OutputGroupSettings.Type === 'FILE_GROUP_SETTINGS') {
-                found = true;
-                defaultGroup = mp4;
-            }
+            switch (group.OutputGroupSettings.Type) {
+                case 'FILE_GROUP_SETTINGS':
+                    found = true;
+                    defaultGroup = mp4;
+                    break;
 
-            if (group.OutputGroupSettings.Type === 'HLS_GROUP_SETTINGS') {
-                found = true;
-                defaultGroup = hls;
-            }
+                case 'HLS_GROUP_SETTINGS':
+                    found = true;
+                    defaultGroup = hls;
+                    break;
 
-            if (group.OutputGroupSettings.Type === 'DASH_ISO_GROUP_SETTINGS') {
-                found = true;
-                defaultGroup = dash;
-            }
+                case 'DASH_ISO_GROUP_SETTINGS':
+                    found = true;
+                    defaultGroup = dash;
+                    break;
 
-            if (group.OutputGroupSettings.Type === 'MS_SMOOTH_GROUP_SETTINGS') {
-                found = true;
-                defaultGroup = mss;
-            }
+                case 'MS_SMOOTH_GROUP_SETTINGS':
+                    found = true;
+                    defaultGroup = mss;
+                    break;
 
-            if (group.OutputGroupSettings.Type === 'CMAF_GROUP_SETTINGS') {
-                found = true;
-                defaultGroup = cmaf;
+                case 'CMAF_GROUP_SETTINGS':
+                    found = true;
+                    defaultGroup = cmaf;
+                    break;
             }
 
             if (found) {
-                console.log(`${group.Name} found in Job Template`);
+                console.log(`${defaultGroup.Name} found in Job Template`);
                 // PR: https://github.com/awslabs/video-on-demand-on-aws/pull/107
-                const outputGroup = mergeSettingsWithDefault(event.isCustomTemplate, defaultGroup, group);
+                const outputGroup = mergeSettingsWithDefault(defaultGroup, group);
                 job.Settings.OutputGroups.push(outputGroup);
             }
         });
@@ -225,8 +227,9 @@ exports.handler = async (event) => {
             job.Settings.TimecodeConfig = {"Source" : "ZEROBASED"}
             job.Settings.Inputs[0].TimecodeSource = "ZEROBASED"
         }
-
-        let data = await mediaconvert.createJob(job).promise();
+        job.Tags = {'SolutionId': 'SO0021'};
+        
+        let data = await mediaconvert.createJob(job);
         event.encodingJob = job;
         event.encodeJobId = data.Job.Id;
 

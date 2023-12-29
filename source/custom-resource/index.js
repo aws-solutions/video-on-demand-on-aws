@@ -11,7 +11,7 @@
  *  and limitations under the License.                                                                                *
  *********************************************************************************************************************/
 
-const uuidv4 = require('uuid/v4');
+const { v4: uuidv4 } = require('uuid');
 const cfn = require('./lib/cfn');
 const Metrics = require('./lib/metrics');
 const S3 = require('./lib/s3');
@@ -45,8 +45,10 @@ exports.handler = async (event, context) => {
                     responseData = { UUID: uuidv4() };
                     break;
 
-                case 'AnonymousMetric':
-                    await Metrics.send(config);
+                case 'AnonymizedMetric':
+                    if (config.SendAnonymizedMetric === "Yes") {
+                        await Metrics.send(config);
+                    }
                     break;
 
                 case 'MediaPackageVod':

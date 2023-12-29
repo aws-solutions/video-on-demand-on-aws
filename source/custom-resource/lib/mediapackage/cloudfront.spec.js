@@ -15,8 +15,8 @@ const expect = require('chai').expect;
 const _ = require('lodash');
 
 const path = require('path');
-const AWS = require('aws-sdk-mock');
-AWS.setSDK(path.resolve('./node_modules/aws-sdk'));
+const { mockClient } = require("aws-sdk-client-mock");
+const { CloudFrontClient, GetDistributionConfigCommand, UpdateDistributionCommand } = require('@aws-sdk/client-cloudfront');
 
 const helper = require('./cloudfront');
 const testAssets = require('./test-assets');
@@ -47,14 +47,16 @@ describe('#CLOUDFRONT::', () => {
     });
 
     describe('Api', () => {
-        afterEach(() => AWS.restore('CloudFront'));
+        const cloudFrontClientMock = mockClient(CloudFrontClient);
+        afterEach(() => cloudFrontClientMock.reset());
 
         it('should throw an exception when updateDistribution fails with something other than PreconditionFailed', async () => {
             try {
                 const config = _.cloneDeep(testAssets.ConfigurationWithS3);
 
-                AWS.mock('CloudFront', 'getDistributionConfig', Promise.resolve(config));
-                AWS.mock('CloudFront', 'updateDistribution', Promise.reject({ code: 'some error' }));
+                cloudFrontClientMock.on(GetDistributionConfigCommand).resolves(config);
+                cloudFrontClientMock.on(UpdateDistributionCommand).rejects({ code: 'some error' });
+
 
                 await helper.addCustomOrigin(testAssets.DistributionId, testAssets.DomainName);
             } catch (error) {
@@ -68,8 +70,8 @@ describe('#CLOUDFRONT::', () => {
         it('should not throw an exception when updateDistribution fails with PreconditionFailed', async () => {
             const config = _.cloneDeep(testAssets.ConfigurationWithS3);
 
-            AWS.mock('CloudFront', 'getDistributionConfig', Promise.resolve(config));
-            AWS.mock('CloudFront', 'updateDistribution', Promise.reject({ code: 'PreconditionFailed' }));
+            cloudFrontClientMock.on(GetDistributionConfigCommand).resolves(config);
+            cloudFrontClientMock.on(UpdateDistributionCommand).rejects({ code: 'PreconditionFailed' });
 
             await helper.addCustomOrigin(testAssets.DistributionId, testAssets.DomainName);
         });
@@ -81,8 +83,8 @@ describe('#CLOUDFRONT::', () => {
             config.DistributionConfig.Origins.Quantity = 2;
             config.DistributionConfig.Origins.Items.push({ Id: 'vodMPOrigin' });
 
-            AWS.mock('CloudFront', 'getDistributionConfig', Promise.resolve(config));
-            AWS.mock('CloudFront', 'updateDistribution', () => {
+            cloudFrontClientMock.on(GetDistributionConfigCommand).resolves(config);
+            cloudFrontClientMock.on(UpdateDistributionCommand, () => {
                 callCount++;
                 return Promise.resolve();
             });
@@ -94,8 +96,8 @@ describe('#CLOUDFRONT::', () => {
         it('should succeed with valid parameters', async () => {
             const config = _.cloneDeep(testAssets.ConfigurationWithS3);
 
-            AWS.mock('CloudFront', 'getDistributionConfig', Promise.resolve(config));
-            AWS.mock('CloudFront', 'updateDistribution', Promise.resolve());
+            cloudFrontClientMock.on(GetDistributionConfigCommand).resolves(config);
+            cloudFrontClientMock.on(UpdateDistributionCommand).resolves();
 
             await helper.addCustomOrigin(testAssets.DistributionId, testAssets.DomainName);
         });

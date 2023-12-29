@@ -13,8 +13,9 @@
 
 const expect = require('chai').expect;
 const path = require('path');
-const AWS = require('aws-sdk-mock');
-AWS.setSDK(path.resolve('./node_modules/aws-sdk'));
+const { mockClient } = require('aws-sdk-client-mock');
+const { DynamoDBDocumentClient, GetCommand } = require('@aws-sdk/lib-dynamodb');
+const { LambdaClient, InvokeCommand } = require('@aws-sdk/client-lambda');
 
 const lambda = require('../index.js');
 
@@ -40,11 +41,13 @@ describe('#PROFILER::', () => {
             frameCapture: true
         }
     };
+    const dynamoDBDocumentClientMock = mockClient(DynamoDBDocumentClient);
+    const lambdaClientMock = mockClient(LambdaClient);
 
-    afterEach(() => AWS.restore('DynamoDB.DocumentClient'));
+    afterEach(() => dynamoDBDocumentClientMock.reset());
 
     it('should return "SUCCESS" on profile set', async () => {
-        AWS.mock('DynamoDB.DocumentClient', 'get', Promise.resolve(data));
+        dynamoDBDocumentClientMock.on(GetCommand).resolves(data);
 
         const response = await lambda.handler(_event);
         expect(response.jobTemplate).to.equal('tmpl3');
@@ -54,7 +57,7 @@ describe('#PROFILER::', () => {
     });
 
     it('should return "SUCCESS" using a custom template', async () => {
-        AWS.mock('DynamoDB.DocumentClient', 'get', Promise.resolve(data));
+        dynamoDBDocumentClientMock.on(GetCommand).resolves(data);
 
         const response = await lambda.handler(_tmpl_event);
         expect(response.jobTemplate).to.equal('customTemplate');
@@ -64,11 +67,11 @@ describe('#PROFILER::', () => {
     });
 
     it('should return "DB ERROR" when db get fails', async () => {
-        AWS.mock('DynamoDB.DocumentClient', 'get', Promise.reject('DB ERROR'));
-        AWS.mock('Lambda', 'invoke', Promise.resolve());
+        dynamoDBDocumentClientMock.on(GetCommand).rejects('DB ERROR');
+        lambdaClientMock.on(InvokeCommand).resolves();
 
         await lambda.handler(_event).catch(err => {
-            expect(err).to.equal('DB ERROR');
+            expect(err.toString()).to.equal('Error: DB ERROR');
         });
     });
 });

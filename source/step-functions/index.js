@@ -11,14 +11,14 @@
  *  and limitations under the License.                                                                                *
  *********************************************************************************************************************/
 
-const AWS = require('aws-sdk');
-const uuidv4 = require('uuid/v4');
+const { SFN: StepFunctions } = require("@aws-sdk/client-sfn");
+const { v4: uuidv4 } = require('uuid');
 const error = require('./lib/error.js');
 
 exports.handler = async (event) => {
     console.log(`REQUEST:: ${JSON.stringify(event, null, 2)}`);
 
-    const stepfunctions = new AWS.StepFunctions({
+    const stepfunctions = new StepFunctions({
         region: process.env.AWS_REGION,
         customUserAgent: process.env.SOLUTION_IDENTIFIER
     });
@@ -73,7 +73,7 @@ exports.handler = async (event) => {
                 throw new Error('invalid event object');
         }
 
-        let data = await stepfunctions.startExecution(params).promise();
+        let data = await stepfunctions.startExecution(params);
         console.log(`STATEMACHINE EXECUTE:: ${JSON.stringify(data, null, 2)}`);
     } catch (err) {
         await error.handler(event, err);

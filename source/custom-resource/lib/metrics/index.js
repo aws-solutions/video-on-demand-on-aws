@@ -12,7 +12,6 @@
  *********************************************************************************************************************/
 
 const axios = require('axios');
-const moment = require('moment');
 
 const sanitizeData = (config) => {
     // Remove lambda arn from config to avoid sending AccountId
@@ -28,7 +27,7 @@ const send = async (config) => {
     const metrics = {
         Solution: config.SolutionId,
         UUID: config.UUID,
-        TimeStamp: moment().utc().toISOString(),
+        TimeStamp: new Date().toISOString(),
         Data: sanitizeData(config)
     };
 

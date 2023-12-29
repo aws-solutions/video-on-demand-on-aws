@@ -11,16 +11,17 @@
  *  and limitations under the License.                                                                                *
  *********************************************************************************************************************/
 
-const AWS = require('aws-sdk');
+const { DynamoDBDocument } = require("@aws-sdk/lib-dynamodb");
+const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
 const error = require('./lib/error.js');
 
 exports.handler = async (event) => {
     console.log(`REQUEST:: ${JSON.stringify(event, null, 2)}`);
 
-    const dynamo = new AWS.DynamoDB.DocumentClient({
+    const dynamo = DynamoDBDocument.from(new DynamoDBClient({ 
         region: process.env.AWS_REGION,
         customUserAgent: process.env.SOLUTION_IDENTIFIER
-    });
+    }));
 
     try {
         // Remove guid from event data (primary db table key) and iterate over event objects
@@ -48,7 +49,7 @@ exports.handler = async (event) => {
         };
 
         console.log(`UPDATE:: ${JSON.stringify(params, null, 2)}`);
-        await dynamo.update(params).promise();
+        await dynamo.update(params);
 
         // Get updated data and reconst event data to return
         event.guid = guid;

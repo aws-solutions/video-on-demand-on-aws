@@ -12,7 +12,7 @@
  *********************************************************************************************************************/
 
 const fs = require('fs');
-const AWS = require('aws-sdk');
+const { MediaConvert } = require("@aws-sdk/client-mediaconvert");
 
 const CATEGORY = 'VOD';
 const DESCRIPTION = 'video on demand on aws';
@@ -160,8 +160,8 @@ const mediaPackageTemplatesNoPreset = [
 
 // Get the Account regional MediaConvert endpoint for making API calls
 const GetEndpoints = async () => {
-    const mediaconvert = new AWS.MediaConvert({customUserAgent: process.env.SOLUTION_IDENTIFIER});
-    const data = await mediaconvert.describeEndpoints().promise();
+    const mediaconvert = new MediaConvert({customUserAgent: process.env.SOLUTION_IDENTIFIER});
+    const data = await mediaconvert.describeEndpoints({MaxResults: 1});
 
     return {
         EndpointUrl: data.Endpoints[0].Url
@@ -173,14 +173,15 @@ const _createTemplates = async (instance, templates, stackName) => {
         // Load template and set unique template name
         let params = JSON.parse(fs.readFileSync(tmpl.file, 'utf8'));
         params.Name = stackName + params.Name;
+        params.Tags = {'SolutionId': 'SO0021'};
 
-        await instance.createJobTemplate(params).promise();
+        await instance.createJobTemplate(params);
         console.log(`template created:: ${params.Name}`);
     }
 };
 
 const Create = async (config) => {
-    const mediaconvert = new AWS.MediaConvert({
+    const mediaconvert = new MediaConvert({
         endpoint: config.EndPoint,
         region: process.env.AWS_REGION,
         customUserAgent: process.env.SOLUTION_IDENTIFIER
@@ -193,14 +194,14 @@ const Create = async (config) => {
 };
 
 const Update = async (config) => {
-    const mediaconvert = new AWS.MediaConvert({
+    const mediaconvert = new MediaConvert({
         endpoint: config.EndPoint,
         region: process.env.AWS_REGION,
         customUserAgent: process.env.SOLUTION_IDENTIFIER
     });
 
     let templatesNoPreset = 'false';
-    let data = await mediaconvert.listJobTemplates({ Category: CATEGORY }).promise();
+    let data = await mediaconvert.listJobTemplates({ Category: CATEGORY, MaxResults: 100 });
 
     // Check if the current templates are MediaPackage are from 5.2.0 (no presets) or not.
     data.JobTemplates.forEach(template => {
@@ -223,7 +224,7 @@ const _deletePresets = async (instance, presets, stackName) => {
     for (let preset of presets) {
         let name = stackName + preset.name;
 
-        await instance.deletePreset({ Name: name }).promise();
+        await instance.deletePreset({ Name: name });
         console.log(`preset deleted:: ${name}`);
     }
 };
@@ -232,21 +233,19 @@ const _deleteTemplates = async (instance, templates, stackName) => {
     for (let tmpl of templates) {
         let name = stackName + tmpl.name;
 
-        await instance.deleteJobTemplate({ Name: name }).promise();
+        await instance.deleteJobTemplate({ Name: name });
         console.log(`template deleted:: ${name}`);
     }
 };
 
 const Delete = async (config) => {
-    const mediaconvert = new AWS.MediaConvert({
+    const mediaconvert = new MediaConvert({
         endpoint: config.EndPoint,
         region: process.env.AWS_REGION,
         customUserAgent: process.env.SOLUTION_IDENTIFIER
     });
 
     try {
-        let templates = [];
-
         await _deleteTemplates(mediaconvert, mediaPackageTemplatesNoPreset, config.StackName);
         await _deleteTemplates(mediaconvert, qvbrTemplatesNoPreset, config.StackName);
 

@@ -14,12 +14,20 @@
 
 # dependencies
 **/node_modules
-package-lock.json
 
 # misc
 **/npm-debug.log
 **/.vscode/settings.json
+codescan-funcs.sh
+codescan-postbuild-default.sh
+codescan-prebuild-default.sh
+codescan-unified-default.sh
 
 # System Files
 **/.DS_Store
 **/.vscode
+
+# test coverage files
+**/source/test
+**source/**/.coverage
+**source/**/coverage

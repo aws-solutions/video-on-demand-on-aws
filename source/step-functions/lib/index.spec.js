@@ -13,8 +13,9 @@
 
 const expect = require('chai').expect;
 const path = require('path');
-const AWS = require('aws-sdk-mock');
-AWS.setSDK(path.resolve('./node_modules/aws-sdk'));
+const { mockClient } = require('aws-sdk-client-mock');
+const { SFNClient, StartExecutionCommand } = require('@aws-sdk/client-sfn');
+const { LambdaClient, InvokeCommand } = require('@aws-sdk/client-lambda');
 
 const lambda = require('../index.js');
 
@@ -52,32 +53,35 @@ describe('#STEP FUNCTIONS::', () => {
         executionArn: 'arn'
     };
 
-    afterEach(() => AWS.restore('StepFunctions'));
+    const lambdaClientMock = mockClient(LambdaClient);
+    const sFNClientMock = mockClient(SFNClient);
+
+    afterEach(() => sFNClientMock.reset());
 
     it('should return "success" on Ingest Execute success', async () => {
-        AWS.mock('StepFunctions', 'startExecution', Promise.resolve(data));
+        sFNClientMock.on(StartExecutionCommand).resolves(data);
 
         const response = await lambda.handler(_ingest);
         expect(response).to.equal('success');
     });
 
     it('should return "success" on process Execute success', async () => {
-        AWS.mock('StepFunctions', 'startExecution', Promise.resolve(data));
+        sFNClientMock.on(StartExecutionCommand).resolves(data);
 
         const response = await lambda.handler(_process);
         expect(response).to.equal('success');
     });
 
     it('should return "success" on publish Execute success', async () => {
-        AWS.mock('StepFunctions', 'startExecution', Promise.resolve(data));
+        sFNClientMock.on(StartExecutionCommand).resolves(data);
 
         const response = await lambda.handler(_publish);
         expect(response).to.equal('success');
     });
 
     it('should return "ERROR" with an invalid event object', async () => {
-        AWS.mock('StepFunctions', 'startExecution', Promise.resolve(data));
-        AWS.mock('Lambda', 'invoke', Promise.resolve());
+        sFNClientMock.on(StartExecutionCommand).resolves(data);
+        lambdaClientMock.on(InvokeCommand).resolves();
 
         await lambda.handler(_error).catch(err => {
             expect(err.toString()).to.equal('Error: invalid event object');
@@ -85,11 +89,11 @@ describe('#STEP FUNCTIONS::', () => {
     });
 
     it('should return "STEP ERROR" when step execution fails', async () => {
-        AWS.mock('StepFunctions', 'startExecution', Promise.reject('STEP ERROR'));
-        AWS.mock('Lambda', 'invoke', Promise.resolve());
+        sFNClientMock.on(StartExecutionCommand).rejects('STEP ERROR');
+        lambdaClientMock.on(InvokeCommand).resolves();
 
         await lambda.handler(_ingest).catch(err => {
-            expect(err).to.equal('STEP ERROR');
+            expect(err.toString()).to.equal('Error: STEP ERROR');
         });
     });
 });

@@ -13,8 +13,9 @@
 
 const expect = require('chai').expect;
 const path = require('path');
-const AWS = require('aws-sdk-mock');
-AWS.setSDK(path.resolve('./node_modules/aws-sdk'));
+const { mockClient } = require("aws-sdk-client-mock");
+const { S3Client, PutObjectTaggingCommand} = require("@aws-sdk/client-s3");
+const { LambdaClient, InvokeCommand } = require("@aws-sdk/client-lambda");
 
 const lambda = require('../index.js');
 
@@ -30,18 +31,19 @@ describe('#SOURCE ARCHIVE::', () => {
     process.env.ErrorHandler = 'error_handler';
     process.env.AWS_LAMBDA_FUNCTION_NAME = 'Lambda';
 
-    afterEach(() => AWS.restore('S3'));
+    const s3ClientMock = mockClient(S3Client);
+    const lambdaClientMock = mockClient(LambdaClient);
 
     it('should return "SUCCESS" when s3 tag object returns success', async () => {
-        AWS.mock('S3', 'putObjectTagging', Promise.resolve());
+        s3ClientMock.on(PutObjectTaggingCommand).resolves();
 
         const response = await lambda.handler(_event);
         expect(response.guid).to.equal('1234');
     });
 
     it('should return "TAG ERROR" when s3 tag object fails', async () => {
-        AWS.mock('S3', 'putObjectTagging', Promise.reject('TAG ERROR'));
-        AWS.mock('Lambda', 'invoke', Promise.resolve());
+        s3ClientMock.on(PutObjectTaggingCommand).rejects('TAG ERROR');
+        lambdaClientMock.on(InvokeCommand).resolves();
 
         await lambda.handler(_event).catch(err => {
             expect(err).to.equal('TAG ERROR');

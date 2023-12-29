@@ -13,8 +13,9 @@
 
 const expect = require('chai').expect;
 const path = require('path');
-const AWS = require('aws-sdk-mock');
-AWS.setSDK(path.resolve('./node_modules/aws-sdk'));
+const { mockClient } = require('aws-sdk-client-mock');
+const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns');
+const { LambdaClient, InvokeCommand } = require('@aws-sdk/client-lambda');
 
 const lambda = require('../index.js');
 
@@ -44,24 +45,27 @@ describe('#SNS::', () => {
 
     process.env.ErrorHandler = 'error_handler';
 
-    afterEach(() => AWS.restore('SNS'));
+    const lambdaClientMock = mockClient(LambdaClient);
+    const sNSClientMock = mockClient(SNSClient);
+
+    afterEach(() => sNSClientMock.reset());
 
     it('should return "Ingest" on sns ingest notification success', async () => {
-        AWS.mock('SNS', 'publish', Promise.resolve());
+        sNSClientMock.on(PublishCommand).resolves();
 
         const response = await lambda.handler(_ingest);
         expect(response.workflowStatus).to.equal('Ingest');
     });
 
     it('should return "Complete" on sns Publish notification success', async () => {
-        AWS.mock('SNS', 'publish', Promise.resolve());
+        sNSClientMock.on(PublishCommand).resolves();
 
         const response = await lambda.handler(_publish);
         expect(response.workflowStatus).to.equal('Complete');
     });
 
     it('should remove properties when MediaPackage is enabled', async() => {
-        AWS.mock('SNS', 'publish', Promise.resolve());
+        sNSClientMock.on(PublishCommand).resolves();
 
         const event = {
             guid: '12345678',
@@ -98,8 +102,8 @@ describe('#SNS::', () => {
     });
 
     it('should return "ERROR" when workflowStatus is not defined', async () => {
-        AWS.mock('SNS', 'publish', Promise.resolve());
-        AWS.mock('Lambda', 'invoke', Promise.resolve());
+        sNSClientMock.on(PublishCommand).resolves();
+        lambdaClientMock.on(InvokeCommand).resolves();
 
         await lambda.handler(_error).catch(err => {
             expect(err.toString()).to.equal('Error: Workflow Status not defined.');
@@ -107,11 +111,11 @@ describe('#SNS::', () => {
     });
 
     it('should return "SNS ERROR" when send sns fails', async () => {
-        AWS.mock('SNS', 'publish', Promise.reject('SNS ERROR'));
-        AWS.mock('Lambda', 'invoke', Promise.resolve());
+        sNSClientMock.on(PublishCommand).rejects('SNS ERROR');
+        lambdaClientMock.on(InvokeCommand).resolves();
 
         await lambda.handler(_ingest).catch(err => {
-            expect(err).to.equal('SNS ERROR');
+            expect(err.toString()).to.equal('Error: SNS ERROR');
         });
     });
 });
