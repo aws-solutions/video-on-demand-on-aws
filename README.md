@@ -309,7 +309,7 @@ aws s3 sync ./global-s3-assets/ s3://my-bucket-us-east-1/video-on-demand-on-aws/
 
 ## Collection of operational metrics
 
-This solution collects Anonymized operational metrics to help AWS improve
+This solution collects anonymized operational metrics to help AWS improve
 the quality of features of the solution.
 For more information, including how to disable this capability,
 please see the

@@ -1,6 +1,8 @@
 id: SO0021
 name: video-on-demand-on-aws
-version: 6.1.5
+version: v6.1.6
 cloudformation_templates:
   - template: video-on-demand-on-aws.template
     main_template: true
+build_environment:
+  build_image: "aws/codebuild/standard:7.0"
