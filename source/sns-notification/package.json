@@ -1,6 +1,6 @@
 {
   "name": "vod-notification",
-  "version": "1.0.0",
+  "version": "6.1.11",
   "engines": {
     "node": ">=18"
   },
