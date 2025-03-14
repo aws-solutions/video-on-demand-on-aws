@@ -79,7 +79,7 @@ After build script run:
       "Properties": {
         "Code": {
           "S3Bucket": "solutions",
-          "S3Key": "trademarked-solution-name/v1.0.0/asset.d513e93e266931de36e1c7e79c27b196f84ab928fce63d364d9152ca501551f7.zip"
+          "S3Key": "trademarked-solution-name/v6.1.11/asset.d513e93e266931de36e1c7e79c27b196f84ab928fce63d364d9152ca501551f7.zip"
         }, ...
         "Handler": "assetd513e93e266931de36e1c7e79c27b196f84ab928fce63d364d9152ca501551f7/index.handler"
 ```
@@ -91,7 +91,7 @@ After CloudFormation deployment:
       "Properties": {
         "Code": {
           "S3Bucket": "solutions-us-east-1",
-          "S3Key": "trademarked-solution-name/v1.0.0/asset.d513e93e266931de36e1c7e79c27b196f84ab928fce63d364d9152ca501551f7.zip"
+          "S3Key": "trademarked-solution-name/v6.1.11/asset.d513e93e266931de36e1c7e79c27b196f84ab928fce63d364d9152ca501551f7.zip"
         }, ...
         "Handler": "assetd513e93e266931de36e1c7e79c27b196f84ab928fce63d364d9152ca501551f7/index.handler"
 ```
