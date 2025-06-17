@@ -387,7 +387,10 @@ export class VideoOnDemand extends cdk.Stack {
         }, {
           id: 'AwsSolutions-CFR4', //same as cfn_nag rule W70
           reason: 'CloudFront automatically sets the security policy to TLSv1 when the distribution uses the CloudFront domain name'
-        }
+        }, {
+          id: 'AwsSolutions-CFR7',
+          reason: 'False alarm. The AWS-cloudfront-s3 solutions construct provides Origin-Access-Control by default.',
+        },
       ]
     );
 
@@ -510,7 +513,7 @@ export class VideoOnDemand extends cdk.Stack {
     );
 
     const customResourceLambda = new lambda.Function(this, 'CustomResource', {
-      runtime: lambda.Runtime.NODEJS_18_X,
+      runtime: lambda.Runtime.NODEJS_22_X,
       handler: 'index.handler',
       description: 'Used to deploy resources not supported by CloudFormation',
       environment: {
@@ -738,7 +741,9 @@ export class VideoOnDemand extends cdk.Stack {
       },
       tableName: cdk.Aws.STACK_NAME,
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-      pointInTimeRecovery: true
+      pointInTimeRecoverySpecification: {
+        pointInTimeRecoveryEnabled: true
+      }
     });
     dynamoDBTable.addGlobalSecondaryIndex({
       indexName: 'srcBucket-startTime-index',
@@ -830,7 +835,7 @@ export class VideoOnDemand extends cdk.Stack {
     );
 
     const errorHandlerLambda = new lambda.Function(this, 'ErrorHandlerLambda', {
-      runtime: lambda.Runtime.NODEJS_18_X,
+      runtime: lambda.Runtime.NODEJS_22_X,
       handler: 'index.handler',
       functionName: `${cdk.Aws.STACK_NAME}-error-handler`,
       description: 'Captures and processes workflow errors',
@@ -940,7 +945,7 @@ export class VideoOnDemand extends cdk.Stack {
     );
 
     const inputValidateLambda = new lambda.Function(this, 'InputValidateLambda', {
-      runtime: lambda.Runtime.NODEJS_18_X,
+      runtime: lambda.Runtime.NODEJS_22_X,
       handler: 'index.handler',
       functionName: `${cdk.Aws.STACK_NAME}-input-validate`,
       description: 'Validates the input given to the workflow',
@@ -1141,7 +1146,7 @@ export class VideoOnDemand extends cdk.Stack {
     );
 
     const dynamoUpdateLambda = new lambda.Function(this, 'DynamoUpdateLambda', {
-      runtime: lambda.Runtime.NODEJS_18_X,
+      runtime: lambda.Runtime.NODEJS_22_X,
       handler: 'index.handler',
       functionName: `${cdk.Aws.STACK_NAME}-dynamo`,
       description: 'Updates DynamoDB with event data',
@@ -1230,7 +1235,7 @@ export class VideoOnDemand extends cdk.Stack {
     );
 
     const profilerLambda = new lambda.Function(this, 'ProfilerLambda', {
-      runtime: lambda.Runtime.NODEJS_18_X,
+      runtime: lambda.Runtime.NODEJS_22_X,
       handler: 'index.handler',
       functionName: `${cdk.Aws.STACK_NAME}-profiler`,
       description: 'Sets an EncodeProfile based on mediainfo output',
@@ -1328,7 +1333,7 @@ export class VideoOnDemand extends cdk.Stack {
     );
 
     const encodeLambda = new lambda.Function(this, 'EncodeLambda', {
-      runtime: lambda.Runtime.NODEJS_18_X,
+      runtime: lambda.Runtime.NODEJS_22_X,
       handler: 'index.handler',
       functionName: `${cdk.Aws.STACK_NAME}-encode`,
       description: 'Creates a MediaConvert encode job',
@@ -1422,7 +1427,7 @@ export class VideoOnDemand extends cdk.Stack {
     );
 
     const outputValidateLambda = new lambda.Function(this, 'OutputValidateLambda', {
-      runtime: lambda.Runtime.NODEJS_18_X,
+      runtime: lambda.Runtime.NODEJS_22_X,
       handler: 'index.handler',
       functionName: `${cdk.Aws.STACK_NAME}-output-validate`,
       description: 'Parses MediaConvert job output',
@@ -1512,7 +1517,7 @@ export class VideoOnDemand extends cdk.Stack {
     );
 
     const archiveSourceLambda = new lambda.Function(this, 'ArchiveSourceLambda', {
-      runtime: lambda.Runtime.NODEJS_18_X,
+      runtime: lambda.Runtime.NODEJS_22_X,
       handler: 'index.handler',
       functionName: `${cdk.Aws.STACK_NAME}-archive-source`,
       description: 'Updates tags on source files to enable Glacier',
@@ -1605,7 +1610,7 @@ export class VideoOnDemand extends cdk.Stack {
     );
 
     const sqsSendMessageLambda = new lambda.Function(this, 'SqsSendMessageLambda', {
-      runtime: lambda.Runtime.NODEJS_18_X,
+      runtime: lambda.Runtime.NODEJS_22_X,
       handler: 'index.handler',
       functionName: `${cdk.Aws.STACK_NAME}-sqs-publish`,
       description: 'Publish the workflow results to an SQS queue',
@@ -1699,7 +1704,7 @@ export class VideoOnDemand extends cdk.Stack {
     );
 
     const snsNotificationLambda = new lambda.Function(this, 'SnsNotificationLambda', {
-      runtime: lambda.Runtime.NODEJS_18_X,
+      runtime: lambda.Runtime.NODEJS_22_X,
       handler: 'index.handler',
       functionName: `${cdk.Aws.STACK_NAME}-sns-notification`,
       description: 'Sends a notification when the encode job is completed',
@@ -1807,7 +1812,7 @@ export class VideoOnDemand extends cdk.Stack {
     );
 
     const mediaPackageAssetsLambda = new lambda.Function(this, 'MediaPackageAssetsLambda', {
-      runtime: lambda.Runtime.NODEJS_18_X,
+      runtime: lambda.Runtime.NODEJS_22_X,
       handler: 'index.handler',
       functionName: `${cdk.Aws.STACK_NAME}-media-package-assets`,
       description: 'Ingests an asset into MediaPackage-VOD',
@@ -1903,7 +1908,7 @@ export class VideoOnDemand extends cdk.Stack {
     );
 
     const stepFunctionsLambda = new lambda.Function(this, 'StepFunctionsLambda', {
-      runtime: lambda.Runtime.NODEJS_18_X,
+      runtime: lambda.Runtime.NODEJS_22_X,
       handler: 'index.handler',
       functionName: `${cdk.Aws.STACK_NAME}-step-functions`,
       description: 'Creates a unique identifer (GUID) and executes the Ingest StateMachine',
@@ -1963,7 +1968,7 @@ export class VideoOnDemand extends cdk.Stack {
         [
           {
             id: 'AwsSolutions-L1',
-            reason: 'Lambda NodeJS 18 Runtime in development...',
+            reason: 'Lambda NodeJS 22 Runtime in development...',
           }
         ]
       );
@@ -2134,7 +2139,7 @@ export class VideoOnDemand extends cdk.Stack {
     const ingestWorkflow = new sfn.StateMachine(this, 'IngestWorkflow', {
       stateMachineName: `${cdk.Aws.STACK_NAME}-ingest`,
       role: stepFunctionsServiceRole,
-      definition: ingestWorkflowDefinition
+      definitionBody: sfn.DefinitionBody.fromChainable(ingestWorkflowDefinition)
     });
 
     //cdk_nag
@@ -2191,7 +2196,7 @@ export class VideoOnDemand extends cdk.Stack {
     const processWorkflow = new sfn.StateMachine(this, 'ProcessWorkflow', {
       stateMachineName: `${cdk.Aws.STACK_NAME}-process`,
       role: stepFunctionsServiceRole,
-      definition: processWorkflowDefinition
+      definitionBody: sfn.DefinitionBody.fromChainable(processWorkflowDefinition)
     });
 
     //cdk_nag
@@ -2258,7 +2263,7 @@ export class VideoOnDemand extends cdk.Stack {
     const publishWorkflow = new sfn.StateMachine(this, 'PublishWorkflow', {
       stateMachineName: `${cdk.Aws.STACK_NAME}-publish`,
       role: stepFunctionsServiceRole,
-      definition: publishWorkflowDefinition
+      definitionBody: sfn.DefinitionBody.fromChainable(publishWorkflowDefinition)
     });
 
     //cfn_nag
