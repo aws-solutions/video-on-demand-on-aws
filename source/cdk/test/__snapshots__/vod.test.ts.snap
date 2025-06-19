@@ -524,7 +524,7 @@ exports[`VideoOnDemand Stack Test 1`] = `
           rules_to_suppress: [
             {
               id: AwsSolutions-L1,
-              reason: Lambda NodeJS 18 Runtime in development...,
+              reason: Lambda NodeJS 22 Runtime in development...,
             },
           ],
         },
@@ -583,7 +583,7 @@ exports[`VideoOnDemand Stack Test 1`] = `
             Arn,
           ],
         },
-        Runtime: nodejs18.x,
+        Runtime: nodejs22.x,
         Tags: [
           {
             Key: SolutionId,
@@ -778,6 +778,10 @@ exports[`VideoOnDemand Stack Test 1`] = `
               id: AwsSolutions-CFR4,
               reason: CloudFront automatically sets the security policy to TLSv1 when the distribution uses the CloudFront domain name,
             },
+            {
+              id: AwsSolutions-CFR7,
+              reason: False alarm. The AWS-cloudfront-s3 solutions construct provides Origin-Access-Control by default.,
+            },
           ],
         },
         cfn_nag: {
@@ -825,18 +829,14 @@ exports[`VideoOnDemand Stack Test 1`] = `
                 ],
               },
               Id: VideoOnDemandCloudFrontToS3CloudFrontDistributionOrigin1CC6EEFFD,
+              OriginAccessControlId: {
+                Fn::GetAtt: [
+                  CloudFrontToS3CloudFrontOacFB5D4E73,
+                  Id,
+                ],
+              },
               S3OriginConfig: {
-                OriginAccessIdentity: {
-                  Fn::Join: [
-                    ,
-                    [
-                      origin-access-identity/cloudfront/,
-                      {
-                        Ref: CloudFrontToS3CloudFrontDistributionOrigin1S3OriginB0637B8F,
-                      },
-                    ],
-                  ],
-                },
+                OriginAccessIdentity: ,
               },
             },
           ],
@@ -851,13 +851,37 @@ exports[`VideoOnDemand Stack Test 1`] = `
       },
       Type: AWS::CloudFront::Distribution,
     },
-    CloudFrontToS3CloudFrontDistributionOrigin1S3OriginB0637B8F: {
+    CloudFrontToS3CloudFrontOacFB5D4E73: {
       Properties: {
-        CloudFrontOriginAccessIdentityConfig: {
-          Comment: Identity for VideoOnDemandCloudFrontToS3CloudFrontDistributionOrigin1CC6EEFFD,
+        OriginAccessControlConfig: {
+          Description: Origin access control provisioned by aws-cloudfront-s3,
+          Name: {
+            Fn::Join: [
+              ,
+              [
+                aws-cloudfront-s3-CloutToS3-,
+                {
+                  Fn::Select: [
+                    2,
+                    {
+                      Fn::Split: [
+                        /,
+                        {
+                          Ref: AWS::StackId,
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            ],
+          },
+          OriginAccessControlOriginType: s3,
+          SigningBehavior: always,
+          SigningProtocol: sigv4,
         },
       },
-      Type: AWS::CloudFront::CloudFrontOriginAccessIdentity,
+      Type: AWS::CloudFront::OriginAccessControl,
     },
     CustomResource8CDCD7A7: {
       DependsOn: [
@@ -869,7 +893,7 @@ exports[`VideoOnDemand Stack Test 1`] = `
           rules_to_suppress: [
             {
               id: AwsSolutions-L1,
-              reason: Lambda NodeJS 18 Runtime in development...,
+              reason: Lambda NodeJS 22 Runtime in development...,
             },
           ],
         },
@@ -921,7 +945,7 @@ exports[`VideoOnDemand Stack Test 1`] = `
             Arn,
           ],
         },
-        Runtime: nodejs18.x,
+        Runtime: nodejs22.x,
         Tags: [
           {
             Key: SolutionId,
@@ -1325,14 +1349,32 @@ exports[`VideoOnDemand Stack Test 1`] = `
             },
             {
               Action: s3:GetObject,
+              Condition: {
+                StringEquals: {
+                  AWS:SourceArn: {
+                    Fn::Join: [
+                      ,
+                      [
+                        arn:,
+                        {
+                          Ref: AWS::Partition,
+                        },
+                        :cloudfront::,
+                        {
+                          Ref: AWS::AccountId,
+                        },
+                        :distribution/,
+                        {
+                          Ref: CloudFrontToS3CloudFrontDistribution241D9866,
+                        },
+                      ],
+                    ],
+                  },
+                },
+              },
               Effect: Allow,
               Principal: {
-                CanonicalUser: {
-                  Fn::GetAtt: [
-                    CloudFrontToS3CloudFrontDistributionOrigin1S3OriginB0637B8F,
-                    S3CanonicalUserId,
-                  ],
-                },
+                Service: cloudfront.amazonaws.com,
               },
               Resource: {
                 Fn::Join: [
@@ -1437,7 +1479,7 @@ exports[`VideoOnDemand Stack Test 1`] = `
           rules_to_suppress: [
             {
               id: AwsSolutions-L1,
-              reason: Lambda NodeJS 18 Runtime in development...,
+              reason: Lambda NodeJS 22 Runtime in development...,
             },
           ],
         },
@@ -1499,7 +1541,7 @@ exports[`VideoOnDemand Stack Test 1`] = `
             Arn,
           ],
         },
-        Runtime: nodejs18.x,
+        Runtime: nodejs22.x,
         Tags: [
           {
             Key: SolutionId,
@@ -1767,7 +1809,7 @@ exports[`VideoOnDemand Stack Test 1`] = `
           rules_to_suppress: [
             {
               id: AwsSolutions-L1,
-              reason: Lambda NodeJS 18 Runtime in development...,
+              reason: Lambda NodeJS 22 Runtime in development...,
             },
           ],
         },
@@ -1838,7 +1880,7 @@ exports[`VideoOnDemand Stack Test 1`] = `
             Arn,
           ],
         },
-        Runtime: nodejs18.x,
+        Runtime: nodejs22.x,
         Tags: [
           {
             Key: SolutionId,
@@ -2028,7 +2070,7 @@ exports[`VideoOnDemand Stack Test 1`] = `
           rules_to_suppress: [
             {
               id: AwsSolutions-L1,
-              reason: Lambda NodeJS 18 Runtime in development...,
+              reason: Lambda NodeJS 22 Runtime in development...,
             },
           ],
         },
@@ -2087,7 +2129,7 @@ exports[`VideoOnDemand Stack Test 1`] = `
             Arn,
           ],
         },
-        Runtime: nodejs18.x,
+        Runtime: nodejs22.x,
         Tags: [
           {
             Key: SolutionId,
@@ -2318,7 +2360,7 @@ exports[`VideoOnDemand Stack Test 1`] = `
           rules_to_suppress: [
             {
               id: AwsSolutions-L1,
-              reason: Lambda NodeJS 18 Runtime in development...,
+              reason: Lambda NodeJS 22 Runtime in development...,
             },
           ],
         },
@@ -2508,7 +2550,7 @@ exports[`VideoOnDemand Stack Test 1`] = `
             Arn,
           ],
         },
-        Runtime: nodejs18.x,
+        Runtime: nodejs22.x,
         Tags: [
           {
             Key: SolutionId,
@@ -2941,7 +2983,7 @@ exports[`VideoOnDemand Stack Test 1`] = `
           rules_to_suppress: [
             {
               id: AwsSolutions-L1,
-              reason: Lambda NodeJS 18 Runtime in development...,
+              reason: Lambda NodeJS 22 Runtime in development...,
             },
           ],
         },
@@ -3145,7 +3187,7 @@ exports[`VideoOnDemand Stack Test 1`] = `
           rules_to_suppress: [
             {
               id: AwsSolutions-L1,
-              reason: Lambda NodeJS 18 Runtime in development...,
+              reason: Lambda NodeJS 22 Runtime in development...,
             },
           ],
         },
@@ -3222,7 +3264,7 @@ exports[`VideoOnDemand Stack Test 1`] = `
             Arn,
           ],
         },
-        Runtime: nodejs18.x,
+        Runtime: nodejs22.x,
         Tags: [
           {
             Key: SolutionId,
@@ -3515,7 +3557,7 @@ exports[`VideoOnDemand Stack Test 1`] = `
           rules_to_suppress: [
             {
               id: AwsSolutions-L1,
-              reason: Lambda NodeJS 18 Runtime in development...,
+              reason: Lambda NodeJS 22 Runtime in development...,
             },
           ],
         },
@@ -3583,7 +3625,7 @@ exports[`VideoOnDemand Stack Test 1`] = `
             Arn,
           ],
         },
-        Runtime: nodejs18.x,
+        Runtime: nodejs22.x,
         Tags: [
           {
             Key: SolutionId,
@@ -3808,7 +3850,7 @@ exports[`VideoOnDemand Stack Test 1`] = `
           rules_to_suppress: [
             {
               id: AwsSolutions-L1,
-              reason: Lambda NodeJS 18 Runtime in development...,
+              reason: Lambda NodeJS 22 Runtime in development...,
             },
           ],
         },
@@ -3870,7 +3912,7 @@ exports[`VideoOnDemand Stack Test 1`] = `
             Arn,
           ],
         },
-        Runtime: nodejs18.x,
+        Runtime: nodejs22.x,
         Tags: [
           {
             Key: SolutionId,
@@ -4144,7 +4186,7 @@ exports[`VideoOnDemand Stack Test 1`] = `
           rules_to_suppress: [
             {
               id: AwsSolutions-L1,
-              reason: Lambda NodeJS 18 Runtime in development...,
+              reason: Lambda NodeJS 22 Runtime in development...,
             },
           ],
         },
@@ -4206,7 +4248,7 @@ exports[`VideoOnDemand Stack Test 1`] = `
             Arn,
           ],
         },
-        Runtime: nodejs18.x,
+        Runtime: nodejs22.x,
         Tags: [
           {
             Key: SolutionId,
@@ -4674,7 +4716,7 @@ exports[`VideoOnDemand Stack Test 1`] = `
           rules_to_suppress: [
             {
               id: AwsSolutions-L1,
-              reason: Lambda NodeJS 18 Runtime in development...,
+              reason: Lambda NodeJS 22 Runtime in development...,
             },
           ],
         },
@@ -4736,7 +4778,7 @@ exports[`VideoOnDemand Stack Test 1`] = `
             Arn,
           ],
         },
-        Runtime: nodejs18.x,
+        Runtime: nodejs22.x,
         Tags: [
           {
             Key: SolutionId,
@@ -4879,7 +4921,7 @@ exports[`VideoOnDemand Stack Test 1`] = `
           rules_to_suppress: [
             {
               id: AwsSolutions-L1,
-              reason: Lambda NodeJS 18 Runtime in development...,
+              reason: Lambda NodeJS 22 Runtime in development...,
             },
           ],
         },
@@ -5010,7 +5052,7 @@ exports[`VideoOnDemand Stack Test 1`] = `
             Arn,
           ],
         },
-        Runtime: nodejs18.x,
+        Runtime: nodejs22.x,
         Tags: [
           {
             Key: SolutionId,

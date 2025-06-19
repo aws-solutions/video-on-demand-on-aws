@@ -1,8 +1,8 @@
 {
   "name": "vod-input-validation",
-  "version": "6.1.11",
+  "version": "6.1.12",
   "engines": {
-    "node": ">=18"
+    "node": ">=22"
   },
   "description": "ingest workflow for video on demand",
   "main": "index.js",
@@ -26,7 +26,8 @@
     "url": "https://aws.amazon.com/solutions"
   },
   "overrides": {
-    "path-to-regexp": ">=8.1.0"
+    "path-to-regexp": ">=8.1.0",
+    "@babel/core": "7.26.10"
   },
   "license": "Apache-2.0"
 }
