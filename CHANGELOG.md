@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.1.13] - 2025-08-26
+
+### Changed
+
+- Updated Lambda to Python 3.13
+
+### Removed
+
+- AppRegistry removed from solution
+
+### Security
+
+- Security updates for npm packages
+
 ## [6.1.12] - 2025-06-19
 
 ### Changed
@@ -69,7 +83,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Updated to JavaScript V3 SDK for NodeJS 18 update.
-- All node JS Lambdas upgraded to NodeJS 18 runtime. 
+- All node JS Lambdas upgraded to NodeJS 18 runtime.
 - Updated packages
 - Removed deprecated moment package
 - Enabled versioning and enforce SSL for S3 buckets

@@ -58,7 +58,7 @@ echo "--------------------------------------------------------------------------
 echo "[Init] Install dependencies for the cdk-solution-helper"
 echo "------------------------------------------------------------------------------"
 cd "$template_dir/cdk-solution-helper"
-npm install --production
+npm install --omit=dev
 
 echo "------------------------------------------------------------------------------"
 echo "Download mediainfo binary for AWS Lambda"
@@ -74,12 +74,10 @@ rm -r MediaInfo_CLI_20.09_Lambda.zip
 echo "------------------------------------------------------------------------------"
 echo "[Synth] CDK Project"
 echo "------------------------------------------------------------------------------"
-# Make sure user has the newest CDK version
-npm uninstall -g aws-cdk && npm install -g aws-cdk@2
 
 cd "$source_dir/cdk"
 npm install
-cdk synth --output="$staging_dist_dir"
+npm run cdk -- synth --output="$staging_dist_dir"
 if [ $? -ne 0 ]
 then
     echo "******************************************************************************"
@@ -127,7 +125,7 @@ for d in `find . -mindepth 1 -maxdepth 1 -type d`; do
     #rm -rf coverage/
     if [ -f "package.json" ]
     then
-        npm install --production
+        npm install --omit=dev
     fi
     zip -rq ../$fname.zip *
     cd ..
