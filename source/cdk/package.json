@@ -2,7 +2,7 @@
   "name": "video-on-demand-on-aws",
   "description": "Synthesize templates for Video on Demand on AWS using AWS Cloud Development Kit (CDK).",
   "license": "Apache-2.0",
-  "version": "6.1.12",
+  "version": "6.1.13",
   "bin": {
     "cdk": "bin/vod.js"
   },
@@ -30,12 +30,8 @@
   "dependencies": {
     "aws-cdk-lib": "^2.196.0",
     "@aws-solutions-constructs/aws-cloudfront-s3": "^2.85.2",
-    "@aws-cdk/aws-servicecatalogappregistry-alpha": "^2.197.0-alpha.0",
     "constructs": "^10.2.47",
     "source-map-support": "^0.5.21",
     "cdk-nag": "^2.27.32"
-  },
-  "overrides": {
-    "@babel/core": "7.26.10"
   }
 }

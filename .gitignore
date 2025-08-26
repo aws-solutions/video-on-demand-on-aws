@@ -4,6 +4,7 @@
 **/regional-s3-assets
 **/open-source
 **/.zip
+/build
 
 # python output
 **/__pycache__

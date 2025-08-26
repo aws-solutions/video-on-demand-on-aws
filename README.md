@@ -18,8 +18,8 @@ Source code for [Video on Demand on AWS][vod-landing] solution.
   - [QVBR Mode](#qvbr-mode)
   - [Accelerated Transcoding](#accelerated-transcoding)
   - [Source code](#source-code)
-    - [Node.js 18](#nodejs-18)
-    - [Python 3.9](#python-39)
+    - [Node.js 22](#nodejs-22)
+    - [Python 3.13](#python-313)
   - [Creating a custom build](#creating-a-custom-build)
     - [Prerequisites:](#prerequisites)
     - [1. Running unit tests for customization](#1-running-unit-tests-for-customization)
@@ -182,7 +182,7 @@ For more detail please see [Accelerated Transcoding][accelerated-transcoding].
 
 ## Source code
 
-### Node.js 18
+### Node.js 22
 * **archive-source:** Lambda function to tag the source video in s3
   to enable the Glacier lifecycle policy.
 * **custom-resource:** Lambda backed CloudFormation custom resource
@@ -197,7 +197,7 @@ For more detail please see [Accelerated Transcoding][accelerated-transcoding].
 * **profiler:** Lambda function used to send publish and/or error notifications.
 * **step-functions:** Lambda function to trigger AWS Step Functions.
 
-### Python 3.9
+### Python 3.13
 * **mediainfo:** Lambda function to run [mediainfo][mediainfo-site]
   on an S3 signed url.
 
@@ -212,8 +212,8 @@ the updated Lambda code to an Amazon S3 bucket in your account.
 
 ### Prerequisites:
 * [AWS Command Line Interface](https://aws.amazon.com/cli/)
-* Node.js 18.x or later
-* Python 3.8 or later
+* Node.js 22.x or later
+* Python 3.13 or later
 
 ### 1. Running unit tests for customization
 Run unit tests to make sure added customization passes the tests:

@@ -1,6 +1,6 @@
 {
   "name": "vod-error-handler",
-  "version": "6.1.12",
+  "version": "6.1.13",
   "engines": {
     "node": ">=22"
   },
@@ -23,10 +23,6 @@
   "author": {
     "name": "Amazon Web Services",
     "url": "https://aws.amazon.com/solutions"
-  },
-  "overrides": {
-    "path-to-regexp": ">=8.1.0",
-    "@babel/core": "7.26.10"
   },
   "license": "Apache-2.0"
 }

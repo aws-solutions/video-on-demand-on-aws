@@ -26,7 +26,6 @@ import * as sfn from 'aws-cdk-lib/aws-stepfunctions';
 import * as tasks from 'aws-cdk-lib/aws-stepfunctions-tasks';
 import * as events from 'aws-cdk-lib/aws-events';
 import * as targets from 'aws-cdk-lib/aws-events-targets';
-import * as appreg from '@aws-cdk/aws-servicecatalogappregistry-alpha';
 import { CloudFrontToS3 } from '@aws-solutions-constructs/aws-cloudfront-s3';
 import { NagSuppressions } from 'cdk-nag';
 
@@ -1059,7 +1058,7 @@ export class VideoOnDemand extends cdk.Stack {
     );
 
     const mediaInfoLambda = new lambda.Function(this, 'MediaInfoLambda', {
-      runtime: lambda.Runtime.PYTHON_3_9,
+      runtime: lambda.Runtime.PYTHON_3_13,
       handler: 'lambda_function.lambda_handler',
       functionName: `${cdk.Aws.STACK_NAME}-mediainfo`,
       description: 'Runs mediainfo on a pre-signed S3 URL',
@@ -2332,32 +2331,6 @@ export class VideoOnDemand extends cdk.Stack {
       }
     });
 
-    /**
-     * AppRegistry
-     */
-    const applicationName = `video-on-demand-on-aws-${cdk.Aws.REGION}-${cdk.Aws.ACCOUNT_ID}-${cdk.Aws.STACK_NAME}`;
-    const attributeGroup = new appreg.AttributeGroup(this, 'AppRegistryAttributeGroupId', {
-      attributeGroupName: `A30-${cdk.Aws.REGION}-${cdk.Aws.STACK_NAME}`,
-      description: 'Attribute group for solution information',
-      attributes: {
-        applicationType: 'AWS-Solutions',
-        version: '%%VERSION%%',
-        solutionID: solutionId,
-        solutionName: solutionName
-      }
-    });
-    const appRegistry = new appreg.Application(this, 'AppRegistryApp', {
-      applicationName: applicationName,
-      description: `Service Catalog application to track and manage all your resources. The SolutionId is ${solutionId} and SolutionVersion is %%VERSION%%.`
-    });
-    appRegistry.associateApplicationWithStack(this);
-    cdk.Tags.of(appRegistry).add('Solutions:SolutionID', solutionId);
-    cdk.Tags.of(appRegistry).add('Solutions:SolutionName', solutionName);
-    cdk.Tags.of(appRegistry).add('Solutions:SolutionVersion', '%%VERSION%%');
-    cdk.Tags.of(appRegistry).add('Solutions:ApplicationType', 'AWS-Solutions');
-
-    attributeGroup.associateWith(appRegistry);
-
 
     /**
      * Outputs
@@ -2401,11 +2374,6 @@ export class VideoOnDemand extends cdk.Stack {
       value: sqsQueue.queueArn,
       description: 'SQS Queue ARN',
       exportName: `${cdk.Aws.STACK_NAME}:SqsQueueArn`
-    });
-    new cdk.CfnOutput(this, 'AppRegistryConsole', { // NOSONAR
-      description: 'AppRegistry',
-      value: `https://${cdk.Aws.REGION}.console.aws.amazon.com/servicecatalog/home?#applications/${appRegistry.applicationId}`,
-      exportName: `${cdk.Aws.STACK_NAME}-AppRegistry`
     });
 
     /**
